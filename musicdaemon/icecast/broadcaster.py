@@ -4,7 +4,7 @@ import logging
 import os
 import sys
 
-import click
+# import click
 import shouty
 
 logger = logging.getLogger('[broadcaster]')
@@ -78,9 +78,9 @@ def load_conf():
     return conf
 
 
-@click.command()
-@click.option('--playlist')
-@click.option('--mount')
+# @click.command()
+# @click.option('--playlist')
+# @click.option('--mount')
 def stream_it(playlist, mount):
     conf = load_conf()
     bc = Broadcaster(conf, playlist, mount)
