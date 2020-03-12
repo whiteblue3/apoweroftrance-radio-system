@@ -1,7 +1,7 @@
 FROM python:3.6-alpine
 
-COPY . /root
-WORKDIR /root
+COPY . /daemon
+WORKDIR /daemon
 
 RUN mkdir -p /srv/media
 
