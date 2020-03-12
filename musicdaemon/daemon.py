@@ -20,6 +20,7 @@ class MusicDaemon:
         control.query(cursor, "select * from pg_settings where name='max_connections';")
         max_connections = cursor.fetchall()
         self.logger.log("max_connections", max_connections)
+        cursor.close()
         control.close(connection)
 
     def main(self):
