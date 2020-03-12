@@ -13,8 +13,20 @@ class MusicDaemon:
         self.is_publishing = False
         self.logger = Logger('MusicDaemon')
 
+        db_username = os.environ.get('DB_USERNAME')
+        db_password = os.environ.get('DB_PASSWORD')
+        db_host = os.environ.get('DB_HOST')
+        db_port = os.environ.get('DB_PORT')
+        db_name = os.environ.get('DB_NAME')
+
         # Example of DBControl
-        control = DBControl('whiteblue3', '', '127.0.0.1', 5432, 'radio')
+        control = DBControl(
+            db_username,
+            db_password,
+            db_host,
+            db_port,
+            db_name
+        )
         connection = control.connect()
         cursor = control.get_cursor(connection)
         control.query(cursor, "select * from pg_settings where name='max_connections';")

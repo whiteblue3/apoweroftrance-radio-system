@@ -18,6 +18,10 @@ class DBControl:
         self.dsn = "postgresql://%s:%s@%s:%s/%s" % (user, password, host, port, dbname)
         self.pool = dbpool.ProcessSafePoolManager(1, 198, dsn=self.dsn)
 
+    # def __init__(self, dsn):
+    #     self.dsn = dsn
+    #     self.pool = dbpool.ProcessSafePoolManager(1, 198, dsn=self.dsn)
+
     def connect(self):
         return self.pool.getconn()
 
