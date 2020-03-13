@@ -36,7 +36,6 @@ services:
       - "8080:8080"
     networks:
       - music_stack
-    entrypoint: /backend/startup.sh
 
 networks:
   music_stack:

@@ -13,13 +13,6 @@ RUN apk update && \
 WORKDIR /backend
 EXPOSE 8080
 
-#ADD https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh .
-
-#RUN chmod +x wait-for-it.sh
 RUN chmod +x startup.sh
 
-#ENTRYPOINT ["python3", "manage.py", "collectstatic", "--noinput", "-i yes"]
-#ENTRYPOINT ["python3", "manage.py", "makemigrations", "--noinput"]
-#ENTRYPOINT ["python3", "manage.py", "migrate", "--noinput"]
-#
-#ENTRYPOINT ["python3", "manage.py", "runserver", "0.0.0.0:8080"]
+ENTRYPOINT ["/backend/startup.sh"]
