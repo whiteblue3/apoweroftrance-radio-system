@@ -1,13 +1,17 @@
 import os
 import time
 import signal
+from multiprocessing import Queue
 from logger import Logger
 from process import Process
 
 
 class Master:
+    cmd_queue = None
+
     def __init__(self, process_classes):
         self.__stop = False
+        self.cmd_queue = Queue()
         self.process = []
         self.logger = Logger('MasterProcess')
 
@@ -27,7 +31,7 @@ class Master:
 
             if pid == 0:
                 process = Process()
-                exit_code = process.main(process_class)
+                exit_code = process.main(process_class, self.cmd_queue)
                 exit(exit_code)
             else:
                 self.logger.log("MasterProcess",

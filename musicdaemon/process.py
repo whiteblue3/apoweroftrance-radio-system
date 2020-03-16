@@ -5,12 +5,12 @@ class Process:
     """Sub Process"""
     process = None
 
-    def main(self, process_class):
+    def main(self, process_class, cmd_queue=None):
         signal.signal(signal.SIGINT, self.stop)
         signal.signal(signal.SIGTERM, self.stop)
 
         self.process = process_class()
-        res = self.process.main()
+        res = self.process.main(cmd_queue)
         return res
 
     def stop(self, signum, frame):

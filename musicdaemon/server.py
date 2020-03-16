@@ -2,6 +2,7 @@ import sys
 import os
 from socketserver import ThreadingMixIn
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from command import CMD
 from logger import Logger
 
 
@@ -15,6 +16,11 @@ class TCPHandler(BaseHTTPRequestHandler):
         if self.server.logger is not None:
             self.server.logger.log("HTTPStream", format % args)
 
+    def queue_cmd(self, cmd):
+        if self.server.cmd_queue is not None:
+            self.server.logger.log("CMD SEND", cmd)
+            self.server.cmd_queue.put(cmd)
+
     def _set_response(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
@@ -24,6 +30,9 @@ class TCPHandler(BaseHTTPRequestHandler):
         self.log_message("GET request,\nPath: %s\nHeaders:\n%s\n", str(self.path), str(self.headers))
         self._set_response()
         self.wfile.write("GET request for {}".format(self.path).encode('utf-8'))
+
+        cmd = CMD(host="server", target="daemon", command="GET", data="")
+        self.queue_cmd(cmd)
 
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])    # <--- Gets the size of data
@@ -49,13 +58,14 @@ class TCPServer:
         server_address = ('0.0.0.0', 9000)
 
         self.httpd = HTTPServer(server_address, TCPHandler)
-        self.httpd.logger = self.logger
 
-    def main(self):
+    def main(self, cmd_queue=None):
         self.logger.log('start', {
             'pid': os.getpid(),
             'message': 'Starting HTTP Server...\n'
         })
+        self.httpd.logger = self.logger
+        self.httpd.cmd_queue = cmd_queue
 
         while not self.__stop:
             sys.stdout.flush()

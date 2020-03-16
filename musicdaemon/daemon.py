@@ -1,4 +1,5 @@
 import os
+import json
 from utils.db.db import DBControl
 from logger import Logger
 
@@ -34,12 +35,13 @@ class MusicDaemon:
         cursor.close()
         control.close(connection)
 
-    def main(self):
+    def main(self, cmd_queue=None):
         self.logger.log('start', {
             'pid': os.getpid()
         })
+
         while not self.__stop:
-            self.loop()
+            self.loop(cmd_queue)
 
         self.logger.log('stop', {
             'pid': os.getpid()
@@ -49,8 +51,11 @@ class MusicDaemon:
     def stop(self):
         self.__stop = True
 
-    def loop(self):
+    def loop(self, cmd_queue):
         # self.logger.log('sing', {
         #     'song': song
         # })
-        pass
+        if cmd_queue is not None and cmd_queue.empty() is False:
+            cmd = cmd_queue.get()
+            if "daemon" in cmd.target:
+                self.logger.log('CMD RECV', cmd)
