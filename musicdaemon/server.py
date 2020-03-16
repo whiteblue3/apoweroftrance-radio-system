@@ -7,6 +7,14 @@ from logger import Logger
 
 
 class TCPHandler(BaseHTTPRequestHandler):
+    def log_message(self, format, *args):
+        sys.stderr.write("%s - - [%s] %s\n" %
+                         (self.address_string(),
+                          self.log_date_time_string(),
+                          format % args))
+
+        self.server.logger.log("HTTPStream", format % args)
+
     def _set_response(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
@@ -41,6 +49,7 @@ class TCPServer:
         server_address = ('0.0.0.0', 9000)
 
         self.httpd = HTTPServer(server_address, TCPHandler)
+        self.httpd.logger = self.logger
 
     def main(self):
         self.logger.log('start', {
