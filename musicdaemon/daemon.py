@@ -13,7 +13,7 @@ class MusicDaemon:
         self.name = name
         self.__stop = False
         self.is_publishing = False
-        self.logger = Logger('MusicDaemon')
+        self.logger = Logger(MusicDaemon.__name__, name)
 
         db_username = os.environ.get('DB_USERNAME')
         db_password = os.environ.get('DB_PASSWORD')

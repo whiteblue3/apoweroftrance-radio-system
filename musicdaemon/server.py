@@ -55,7 +55,7 @@ class TCPServer:
     def __init__(self, name):
         self.name = name
         self.__stop = False
-        self.logger = Logger('HTTPServer')
+        self.logger = Logger(TCPServer.__name__, name)
 
         server_address = ('0.0.0.0', 9000)
 

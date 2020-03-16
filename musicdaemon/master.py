@@ -13,7 +13,7 @@ class Master:
         self.__stop = False
         self.cmd_queue = Queue()
         self.process = []
-        self.logger = Logger('MasterProcess')
+        self.logger = Logger(Master.__name__, 'musicdaemon')
 
         self.child_process = child_process
         self.num_process = len(self.child_process)

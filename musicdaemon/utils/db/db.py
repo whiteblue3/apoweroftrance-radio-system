@@ -6,15 +6,14 @@ from . import dbpool
 from logger import Logger
 
 
-logger = Logger('DBControl')
-
-
 # max_connections : select * from pg_settings where name='max_connections';
 class DBControl:
     dsn = None
     pool = None
+    logger = None
 
     def __init__(self, user, password, host, port, dbname):
+        self.logger = Logger(DBControl.__name__, "db")
         self.dsn = "postgresql://%s:%s@%s:%s/%s" % (user, password, host, port, dbname)
         self.pool = dbpool.ProcessSafePoolManager(1, 198, dsn=self.dsn)
 
@@ -32,12 +31,12 @@ class DBControl:
         try:
             cursor.execute(sql, parameter)
         except Exception as e:
-            logger.log("error", "Database Query Error {}".format(e))
+            self.logger.log("error", "Database Query Error {}".format(e))
             raise
 
     def close(self, connection):
         try:
             self.pool.putconn(connection)
         except Exception as e:
-            logger.log("error", "Database Close Error {}".format(e))
+            self.logger.log("error", "Database Close Error {}".format(e))
             raise
