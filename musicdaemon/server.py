@@ -1,4 +1,6 @@
 import sys
+import os
+import time
 from socketserver import ThreadingMixIn
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from logger import Logger
@@ -37,18 +39,25 @@ class TCPServer:
         self.logger = Logger('HTTPServer')
 
         server_address = ('0.0.0.0', 9000)
-        self.httpd = ThreadedHTTPServer(server_address, TCPHandler)
+
+        self.httpd = HTTPServer(server_address, TCPHandler)
 
     def main(self):
-        self.logger.log('start', 'Starting HTTP Server...\n')
+        self.logger.log('start', {
+            'pid': os.getpid(),
+            'message': 'Starting HTTP Server...\n'
+        })
 
         while not self.__stop:
             sys.stdout.flush()
             self.httpd.handle_request()
-
-        self.logger.log('stop', 'Stopping HTTP Server...\n')
-        self.httpd.server_close()
         return 0
 
     def stop(self):
         self.__stop = True
+
+        self.logger.log('stop', {
+            'pid': os.getpid(),
+            'message': 'Stopping HTTP Server...\n'
+        })
+        self.httpd.shutdown()

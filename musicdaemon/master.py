@@ -51,3 +51,4 @@ class Master:
                                 signal.SIGTERM, process['name'], process['id'], process['pid']
                             ))
             os.kill(process['pid'], signal.SIGTERM)
+            os.kill(process['pid'], signal.SIGKILL)
