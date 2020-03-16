@@ -14,4 +14,6 @@ RUN apk update && \
     python3 -m pip install -r requirement.txt --no-cache-dir && \
     apk --purge del .build-deps
 
+EXPOSE 9000
+
 CMD ["python3", "main.py"]
