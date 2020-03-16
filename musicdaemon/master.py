@@ -19,7 +19,7 @@ class Master:
         self.num_process = len(self.child_process)
 
     def main(self):
-        self.logger.log("MasterProcess", "Start Master, PID {0}".format(os.getpid()))
+        self.logger.log("start", "Start Master, PID {0}".format(os.getpid()))
 
         signal.signal(signal.SIGINT, self.stop)
         signal.signal(signal.SIGTERM, self.stop)
@@ -36,7 +36,7 @@ class Master:
                 exit_code = process.main(process_class, self.cmd_queue)
                 exit(exit_code)
             else:
-                self.logger.log("MasterProcess",
+                self.logger.log("start",
                                 "Start {0} Process {1} Process-{2} PID {3}".format(
                                     process_class.__name__, process_name, child_process_id, pid
                                 ))
@@ -47,14 +47,14 @@ class Master:
         while not self.__stop:
             time.sleep(1)
 
-        self.logger.log("MasterProcess", "Stop Master, PID {0}".format(os.getpid()))
+        self.logger.log("stop", "Stop Master, PID {0}".format(os.getpid()))
 
     def stop(self, signum, frame):
         self.__stop = True
-        self.logger.log("MasterProcess", "Receive Signal {0}".format(signum))
+        self.logger.log("stop", "Receive Signal {0}".format(signum))
 
         for process in self.process:
-            self.logger.log("MasterProcess",
+            self.logger.log("stop",
                             "Send Signal {0} to {1} Process-{2} PID {3}".format(
                                 signal.SIGTERM, process['name'], process['id'], process['pid']
                             ))

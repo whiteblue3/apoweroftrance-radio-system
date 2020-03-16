@@ -59,7 +59,7 @@ class TCPServer:
 
         server_address = ('0.0.0.0', 9000)
 
-        self.httpd = HTTPServer(server_address, TCPHandler)
+        self.httpd = ThreadedHTTPServer(server_address, TCPHandler)
 
     def main(self, cmd_queue=None):
         self.logger.log('start', {
