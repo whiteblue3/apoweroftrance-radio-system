@@ -2,14 +2,18 @@ import signal
 
 
 class Process:
-    """Sub Process"""
+    """Child Process"""
+    name = None
     process = None
+
+    def __init__(self, name):
+        self.name = name
 
     def main(self, process_class, cmd_queue=None):
         signal.signal(signal.SIGINT, self.stop)
         signal.signal(signal.SIGTERM, self.stop)
 
-        self.process = process_class()
+        self.process = process_class(self.name)
         res = self.process.main(cmd_queue)
         return res
 

@@ -31,7 +31,7 @@ class TCPHandler(BaseHTTPRequestHandler):
         self._set_response()
         self.wfile.write("GET request for {}".format(self.path).encode('utf-8'))
 
-        cmd = CMD(host="server", target="daemon", command="GET", data="")
+        cmd = CMD(host=self.server.name, target="yui", command="GET", data="")
         self.queue_cmd(cmd)
 
     def do_POST(self):
@@ -48,10 +48,12 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 
 
 class TCPServer:
+    name = None
     httpd = None
     __stop = False
 
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
         self.__stop = False
         self.logger = Logger('HTTPServer')
 
@@ -65,6 +67,7 @@ class TCPServer:
             'message': 'Starting HTTP Server...\n'
         })
         self.httpd.logger = self.logger
+        self.httpd.name = self.name
         self.httpd.cmd_queue = cmd_queue
 
         while not self.__stop:

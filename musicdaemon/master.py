@@ -9,14 +9,14 @@ from process import Process
 class Master:
     cmd_queue = None
 
-    def __init__(self, process_classes):
+    def __init__(self, child_process):
         self.__stop = False
         self.cmd_queue = Queue()
         self.process = []
         self.logger = Logger('MasterProcess')
 
-        self.process_classes = process_classes
-        self.num_process = len(self.process_classes)
+        self.child_process = child_process
+        self.num_process = len(self.child_process)
 
     def main(self):
         self.logger.log("MasterProcess", "Start Master, PID {0}".format(os.getpid()))
@@ -25,18 +25,22 @@ class Master:
         signal.signal(signal.SIGTERM, self.stop)
 
         process_class_index = 0
-        for process_id in range(self.num_process):
+        for child_process_id in range(self.num_process):
             pid = os.fork()
-            process_class = self.process_classes[process_class_index]
+            child_process = self.child_process[process_class_index]
+            process_name = child_process.name
+            process_class = child_process.process_class
 
             if pid == 0:
-                process = Process()
+                process = Process(child_process.name)
                 exit_code = process.main(process_class, self.cmd_queue)
                 exit(exit_code)
             else:
                 self.logger.log("MasterProcess",
-                                "Start {0} Process-{1} PID {2}".format(process_class.__name__, process_id, pid))
-                self.process.append({"id": process_id, "pid": pid, "name": process_class.__name__})
+                                "Start {0} Process {1} Process-{2} PID {3}".format(
+                                    process_class.__name__, process_name, child_process_id, pid
+                                ))
+                self.process.append({"id": child_process_id, "pid": pid, "name": process_name})
 
             process_class_index += 1
 

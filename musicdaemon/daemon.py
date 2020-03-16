@@ -5,10 +5,12 @@ from logger import Logger
 
 
 class MusicDaemon:
+    name = None
     PLAYLIST = []
     is_publishing = False
 
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
         self.__stop = False
         self.is_publishing = False
         self.logger = Logger('MusicDaemon')
@@ -57,5 +59,5 @@ class MusicDaemon:
         # })
         if cmd_queue is not None and cmd_queue.empty() is False:
             cmd = cmd_queue.get()
-            if "daemon" in cmd.target:
+            if self.name in cmd.target:
                 self.logger.log('CMD RECV', cmd)
