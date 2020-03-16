@@ -1,6 +1,5 @@
 import sys
 import os
-import time
 from socketserver import ThreadingMixIn
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from logger import Logger
@@ -13,7 +12,8 @@ class TCPHandler(BaseHTTPRequestHandler):
                           self.log_date_time_string(),
                           format % args))
 
-        self.server.logger.log("HTTPStream", format % args)
+        if self.server.logger is not None:
+            self.server.logger.log("HTTPStream", format % args)
 
     def _set_response(self):
         self.send_response(200)
