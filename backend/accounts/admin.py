@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
-from ..models import (
+from .models import (
     User, Profile, AccessLog,
 )
 

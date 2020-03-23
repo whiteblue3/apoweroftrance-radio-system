@@ -3,10 +3,10 @@ from rest_framework.exceptions import ValidationError
 from django.core.validators import EmailValidator, URLValidator
 from django.contrib.auth import authenticate
 from django.utils.translation import ugettext_lazy as _
-from ..models import (
+from .models import (
     JWTBlackList, AccessLog, Profile, User
 )
-from ..error import (
+from .error import (
     ProfileDoesNotExist, InvalidAuthentication, UserIsNotActive
 )
 
@@ -258,7 +258,7 @@ class AuthenticateSerializer(serializers.Serializer):
         pass
 
     def validate(self, data):
-        from .. import api
+        from backend_utils import api
 
         # username = data.get('username', None)
         email = data.get('email', None)

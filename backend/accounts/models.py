@@ -7,7 +7,7 @@ from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin
 )
 from django.conf import settings
-from ..access_log import ACCESS_TYPE, ACCESS_STATUS
+from accounts.access_log import ACCESS_TYPE, ACCESS_STATUS
 
 
 class UserManager(BaseUserManager):
@@ -211,7 +211,7 @@ class Profile(TimestampedModel):
     # are formalizing this relationship. Every user will have one -- and only
     # one -- related Profile model.
     user = models.OneToOneField(
-        'radio.User', on_delete=models.CASCADE, db_index=True
+        'accounts.User', on_delete=models.CASCADE, db_index=True
     )
 
     nickname = models.CharField(blank=True, null=True, max_length=30)
@@ -264,5 +264,5 @@ class JWTBlackList(models.Model):
     expire_at = models.DateTimeField(db_index=True)
     accessed_at = models.DateTimeField(auto_now=True)
     log_ref = models.OneToOneField(
-        'radio.AccessLog', on_delete=models.CASCADE, default=None, null=True
+        'accounts.AccessLog', on_delete=models.CASCADE, default=None, null=True
     )

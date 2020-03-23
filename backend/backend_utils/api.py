@@ -8,14 +8,13 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.http import HttpResponseRedirect, HttpResponse
 from rest_framework.response import Response
-from ..serializers import (
+from accounts.serializers import (
     AccessLogSerializer
 )
-from ..models import Profile
-from ..access_log import *
-from ..exceptions import ProfileDoesNotExist
-from .. import aes
-from .apiview import *
+from accounts.models import Profile
+from accounts.access_log import *
+from accounts.error import ProfileDoesNotExist
+from . import aes
 
 logger = logging.getLogger(__name__)
 
@@ -224,3 +223,117 @@ def notify_security_email(email, ip_address, token, request, accesslog_pk):
     from_email = settings.EMAIL_HOST_USER
     send_mail("신규 로그인 알림", message=email_body, html_message=email_html,
               from_email=from_email, recipient_list=[email], fail_silently=True)
+
+
+from rest_framework import mixins, generics
+
+
+class UpdatePUTAPIView(mixins.UpdateModelMixin, generics.GenericAPIView):
+    """
+    Concrete view for updating a model instance.
+    """
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+
+class CreateUpdateAPIView(
+    mixins.CreateModelMixin,
+    mixins.UpdateModelMixin,
+    generics.GenericAPIView
+):
+    """
+    Concrete view for creating, retrieving, updating or deleting a model instance.
+    """
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
+
+class CreateRetrieveAPIView(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    generics.GenericAPIView
+):
+    """
+    Concrete view for creating, retrieving a model instance.
+    """
+
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
+
+class ListDestroyAPIView(
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+    generics.GenericAPIView
+):
+    """
+    Concrete view for creating, retrieving, updating or deleting a model instance.
+    """
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+
+
+class CreateListUpdateDestroyAPIView(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    generics.GenericAPIView
+):
+    """
+    Concrete view for creating, retrieving, updating or deleting a model instance.
+    """
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+
+
+class CreateListUpdateAPIView(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.UpdateModelMixin,
+    generics.GenericAPIView
+):
+    """
+    Concrete view for creating, retrieving, updating a model instance.
+    """
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
+
+class ListUpdateAPIView(
+    mixins.ListModelMixin,
+    mixins.UpdateModelMixin,
+    generics.GenericAPIView
+):
+    """
+    Concrete view for retrieving, updating a model instance.
+    """
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)

@@ -8,21 +8,21 @@ from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import RetrieveAPIView, CreateAPIView
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny
 from rest_framework.renderers import JSONRenderer
 from rest_framework.serializers import Serializer
 from rest_framework import status
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from ..models import JWTBlackList, AccessLog, User
-from ..serializers import (
+from .models import JWTBlackList, AccessLog, User
+from .serializers import (
     AuthenticateSerializer, RegistrationSerializer, UserSerializer
 )
-from ..error import (
+from .error import (
     InvalidAuthentication, UserDoesNotExist, UserIsNotActive
 )
-from .. import api, aes
-from ..access_log import *
+from backend_utils import api, aes
+from accounts.access_log import *
 
 
 class RegistrationAPI(CreateAPIView):

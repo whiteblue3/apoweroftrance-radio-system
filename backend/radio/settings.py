@@ -33,7 +33,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    # 'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.postgres',
 
     'radio',
+    'accounts',
 
     'rest_framework',
     'drf_yasg',
@@ -231,7 +232,7 @@ logging.config.dictConfig({
 # JWT Auth Setup #
 ##################
 
-AUTH_USER_MODEL = 'radio.User'
+AUTH_USER_MODEL = 'accounts.User'
 
 # Configure the accounts in Django Rest Framework to be JWT
 # http://www.django-rest-framework.org/
@@ -240,14 +241,14 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'radio.backends.JWTAuthentication',
+        'accounts.backends.JWTAuthentication',
     ),
     'EXCEPTION_HANDLER': 'radio.exceptions.core_exception_handler',
 }
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
-    'radio.backends.JWTAuthentication',
+    'accounts.backends.JWTAuthentication',
 )
 
 
