@@ -1,4 +1,18 @@
 django>=2.0,<3.0
 
+django-pgcrypto
+
+# RESTful API
+djangorestframework
+
+# Swagger 2.0
+drf-yasg
+
 # Database
 psycopg2-binary
+
+# JWT
+pyjwt
+
+# AES
+pycrypto
