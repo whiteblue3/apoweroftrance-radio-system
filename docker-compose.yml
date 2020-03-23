@@ -34,6 +34,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: ?!Triace07
       DB_PORT: 5432
+      DJANGO_SETTINGS: local
     ports:
       - "8080:8080"
     networks:

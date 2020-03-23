@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
 
     'radio',
 
@@ -49,11 +50,15 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'drf_yasg.middleware.SwaggerExceptionMiddleware',
+    'radio.remove_next_middleware.RemoveNextMiddleware',
+    'radio.json404_middleware.JSON404Middleware',
 ]
 
 ROOT_URLCONF = 'radio.urls'
@@ -84,13 +89,21 @@ WSGI_APPLICATION = 'radio.wsgi.application'
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = {
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME': os.environ.get('DB_NAME'),
+    #     'USER': os.environ.get('DB_USERNAME'),
+    #     'PASSWORD': os.environ.get('DB_PASSWORD'),
+    #     'HOST': os.environ.get('DB_HOST'),
+    #     'PORT': os.environ.get('DB_PORT')
+    # },
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USERNAME'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT')
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': "radio",
+        'USER': "whiteblue3",
+        'PASSWORD': "",
+        'HOST': "127.0.0.1",
+        'PORT': 5432
     },
 }
 
@@ -104,6 +117,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 9
+        }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -211,6 +227,30 @@ logging.config.dictConfig({
 })
 
 
+##################
+# JWT Auth Setup #
+##################
+
+AUTH_USER_MODEL = 'radio.User'
+
+# Configure the accounts in Django Rest Framework to be JWT
+# http://www.django-rest-framework.org/
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'radio.backends.JWTAuthentication',
+    ),
+    'EXCEPTION_HANDLER': 'radio.exceptions.core_exception_handler',
+}
+
+AUTHENTICATION_BACKENDS = (
+    'radio.backends.JWTAuthentication',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+
 #################
 # Swagger Setup #
 #################
@@ -226,12 +266,16 @@ SWAGGER_SETTINGS = {
 }
 
 
+AES_KEY = "BYOUwqYyMgWfEIjSHhmVHBoJgobVUJbR"
+AES_SECRET = "I6V8HN5DMUPM4AES"
+
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = "hd2dj07@gmail.com"
 EMAIL_HOST_PASSWORD = '"!Triace07"'
-EMAIL_USE_TLS = True
+# EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
@@ -241,3 +285,7 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+# ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+# ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
+# ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 86400 # 1 day in seconds
+# ACCOUNT_LOGOUT_REDIRECT_URL = '/'

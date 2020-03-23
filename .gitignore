@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 /.idea/
 /backend/static/admin/
+/backend/radio/migrations/

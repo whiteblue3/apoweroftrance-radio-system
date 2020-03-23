@@ -1,62 +1,254 @@
+import jwt
+import ast
+from datetime import datetime, timedelta
+from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
 from rest_framework.exceptions import ValidationError
+from rest_framework.generics import RetrieveAPIView, CreateAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.renderers import JSONRenderer
+from rest_framework.serializers import Serializer
 from rest_framework import status
 from drf_yasg.utils import swagger_auto_schema
-# from .serializers import TMSentenceSerializer, TMGroupSerializer
-# from .models import TMSentence, TMGroup
-from .api import *
+from drf_yasg import openapi
+from .models import JWTBlackList, AccessLog, User
+from .serializers.api import (
+    AuthenticateSerializer, RegistrationSerializer
+)
+from .serializers.model import (
+    UserSerializer
+)
+from .error import (
+    InvalidAuthentication, UserDoesNotExist, UserIsNotActive
+)
+from . import api, aes
+from .access_log import *
 
 
-# class TranslateAPIView(CreateRetrieveAPIView):
-#     permission_classes = (AllowAny,)
-#     serializer_class = TMGroupSerializer
-#     renderer_classes = (JSONRenderer,)
-#
-#     @swagger_auto_schema(operation_summary="TM 추가/편집")
-#     @transaction.atomic
-#     @method_decorator(ensure_csrf_cookie)
-#     def post(self, request, *args, **kwargs):
-#         """
-#         TM을 추가/편집합니다
-#         """
-#         serializer = self.serializer_class(data=request.data, context=request)
-#         serializer.is_valid(raise_exception=True)
-#         data = serializer.save()
-#
-#         return response_json(data, status.HTTP_200_OK)
-#
-#     @swagger_auto_schema(operation_summary="TM 가져오기",
-#                          query_serializer=TMSentenceSerializer,
-#                          responses={'200': TMGroupSerializer})
-#     @transaction.atomic
-#     @method_decorator(ensure_csrf_cookie)
-#     def get(self, request, *args, **kwargs):
-#         """
-#         TM을 가져옵니다
-#         """
-#         sentence = request.GET['sentence']
-#         language = request.GET['language']
-#
-#         try:
-#             instance_sentence = TMSentence.objects.get(sentence=sentence, language=language)
-#             instances = TMGroup.objects.filter(
-#                 translated__sentence__exact=instance_sentence.sentence,
-#                 translated__language__exact=instance_sentence.language
-#             )
-#         except TMSentence.DoesNotExist:
-#             raise ValidationError(_("TM이 존재하지 않습니다"))
-#         except TMGroup.DoesNotExist:
-#             raise ValidationError(_("TM이 존재하지 않습니다"))
-#
-#         serializers = []
-#         for instance in instances:
-#             serializer = self.serializer_class(instance)
-#             data = serializer.fetch(instance)
-#             serializers.append(data)
-#
-#         return response_json(serializers, status.HTTP_200_OK)
+class RegistrationAPI(CreateAPIView):
+    permission_classes = (AllowAny,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = RegistrationSerializer
+
+    @swagger_auto_schema(
+        operation_summary="회원가입",
+        operation_description="",
+        responses={'201': UserSerializer})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return api.response_json(serializer.data, status.HTTP_201_CREATED)
+
+
+class AuthenticateAPI(CreateAPIView):
+    permission_classes = (AllowAny,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = AuthenticateSerializer
+
+    @swagger_auto_schema(operation_summary="로그인 및 인증",
+                         responses={'200': UserSerializer})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def post(self, request):
+        """
+        로그인 및 사용자 인증을 합니다.
+        device 파라미터가 있을 경우 모바일 로그인으로 인식합니다.
+        """
+        ip = api.get_client_ip(request)
+
+        try:
+            serializer = self.serializer_class(data=request.data, context=request)
+            serializer.is_valid(raise_exception=True)
+        except InvalidAuthentication:
+            api.accesslog(
+                request, ACCESS_TYPE_AUTHENTICATE, ACCESS_STATUS_FAIL,
+                request.data['email'], ip
+            )
+            raise InvalidAuthentication
+        except UserDoesNotExist:
+            api.accesslog(
+                request, ACCESS_TYPE_AUTHENTICATE, ACCESS_STATUS_FAIL_USER_NOT_EXIST,
+                request.data['email'], ip
+            )
+            raise UserDoesNotExist
+        except UserIsNotActive:
+            api.accesslog(
+                request, ACCESS_TYPE_AUTHENTICATE, ACCESS_STATUS_FAIL_USER_INACTIVE,
+                request.data['email'], ip
+            )
+            raise UserIsNotActive
+        else:
+            api.accesslog(
+                request, ACCESS_TYPE_AUTHENTICATE, ACCESS_STATUS_SUCCESSFUL,
+                request.data['email'], ip
+            )
+
+        response = serializer.data
+        return api.response_json(response, status.HTTP_200_OK)
+
+
+class ResetPasswordAPI(RetrieveAPIView):
+    schema = openapi.Schema(
+        title="비밀번호 리셋 요청",
+        type=openapi.TYPE_OBJECT,
+        manual_parameters=[
+            openapi.Parameter('email', openapi.IN_PATH, type=openapi.TYPE_STRING, description="사용자 이메일")
+        ],
+    )
+    permission_classes = (AllowAny,)
+    serializer_class = Serializer
+
+    @swagger_auto_schema(operation_summary=schema.title,
+                         manual_parameters=schema.manual_parameters)
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request, email, *args, **kwargs):
+        """
+        이메일로 비밀번호 재설정 알림 이메일을 보냅니다
+        이메일 안의 링크를 클릭했을때 비로소 비밀번호 재설정이 완료됩니다
+        """
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise ValidationError(_('%s는 존재하지 않는 사용자의 이메일 주소입니다' % email))
+
+        profile = api.get_profile(email)
+        if profile is not None:
+            api.send_reset_password_email(profile.user.email)
+
+        return api.response_json({'payload': 'Sent email'}, status.HTTP_200_OK)
+
+
+class ConfirmResetPasswordAPI(RetrieveAPIView):
+    schema = openapi.Schema(
+        title="비밀번호 리셋 확인",
+        type=openapi.TYPE_OBJECT,
+        manual_parameters=[
+            openapi.Parameter('auth_code', openapi.IN_QUERY, type=openapi.TYPE_STRING, description="인증코드")
+        ],
+    )
+    permission_classes = (AllowAny,)
+    serializer_class = Serializer
+
+    @swagger_auto_schema(operation_summary=schema.title,
+                         manual_parameters=schema.manual_parameters)
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request, *args, **kwargs):
+        """비밀번호 재설정 실패시와 성공시 Redirect 할 페이지가 필요합니다"""
+        auth_code = request.GET.get('auth_code')
+
+        try:
+            decrypted = aes.aes_decrypt(auth_code)
+            decrypted_data = decrypted.decode()
+            data = ast.literal_eval(decrypted_data[0:-ord(decrypted_data[-1])])
+        except Exception as e:
+            return api.response_json({'error': 'Reset Password Failed'})
+            # return api.response_url("https://www.gloground.com/resetpasswordfailed")
+
+        if (
+            data['email'] is not None and
+            data['date'] is not None and
+            data['password'] is not None and
+            data['expire'] is not None
+        ) is False:
+            return api.response_json({'error': 'Reset Password Failed'})
+            # return api.response_url("https://www.gloground.com/resetpasswordfailed")
+
+        profile = api.get_profile(data['email'])
+        if profile is not None:
+            expire = datetime.strptime(data['expire'], "%Y-%m-%dT%H:%M:%S.%f")
+            now = datetime.utcnow()
+
+            if expire.timestamp() < now.timestamp():
+                return api.response_json({'error': 'Reset Password Failed for Timeout'})
+                # return api.response_url("https://www.gloground.com/resetpasswordfailedfortimeout")
+
+            # TODO: 패스워드 변경 페이지로 리다이렉트
+            profile.user.login_redirect = "/password"
+            profile.user.set_password(data['password'])
+            profile.user.save()
+
+            """임시 비밀번호 발급 내역은 History에 포함하지 않습니다"""
+            # PasswordHistory(email=data['email'], password=data['password'], auth_code=auth_code).save()
+        else:
+            raise UserDoesNotExist
+
+        return api.response_json({'payload': 'OK'})
+
+
+class BanJWTAPIView(RetrieveAPIView):
+    schema = openapi.Schema(
+        title="평소와 다른곳에서 로그인 되었을때 조치를 취하는 API",
+        type=openapi.TYPE_OBJECT,
+        manual_parameters=[
+            openapi.Parameter('auth_code', openapi.IN_QUERY, type=openapi.TYPE_STRING, description="인증코드")
+        ],
+    )
+    permission_classes = (AllowAny,)
+    serializer_class = Serializer
+
+    http_method_names = ['get']
+
+    @swagger_auto_schema(operation_summary=schema.title,
+                         manual_parameters=schema.manual_parameters)
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request, *args, **kwargs):
+        """실패시와 성공시 Redirect 할 페이지가 필요합니다"""
+        auth_code = request.GET.get('auth_code')
+
+        try:
+            decrypted = aes.aes_decrypt(auth_code)
+            decrypted_data = decrypted.decode()
+            data = ast.literal_eval(decrypted_data[0:-ord(decrypted_data[-1])])
+        except Exception as e:
+            return api.response_json({'error': 'Ban JWT Failed'})
+
+        if (
+            data['email'] is not None and
+            data['date'] is not None and
+            data['jwt'] is not None and
+            data['log'] is not None and
+            data['ip_address'] is not None
+        ) is False:
+            return api.response_json({'error': 'Ban JWT Failed'})
+
+        token = data['jwt']
+        email = data['email']
+        accesslog_pk = data['log']
+        ip_address = data['ip_address']
+
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms='HS512')
+        except:
+            # msg = 'Invalid authentication. Could not decode token.'
+            # raise exceptions.AuthenticationFailed(msg, code=401)
+            return api.response_json({'error': 'Ban JWT Failed'})
+
+        orig_iat = payload.get('orig_iat')
+        refresh_limit = timedelta(hours=36)
+        refresh_limit = (refresh_limit.days * 24 * 3600 + refresh_limit.seconds)
+        expiration_timestamp = orig_iat + int(refresh_limit)
+
+        try:
+            accesslog = AccessLog.objects.get(id=accesslog_pk)
+        except AccessLog.DoesNotExist:
+            return api.response_json({'error': 'Ban JWT Failed'})
+
+        JWTBlackList(
+            email=email,
+            token=token,
+            ip_address=ip_address,
+            expire_at=datetime.fromtimestamp(expiration_timestamp),
+            log_ref=accesslog
+        ).save()
+
+        return api.response_json({'payload': 'OK'})
