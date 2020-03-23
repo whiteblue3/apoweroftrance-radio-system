@@ -1,5 +1,9 @@
 import os
 import json
+from datetime import datetime
+from dateutil.parser import parse
+from dateutil.tz import tzlocal
+from command import QUEUE
 from utils.db.db import DBControl
 from logger import Logger
 
@@ -8,6 +12,9 @@ class MusicDaemon:
     name = None
     PLAYLIST = []
     is_publishing = False
+
+    # DB control
+    db = None
 
     def __init__(self, name):
         self.name = name
@@ -22,20 +29,30 @@ class MusicDaemon:
         db_name = os.environ.get('DB_NAME')
 
         # Example of DBControl
-        control = DBControl(
+        self.db = DBControl(
             db_username,
             db_password,
             db_host,
             db_port,
             db_name
         )
-        connection = control.connect()
-        cursor = control.get_cursor(connection)
-        control.query(cursor, "select * from pg_settings where name='max_connections';")
-        max_connections = cursor.fetchall()
+        max_connections = self.query("select * from pg_settings where name='max_connections';")
         self.logger.log("max_connections", max_connections)
+
+    def __del__(self):
+        pass
+
+    def query(self, sql):
+        connection = self.db.connect()
+        cursor = self.db.get_cursor(connection)
+        self.db.query(cursor, sql)
+        result = cursor.fetchall()
         cursor.close()
-        control.close(connection)
+        self.db.close(connection)
+        return result
+
+    def now(self, tz=tzlocal()):
+        return datetime.now(tz=tz).isoformat()
 
     def main(self, cmd_queue=None):
         self.logger.log('start', {
@@ -53,6 +70,25 @@ class MusicDaemon:
     def stop(self):
         self.__stop = True
 
+    def process_queue(self, cmd):
+        try:
+            track_id = cmd.data["track_id"]
+        except KeyError as e:
+            self.logger.log('error', str(e))
+        else:
+            try:
+                queue_at = cmd.data["queue_at"]
+            except KeyError:
+
+                queue_at = self.now()
+
+            try:
+                parse(queue_at, fuzzy=False)
+            except ValueError as e:
+                self.logger.log('error', str(e))
+            else:
+                self.logger.log('QUEUE', {"track_id": track_id, "queue_at": queue_at})
+
     def loop(self, cmd_queue):
         # self.logger.log('sing', {
         #     'song': song
@@ -60,4 +96,8 @@ class MusicDaemon:
         if cmd_queue is not None and cmd_queue.empty() is False:
             cmd = cmd_queue.get()
             if self.name in cmd.target:
+                # cmd_data = json.loads(cmd.data)
                 self.logger.log('CMD RECV', cmd)
+
+                if QUEUE in cmd.command:
+                    self.process_queue(cmd)

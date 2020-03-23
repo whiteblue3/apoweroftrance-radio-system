@@ -1,5 +1,25 @@
 from serializable import Serializable
 
+# Commands of CMD command properties
+QUEUE = "queue"
+
+
+COMMAND_LIST = [QUEUE]
+
+
+# Data of Queue command
+class Queue(Serializable):
+    # Track ID
+    track_id = None
+
+    # Queue track at date-time
+    queue_at = None
+
+    def __init__(self, track_id, queue_at=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.track_id = track_id
+        self.queue_at = queue_at
+
 
 class CMD(Serializable):
     # Command queued host

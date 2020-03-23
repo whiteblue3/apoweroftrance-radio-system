@@ -1,4 +1,4 @@
-from master import Master
+from process.master import Master
 from daemon import MusicDaemon
 from server import TCPServer
 

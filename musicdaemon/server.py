@@ -1,8 +1,10 @@
 import sys
 import os
+import json
+from dateutil.parser import parse
 from socketserver import ThreadingMixIn
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from command import CMD
+from command import CMD, COMMAND_LIST, QUEUE
 from logger import Logger
 
 
@@ -21,8 +23,8 @@ class TCPHandler(BaseHTTPRequestHandler):
             self.server.logger.log("CMD SEND", cmd)
             self.server.cmd_queue.put(cmd)
 
-    def _set_response(self):
-        self.send_response(200)
+    def _set_response(self, status_code=200):
+        self.send_response(status_code)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
 
@@ -31,7 +33,9 @@ class TCPHandler(BaseHTTPRequestHandler):
         self._set_response()
         self.wfile.write("GET request for {}".format(self.path).encode('utf-8'))
 
-        cmd = CMD(host=self.server.name, target="yui", command="GET", data="")
+        request_path = str(self.path)
+
+        cmd = CMD(host=self.server.name, target="yui", command="GET", data=request_path)
         self.queue_cmd(cmd)
 
     def do_POST(self):
@@ -39,8 +43,63 @@ class TCPHandler(BaseHTTPRequestHandler):
         post_data = self.rfile.read(content_length)             # <--- Gets the data itself
         self.log_message("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
                          str(self.path), str(self.headers), post_data.decode('utf-8'))
+
+        # request_path = str(self.path)
+        data = json.loads(post_data.decode('utf-8'))
+
+        host = data["host"]
+        if host is None or host is "":
+            host = self.server.name
+
+        target = data["target"]
+        if target is None or target is "":
+            target = "yui"
+
+        command = data["command"]
+        payload = data["data"]
+        if (
+            command is None or command is "" or payload is None or payload is ""
+        ) or (
+            command not in COMMAND_LIST
+        ):
+            self._set_response(400)
+            self.wfile.write("Bad Request".encode('utf-8'))
+            return
+
+        if command in QUEUE:
+            if self.validate_queue_command(data) is False:
+                self._set_response(400)
+                self.wfile.write("Request is invalid queue command".encode('utf-8'))
+                return
+
+        cmd = CMD(host=host, target=target, command=command, data=payload)
+        self.queue_cmd(cmd)
+
         self._set_response()
-        self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
+        self.wfile.write("OK".encode('utf-8'))
+
+    def validate_queue_command(self, data):
+        command = data["command"]
+        payload = data["data"]
+
+        if command not in QUEUE:
+            self.log_message("Not a queue command")
+            return False
+
+        try:
+            _ = payload["track_id"]
+        except KeyError as e:
+            self.log_message("'track_id' is a must have requirement")
+            return False
+
+        try:
+            queue_at = payload["queue_at"]
+            parse(queue_at, fuzzy=False)
+        except ValueError as e:
+            self.log_message("'queue_at' is invalid datetime format")
+            return False
+
+        return True
 
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):

@@ -3,7 +3,7 @@ import time
 import signal
 from multiprocessing import Queue
 from logger import Logger
-from process import Process
+from process.process import Process
 
 
 class Master:
