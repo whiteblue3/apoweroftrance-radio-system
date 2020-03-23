@@ -79,14 +79,15 @@ class MusicDaemon:
             try:
                 queue_at = cmd.data["queue_at"]
             except KeyError:
-                queue_at = self.now()
+                queue_at = None
 
-            try:
-                parse(queue_at, fuzzy=False)
-            except ValueError as e:
-                self.logger.log('error', str(e))
-            else:
-                self.logger.log('QUEUE', {"track_id": track_id, "queue_at": queue_at})
+            if queue_at is not None:
+                try:
+                    parse(queue_at, fuzzy=False)
+                except ValueError as e:
+                    self.logger.log('error', str(e))
+
+            self.logger.log('QUEUE', {"track_id": track_id, "queue_at": queue_at})
 
     def process_unqueue(self, cmd):
         try:

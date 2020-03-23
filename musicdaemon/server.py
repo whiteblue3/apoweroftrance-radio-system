@@ -99,10 +99,15 @@ class TCPHandler(BaseHTTPRequestHandler):
 
         try:
             queue_at = payload["queue_at"]
-            parse(queue_at, fuzzy=False)
-        except ValueError:
-            self.log_message("'queue_at' is invalid datetime format")
-            return False
+        except KeyError:
+            queue_at = None
+
+        if queue_at is not None:
+            try:
+                parse(queue_at, fuzzy=False)
+            except ValueError:
+                self.log_message("'queue_at' is invalid datetime format")
+                return False
 
         return True
 
