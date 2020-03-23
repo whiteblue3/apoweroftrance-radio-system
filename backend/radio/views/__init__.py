@@ -56,7 +56,6 @@ class AuthenticateAPI(CreateAPIView):
     def post(self, request):
         """
         로그인 및 사용자 인증을 합니다.
-        device 파라미터가 있을 경우 모바일 로그인으로 인식합니다.
         """
         ip = api.get_client_ip(request)
 
