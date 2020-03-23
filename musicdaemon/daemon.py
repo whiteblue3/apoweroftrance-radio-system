@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 from dateutil.parser import parse
 from dateutil.tz import tzlocal
-from command import QUEUE
+from command import QUEUE, UNQUEUE
 from utils.db.db import DBControl
 from logger import Logger
 
@@ -79,7 +79,6 @@ class MusicDaemon:
             try:
                 queue_at = cmd.data["queue_at"]
             except KeyError:
-
                 queue_at = self.now()
 
             try:
@@ -88,6 +87,14 @@ class MusicDaemon:
                 self.logger.log('error', str(e))
             else:
                 self.logger.log('QUEUE', {"track_id": track_id, "queue_at": queue_at})
+
+    def process_unqueue(self, cmd):
+        try:
+            queue_id = cmd.data["queue_id"]
+        except KeyError as e:
+            self.logger.log('error', str(e))
+        else:
+            self.logger.log('UNQUEUE', {"queue_id": queue_id})
 
     def loop(self, cmd_queue):
         # self.logger.log('sing', {
@@ -99,5 +106,7 @@ class MusicDaemon:
                 # cmd_data = json.loads(cmd.data)
                 self.logger.log('CMD RECV', cmd)
 
-                if QUEUE in cmd.command:
+                if QUEUE == cmd.command:
                     self.process_queue(cmd)
+                elif UNQUEUE == cmd.command:
+                    self.process_unqueue(cmd)

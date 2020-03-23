@@ -4,7 +4,7 @@ import json
 from dateutil.parser import parse
 from socketserver import ThreadingMixIn
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from command import CMD, COMMAND_LIST, QUEUE
+from command import CMD, COMMAND_LIST, QUEUE, UNQUEUE
 from logger import Logger
 
 
@@ -66,10 +66,15 @@ class TCPHandler(BaseHTTPRequestHandler):
             self.wfile.write("Bad Request".encode('utf-8'))
             return
 
-        if command in QUEUE:
+        if command == QUEUE:
             if self.validate_queue_command(data) is False:
                 self._set_response(400)
                 self.wfile.write("Request is invalid queue command".encode('utf-8'))
+                return
+        elif command == UNQUEUE:
+            if self.validate_unqueue_command(data) is False:
+                self._set_response(400)
+                self.wfile.write("Request is invalid unqueue command".encode('utf-8'))
                 return
 
         cmd = CMD(host=host, target=target, command=command, data=payload)
@@ -95,8 +100,24 @@ class TCPHandler(BaseHTTPRequestHandler):
         try:
             queue_at = payload["queue_at"]
             parse(queue_at, fuzzy=False)
-        except ValueError as e:
+        except ValueError:
             self.log_message("'queue_at' is invalid datetime format")
+            return False
+
+        return True
+
+    def validate_unqueue_command(self, data):
+        command = data["command"]
+        payload = data["data"]
+
+        if command not in UNQUEUE:
+            self.log_message("Not a unqueue command")
+            return False
+
+        try:
+            _ = payload["queue_id"]
+        except KeyError:
+            self.log_message("'queue_id' is a must have requirement")
             return False
 
         return True
