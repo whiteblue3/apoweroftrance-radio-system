@@ -246,8 +246,8 @@ REST_FRAMEWORK = {
 }
 
 AUTHENTICATION_BACKENDS = (
-    'radio.backends.JWTAuthentication',
     'django.contrib.auth.backends.ModelBackend',
+    'radio.backends.JWTAuthentication',
 )
 
 

@@ -14,18 +14,15 @@ from rest_framework.serializers import Serializer
 from rest_framework import status
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from .models import JWTBlackList, AccessLog, User
-from .serializers.api import (
-    AuthenticateSerializer, RegistrationSerializer
+from ..models import JWTBlackList, AccessLog, User
+from ..serializers import (
+    AuthenticateSerializer, RegistrationSerializer, UserSerializer
 )
-from .serializers.model import (
-    UserSerializer
-)
-from .error import (
+from ..error import (
     InvalidAuthentication, UserDoesNotExist, UserIsNotActive
 )
-from . import api, aes
-from .access_log import *
+from .. import api, aes
+from ..access_log import *
 
 
 class RegistrationAPI(CreateAPIView):

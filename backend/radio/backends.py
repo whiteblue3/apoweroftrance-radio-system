@@ -8,7 +8,6 @@ from .error import (
     InvalidAuthentication, UserIsNotActive, UserDoesNotExist
 )
 from .models import User, JWTBlackList
-from .serializers.model import JWTBlackListSerializer
 
 
 class JWTAuthentication(authentication.BaseAuthentication):
@@ -154,6 +153,8 @@ class JWTAuthentication(authentication.BaseAuthentication):
                 if "local" == self.get_setting_config() or "dev" == self.get_setting_config():
                     pass
                 else:
+                    from .serializers import JWTBlackListSerializer
+
                     old_token = JWTBlackListSerializer(data={
                         "email": user.email,
                         "token": token,
