@@ -2,12 +2,13 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from django.core.validators import EmailValidator, URLValidator
 from django.contrib.auth import authenticate
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from .models import (
     JWTBlackList, AccessLog, Profile, User
 )
 from .error import (
-    ProfileDoesNotExist, InvalidAuthentication, UserIsNotActive
+    ProfileDoesNotExist, InvalidAuthentication, UserIsNotActive, UserDoesNotExist
 )
 
 
@@ -75,7 +76,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     nickname = serializers.CharField(help_text="닉네임", required=True)
 
     bio = serializers.CharField(help_text="자기소개", allow_blank=True, required=False)
-    image = serializers.CharField(help_text="프로필 이미지", allow_blank=True, required=False, read_only=True)
+    image = serializers.SerializerMethodField(help_text="프로필 이미지", required=False, read_only=True)
 
     homepage = serializers.URLField(
         help_text="홈페이지", allow_blank=True, required=False, validators=[URLValidator(schemes=['http', 'https'])]
@@ -99,6 +100,12 @@ class ProfileSerializer(serializers.ModelSerializer):
             'homepage', 'youtube', 'twitter', 'facebook',
         )
 
+    def get_image(self, obj):
+        if obj.image is None:
+            return None
+        else:
+            return "%s/%s" % (settings.STORAGE_DOMAIN, obj.image)
+
     def update(self, instance, validated_data):
         for (key, value) in validated_data.items():
             setattr(instance, key, value)
@@ -110,6 +117,9 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     """Handles serialization and deserialization of User objects."""
+    email = serializers.EmailField(
+        help_text="사용자 이메일", read_only=True
+    )
 
     password_old = serializers.CharField(
         max_length=128,
@@ -127,7 +137,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('password_old', 'password', 'profile')
+        fields = ('email', 'password_old', 'password', 'profile')
 
     def update(self, instance, validated_data):
         """Performs an update on a User."""
@@ -259,6 +269,7 @@ class AuthenticateSerializer(serializers.Serializer):
 
     def validate(self, data):
         from backend_utils import api
+        from . import util
 
         # username = data.get('username', None)
         email = data.get('email', None)
@@ -280,7 +291,11 @@ class AuthenticateSerializer(serializers.Serializer):
         if password is None:
             raise InvalidAuthentication
 
-        user_temp = User.objects.get(email=email)
+        try:
+            user_temp = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise UserDoesNotExist
+
         if user_temp is not None and user_temp.is_active is False:
             if user_temp.last_login is None:
                 raise ValidationError({"is_active": _("활성화 되지 않은 아이디입니다. 이메일 인증을위해 발송된 이메일을 확인해주세요.")})
@@ -306,7 +321,7 @@ class AuthenticateSerializer(serializers.Serializer):
         if accesslog.count() > 0:
             for record in accesslog:
                 if ip_address != record.ip_address:
-                    api.notify_security_email(email, ip_address, token, request, record.id)
+                    util.notify_security_email(email, ip_address, token, request, record.id)
                     break
 
         return {

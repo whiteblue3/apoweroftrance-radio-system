@@ -267,9 +267,51 @@ SWAGGER_SETTINGS = {
 }
 
 
+################
+# AWS S3 Setup #
+################
+
+# AWS_ACCESS_KEY_ID = config_secret_common['AWS_ACCESS_KEY_ID']
+# AWS_SECRET_ACCESS_KEY = config_secret_common['AWS_SECRET_ACCESS_KEY']
+#
+# AWS_S3_REGION_NAME = 'ap-northeast-2'
+# AWS_S3_SIGNATURE_VERSION = 's3v4'
+#
+# STATICFILES_LOCATION = 'static'
+# STATICFILES_STORAGE = 'app.s3.StaticStorage'
+# AWS_DEFAULT_ACL = None
+# AWS_S3_ENCRYPTION = False
+# DEFAULT_FILE_STORAGE = 'app.s3.MediaStorage'
+# MEDIAFILES_LOCATION = 'media'
+
+# AWS_STORAGE_BUCKET_NAME = 'api-prod-gloground-com'
+#
+# # STORAGE_DOMAIN = '%s.s3-accelerate.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
+# STORAGE_DOMAIN = '%s.s3.%s.amazonaws.com' % (AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME)
+# STATIC_URL = "https://%s/%s/" % (STORAGE_DOMAIN, STATICFILES_LOCATION)
+
+
+##############################
+# Google Cloud Storage Setup #
+##############################
+
+GCP_PROJECT_ID = "apoweroftrance"
+GCP_STORAGE_BUCKET_NAME = "apoweroftrance-media"
+
+STORAGE_DOMAIN = "https://storage.cloud.google.com/apoweroftrance-media"
+
+
+#############
+# AES Setup #
+#############
+
 AES_KEY = "BYOUwqYyMgWfEIjSHhmVHBoJgobVUJbR"
 AES_SECRET = "I6V8HN5DMUPM4AES"
 
+
+###############
+# Email Setup #
+###############
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -279,6 +321,10 @@ EMAIL_HOST_PASSWORD = '"!Triace07"'
 # EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
+
+#################
+# Account Setup #
+#################
 
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 # ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS =1

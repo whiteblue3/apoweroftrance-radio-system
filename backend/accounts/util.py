@@ -5,13 +5,13 @@ from datetime import datetime, timedelta
 import urllib.parse
 from django.core.mail import send_mail
 from django.conf import settings
-from accounts.serializers import (
+from .serializers import (
     AccessLogSerializer
 )
-from accounts.models import Profile
-from accounts.access_log import *
-from accounts.error import ProfileDoesNotExist
-from backend_utils import aes
+from .models import Profile
+from .access_log import *
+from .error import ProfileDoesNotExist
+from backend_utils import aes, storage
 
 
 def accesslog(request, access_type, status, email, ip):
@@ -47,6 +47,32 @@ def get_profile(email):
     except Profile.DoesNotExist:
         raise ProfileDoesNotExist
     return profile
+
+
+def upload_profile_image(email, request):
+    profile = get_profile(email)
+
+    # Store previous image file name
+    prev_image = profile.image
+
+    # Upload file if file given
+    try:
+        filepath = storage.upload_file(request, 'image', 'image')
+        if filepath is not None:
+            image_path = filepath[0]
+            profile.image = image_path
+            profile.save()
+    except Exception as e:
+        raise e
+
+    # Delete previous image file if new image file has been uploaded successful
+    try:
+        if filepath is not None:
+            if storage.exist_file('image', prev_image):
+                storage.delete_file('image', prev_image)
+    except Exception as e:
+        # 파일이 존재하지 않는 경우 이곳으로 온다
+        pass
 
 
 def generate_password(length=11, charset="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()"):

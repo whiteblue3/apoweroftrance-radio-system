@@ -16,3 +16,13 @@ pyjwt
 
 # AES
 pycrypto
+
+# AWS S3
+#django-storages
+#boto3
+
+# Google Cloud Storage
+google-cloud-storage
+
+# Extra: Accounts
+fleep
