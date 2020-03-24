@@ -14,8 +14,10 @@ class Child:
 
 if __name__ == '__main__':
     yui = Child(name="yui", process_class=MusicDaemon)
+    alice = Child(name="alice", process_class=MusicDaemon)
+    miku = Child(name="miku", process_class=MusicDaemon)
     server = Child(name="server", process_class=TCPServer)
 
-    master = Master([yui, server])
+    master = Master([yui, alice, miku, server])
     exit_code = master.main()
     exit(exit_code)

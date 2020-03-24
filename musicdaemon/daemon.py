@@ -103,7 +103,7 @@ class MusicDaemon:
         # })
         if cmd_queue is not None and cmd_queue.empty() is False:
             cmd = cmd_queue.get()
-            if self.name in cmd.target:
+            if self.name == cmd.target:
                 # cmd_data = json.loads(cmd.data)
                 self.logger.log('CMD RECV', cmd)
 
