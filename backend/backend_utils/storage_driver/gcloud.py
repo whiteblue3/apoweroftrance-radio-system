@@ -7,7 +7,7 @@ from google.resumable_media import requests, common
 from django.conf import settings
 
 
-project_name = settings.GCP_PROJECT_ID
+project_id = settings.GCP_PROJECT_ID
 bucket_name = settings.GCP_STORAGE_BUCKET_NAME
 
 try:
@@ -20,7 +20,7 @@ except:
     except:
         credentials = app_engine.Credentials()
 
-client = storage.Client(credentials=credentials)
+client = storage.Client(credentials=credentials, project=project_id)
 bucket = client.get_bucket(bucket_name)
 
 
