@@ -43,6 +43,7 @@ INSTALLED_APPS = [
 
     'app',
     'accounts',
+    'radio',
 
     'rest_framework',
     'drf_yasg',

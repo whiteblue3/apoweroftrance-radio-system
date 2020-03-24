@@ -57,7 +57,7 @@ def upload_profile_image(email, request):
 
     # Upload file if file given
     try:
-        filepath = storage.upload_file(request, 'image', 'image')
+        filepath = storage.upload_file(request, 'image', 'image', ["image/png", "image/jpeg"])
         if filepath is not None:
             image_path = filepath[0]
             profile.image = image_path

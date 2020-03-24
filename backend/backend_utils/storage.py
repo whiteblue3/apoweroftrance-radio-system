@@ -11,7 +11,7 @@ def get_extension(filename):
     return str(filename).split('.')[-1]
 
 
-def upload_file(request, filefield, target_path):
+def upload_file(request, filefield, target_path, valid_mimetype):
     """
     파일을 업로드
 
@@ -33,7 +33,12 @@ def upload_file(request, filefield, target_path):
 
         data = filebody.read()
         info = fleep.get(data)
-        if (info.mime_matches("image/png") or info.mime_matches("image/jpeg")) is False:
+        is_valid = False
+        for mimetype in valid_mimetype:
+            if info.mime_matches(mimetype) is True:
+                is_valid = True
+
+        if is_valid is False:
             raise ValidationError(_('Not a image or Invalid format'))
 
         remote_file_path = driver.upload_data(data, target_path, uniquename, filebody.content_type, filebody.size)
