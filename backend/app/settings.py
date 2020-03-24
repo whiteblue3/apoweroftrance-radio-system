@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.postgres',
 
-    'radio',
+    'app',
     'accounts',
 
     'rest_framework',
@@ -58,11 +58,11 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'drf_yasg.middleware.SwaggerExceptionMiddleware',
-    'radio.remove_next_middleware.RemoveNextMiddleware',
-    'radio.json404_middleware.JSON404Middleware',
+    'app.remove_next_middleware.RemoveNextMiddleware',
+    'app.json404_middleware.JSON404Middleware',
 ]
 
-ROOT_URLCONF = 'radio.urls'
+ROOT_URLCONF = 'app.urls'
 
 TEMPLATES = [
     {
@@ -83,7 +83,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'radio.wsgi.application'
+WSGI_APPLICATION = 'app.wsgi.application'
 
 
 # Database
@@ -243,7 +243,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'accounts.backends.JWTAuthentication',
     ),
-    'EXCEPTION_HANDLER': 'radio.exceptions.core_exception_handler',
+    'EXCEPTION_HANDLER': 'app.exceptions.core_exception_handler',
 }
 
 AUTHENTICATION_BACKENDS = (
