@@ -21,6 +21,7 @@ from drf_yasg import openapi
 
 schema_url_patterns = [
     path('v1/user/', include('accounts.urls', namespace='user')),
+    path('v1/radio/', include('radio.urls', namespace='radio')),
 ]
 
 schema_view = get_schema_view(
