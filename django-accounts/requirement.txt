@@ -1,9 +1,6 @@
 django>=2.0,<3.0
 
-django-pgcrypto
-
 ./django_utils-0.0.1.tar.gz
-./accounts-0.0.1.tar.gz
 
 # RESTful API
 djangorestframework
@@ -14,8 +11,11 @@ drf-yasg
 # Database
 psycopg2-binary
 
+# AES
+pycrypto
+
 # JWT
 pyjwt
 
-# AES
-pycrypto
+# Extra
+fleep

@@ -131,3 +131,6 @@ dmypy.json
 /backend/static/admin/
 /backend/radio/migrations/
 /backend/accounts/migrations/
+/django-accounts/accounts/migrations/
+/backend/static/
+/.static_root/
