@@ -7,7 +7,7 @@ from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin
 )
 from django.conf import settings
-from accounts.access_log import ACCESS_TYPE, ACCESS_STATUS
+from .access_log import ACCESS_TYPE, ACCESS_STATUS
 
 
 class UserManager(BaseUserManager):

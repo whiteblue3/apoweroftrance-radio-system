@@ -11,7 +11,7 @@ from .serializers import (
 from .models import Profile
 from .access_log import *
 from .error import ProfileDoesNotExist
-from backend_utils import aes, storage
+from django_utils import aes, storage
 
 
 def accesslog(request, access_type, status, email, ip):

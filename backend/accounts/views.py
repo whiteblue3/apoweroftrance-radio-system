@@ -25,7 +25,7 @@ from .error import (
     InvalidAuthentication, UserDoesNotExist, UserIsNotActive
 )
 from .access_log import *
-from backend_utils import api, aes
+from django_utils import api, aes
 from . import util
 
 

@@ -279,10 +279,10 @@ SWAGGER_SETTINGS = {
 # AWS_S3_SIGNATURE_VERSION = 's3v4'
 #
 # STATICFILES_LOCATION = 'static'
-# STATICFILES_STORAGE = 'app.s3.StaticStorage'
+# STATICFILES_STORAGE = 'django_utils.storage_backend.s3_backend.StaticStorage'
 # AWS_DEFAULT_ACL = None
 # AWS_S3_ENCRYPTION = False
-# DEFAULT_FILE_STORAGE = 'app.s3.MediaStorage'
+# DEFAULT_FILE_STORAGE = 'django_utils.storage_backend.s3_backend.MediaStorage'
 # MEDIAFILES_LOCATION = 'media'
 
 # AWS_STORAGE_BUCKET_NAME = 'api-prod-gloground-com'

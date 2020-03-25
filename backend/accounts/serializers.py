@@ -268,7 +268,7 @@ class AuthenticateSerializer(serializers.Serializer):
         pass
 
     def validate(self, data):
-        from backend_utils import api
+        from django_utils import api
         from . import util
 
         # username = data.get('username', None)

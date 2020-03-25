@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from calendar import timegm
 from django.conf import settings
 from rest_framework import authentication
-from accounts.error import (
+from .error import (
     InvalidAuthentication, UserIsNotActive, UserDoesNotExist
 )
 from .models import User, JWTBlackList
