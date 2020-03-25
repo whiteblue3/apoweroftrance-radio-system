@@ -3,3 +3,5 @@ python-dateutil
 
 # Database
 psycopg2-binary
+
+./django_utils-0.0.1.tar.gz

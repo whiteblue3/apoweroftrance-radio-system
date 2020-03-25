@@ -4,7 +4,7 @@ from datetime import datetime
 from dateutil.parser import parse
 from dateutil.tz import tzlocal
 from command import QUEUE, UNQUEUE
-from utils.db.db import DBControl
+from django_utils.db.db import DBControl
 from logger import Logger
 
 
