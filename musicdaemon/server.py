@@ -120,9 +120,9 @@ class TCPHandler(BaseHTTPRequestHandler):
             return False
 
         try:
-            _ = payload["queue_id"]
+            _ = payload["track_id"]
         except KeyError:
-            self.log_message("'queue_id' is a must have requirement")
+            self.log_message("'track_id' is a must have requirement")
             return False
 
         return True

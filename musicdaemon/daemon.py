@@ -91,11 +91,11 @@ class MusicDaemon:
 
     def process_unqueue(self, cmd):
         try:
-            queue_id = cmd.data["queue_id"]
+            track_id = cmd.data["track_id"]
         except KeyError as e:
             self.logger.log('error', str(e))
         else:
-            self.logger.log('UNQUEUE', {"queue_id": queue_id})
+            self.logger.log('UNQUEUE', {"track_id": track_id})
 
     def loop(self, cmd_queue):
         # self.logger.log('sing', {

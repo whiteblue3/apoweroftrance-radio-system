@@ -25,11 +25,11 @@ class Queue(Serializable):
 # Data of UnQueue command
 class UnQueue(Serializable):
     # Queue ID
-    queue_id = None
+    track_id = None
 
-    def __init__(self, queue_id, *args, **kwargs):
+    def __init__(self, track_id, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.queue_id = queue_id
+        self.track_id = track_id
 
 
 class CMD(Serializable):

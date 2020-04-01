@@ -1,4 +1,4 @@
-from backend_utils import storage
+from django_utils import storage
 
 
 def upload_audio(request):

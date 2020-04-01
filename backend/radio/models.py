@@ -6,8 +6,8 @@ from django.utils.translation import ugettext_lazy as _
 
 CHANNEL = [
     ("yui", _("Trance")),
-    ("alice", _("EDM / POP")),
-    ("miku", _("ANI / Game / Subculture")),
+    ("alice", _("POP")),
+    ("miku", _("Subculture")),
 ]
 DEFAULT_CHANNEL = "yui"
 
