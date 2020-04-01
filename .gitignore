@@ -134,3 +134,4 @@ dmypy.json
 /django-accounts/accounts/migrations/
 /backend/static/
 /.static_root/
+/backend/.static/
