@@ -2,8 +2,8 @@ import os
 # import json
 from datetime import datetime
 from dateutil.tz import tzlocal
-from command import QUEUE, UNQUEUE, SETLIST, CMD
-from process.shared import ns, cmd_queue
+from format import QUEUE, UNQUEUE, SETLIST, CMD
+from process.shared import ns, cmd_queue, get_ns_obj, set_ns_obj
 # from django_utils.db.db import DBControl
 from logger import Logger
 
@@ -19,7 +19,14 @@ class MusicDaemon:
         self.__stop = False
         self.logger = Logger(MusicDaemon.__name__, name)
 
-        ns_object = {"PLAYLIST": []}
+        ns_object = {
+            "current_playing": {
+                "artist": None,
+                "title": None,
+                "location": None
+            },
+            "playlist": []
+        }
         setattr(ns, name, ns_object)
 
         # db_username = os.environ.get('DB_USERNAME')
@@ -52,20 +59,25 @@ class MusicDaemon:
     #     return result
 
     @property
-    def PLAYLIST(self):
-        ns_object = getattr(ns, self.name)
-        return ns_object["PLAYLIST"]
+    def current_playing(self):
+        return get_ns_obj(self.name, "current_playing")
 
-    @PLAYLIST.setter
-    def PLAYLIST(self, value):
-        ns_object = getattr(ns, self.name)
-        ns_object["PLAYLIST"] = value
-        setattr(ns, self.name, ns_object)
+    @current_playing.setter
+    def current_playing(self, value):
+        set_ns_obj(self.name, "current_playing", value)
+
+    @property
+    def playlist(self):
+        return get_ns_obj(self.name, "playlist")
+
+    @playlist.setter
+    def playlist(self, value):
+        set_ns_obj(self.name, "playlist", value)
 
     def now(self, tz=tzlocal()):
         return datetime.now(tz=tz).isoformat()
 
-    def main(self,):
+    def main(self):
         self.logger.log('start', {
             'pid': os.getpid()
         })
@@ -97,7 +109,7 @@ class MusicDaemon:
                 except KeyError as e:
                     self.logger.log('error', str(e))
                 else:
-                    self.PLAYLIST.append(cmd.data)
+                    self.playlist.append(cmd.data)
                     self.logger.log('QUEUE', {"location": location, "artist": artist, "title": title})
 
     def process_unqueue(self, cmd):
@@ -106,7 +118,7 @@ class MusicDaemon:
         except KeyError as e:
             self.logger.log('error', str(e))
         else:
-            self.PLAYLIST.pop(index_at)
+            self.playlist.pop(index_at)
             self.logger.log('UNQUEUE', {"index_at": index_at})
 
     def process_setlist(self, cmd):
@@ -130,11 +142,12 @@ class MusicDaemon:
                         is_no_error = True
 
         if is_no_error or len(cmd.data) == 0:
-            self.PLAYLIST = cmd.data
-            self.logger.log('SETLIST', self.PLAYLIST)
+            self.playlist = cmd.data
+            self.logger.log('SETLIST', self.playlist)
 
     def loop(self):
         if cmd_queue is not None and cmd_queue.empty() is False:
+            # Dequeue from queue (pop)
             cmd = cmd_queue.get()
             if self.name == cmd.target:
                 # cmd_data = json.loads(cmd.data)
@@ -147,4 +160,5 @@ class MusicDaemon:
                 elif SETLIST == cmd.command:
                     self.process_setlist(cmd)
             else:
+                # If else, rollback to queue
                 cmd_queue.put(cmd)

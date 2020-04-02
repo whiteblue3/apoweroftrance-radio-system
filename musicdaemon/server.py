@@ -4,8 +4,8 @@ import json
 # from dateutil.parser import parse
 from socketserver import ThreadingMixIn
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from command import CMD, COMMAND_LIST, QUEUE, UNQUEUE, SETLIST
-from process.shared import ns, cmd_queue
+from format import CMD, COMMAND_LIST, QUEUE, UNQUEUE, SETLIST
+from process.shared import ns, cmd_queue, get_ns_obj
 from logger import Logger
 
 
@@ -36,17 +36,23 @@ class TCPHandler(BaseHTTPRequestHandler):
 
         target = str(self.path)[1:]
 
-        if not hasattr(ns, target):
+        if target == "" or not hasattr(ns, target):
             self._set_response(400)
-            self.wfile.write("{'error': 'no target'}")
+            response = {
+                'error': 'no target'
+            }
+            self.wfile.write("{}".format(json.dumps(response)).encode('utf-8'))
             return
 
-        ns_object = getattr(ns, target)
-        playlist = ns_object["PLAYLIST"]
+        current_playing = get_ns_obj(target, "current_playing")
+        playlist = get_ns_obj(target, "playlist")
 
         self._set_response()
         response = {
-            'payload': playlist
+            'payload': {
+                'current_playing': current_playing,
+                'playlist': playlist
+            }
         }
         self.wfile.write("{}".format(json.dumps(response)).encode('utf-8'))
 
@@ -195,7 +201,7 @@ class TCPServer:
 
         self.httpd = ThreadedHTTPServer(server_address, TCPHandler)
 
-    def main(self, cmd_queue=None):
+    def main(self):
         self.logger.log('start', {
             'pid': os.getpid(),
             'message': 'Starting HTTP Server...\n'

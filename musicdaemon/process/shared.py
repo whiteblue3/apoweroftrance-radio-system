@@ -1,8 +1,18 @@
 import multiprocessing
-from multiprocessing import Queue
 
 # CMD Queue
-cmd_queue = Queue()
+cmd_queue = multiprocessing.Queue()
 
 manager = multiprocessing.Manager()
 ns = manager.Namespace()
+
+
+def get_ns_obj(namespace, objname):
+    ns_object = getattr(ns, namespace)
+    return ns_object[objname]
+
+
+def set_ns_obj(namespace, objname, value):
+    ns_object = getattr(ns, namespace)
+    ns_object[objname] = value
+    setattr(ns, namespace, ns_object)
