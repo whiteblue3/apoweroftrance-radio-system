@@ -1,17 +1,15 @@
 import os
 import time
 import signal
-from multiprocessing import Queue
 from logger import Logger
 from process.process import Process
+from process.shared import cmd_queue
 
 
 class Master:
-    cmd_queue = None
 
     def __init__(self, child_process):
         self.__stop = False
-        self.cmd_queue = Queue()
         self.process = []
         self.logger = Logger(Master.__name__, 'musicdaemon')
 
@@ -33,7 +31,7 @@ class Master:
 
             if pid == 0:
                 process = Process(child_process.name)
-                exit_code = process.main(process_class, self.cmd_queue)
+                exit_code = process.main(process_class)
                 exit(exit_code)
             else:
                 self.logger.log("start",

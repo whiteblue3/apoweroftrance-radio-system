@@ -1,10 +1,11 @@
 import sys
 import os
 import json
-from dateutil.parser import parse
+# from dateutil.parser import parse
 from socketserver import ThreadingMixIn
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from command import CMD, COMMAND_LIST, QUEUE, UNQUEUE, SETLIST
+from process.shared import ns, cmd_queue
 from logger import Logger
 
 
@@ -19,24 +20,35 @@ class TCPHandler(BaseHTTPRequestHandler):
             self.server.logger.log("HTTPStream", format % args)
 
     def queue_cmd(self, cmd):
-        if self.server.cmd_queue is not None:
+        if cmd_queue is not None:
             self.server.logger.log("CMD SEND", cmd)
-            self.server.cmd_queue.put(cmd)
+            cmd_queue.put(cmd)
 
     def _set_response(self, status_code=200):
         self.send_response(status_code)
-        self.send_header('Content-type', 'text/html')
+        self.send_header('Content-type', 'application/json')
         self.end_headers()
 
     def do_GET(self):
         self.log_message("GET request,\nPath: %s\nHeaders:\n%s\n", str(self.path), str(self.headers))
+        # self._set_response()
+        # self.wfile.write("GET request for {}".format(self.path).encode('utf-8'))
+
+        target = str(self.path)[1:]
+
+        if not hasattr(ns, target):
+            self._set_response(400)
+            self.wfile.write("{'error': 'no target'}")
+            return
+
+        ns_object = getattr(ns, target)
+        playlist = ns_object["PLAYLIST"]
+
         self._set_response()
-        self.wfile.write("GET request for {}".format(self.path).encode('utf-8'))
-
-        request_path = str(self.path)
-
-        cmd = CMD(host=self.server.name, target="yui", command="GET", data=request_path)
-        self.queue_cmd(cmd)
+        response = {
+            'payload': playlist
+        }
+        self.wfile.write("{}".format(json.dumps(response)).encode('utf-8'))
 
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])    # <--- Gets the size of data
@@ -54,7 +66,7 @@ class TCPHandler(BaseHTTPRequestHandler):
         target = data["target"]
         if target is None or target is "":
             self._set_response(400)
-            self.wfile.write("No target".encode('utf-8'))
+            self.wfile.write("{'error': 'no target'}")
             return
 
         command = data["command"]
@@ -65,30 +77,33 @@ class TCPHandler(BaseHTTPRequestHandler):
             command not in COMMAND_LIST
         ):
             self._set_response(400)
-            self.wfile.write("Bad Request".encode('utf-8'))
+            self.wfile.write("{'error': 'bad request'}")
             return
 
         if command == QUEUE:
             if self.validate_queue_command(data) is False:
                 self._set_response(400)
-                self.wfile.write("Request is invalid queue command".encode('utf-8'))
+                self.wfile.write("{'error': 'Request is invalid queue command'}")
                 return
         elif command == UNQUEUE:
             if self.validate_unqueue_command(data) is False:
                 self._set_response(400)
-                self.wfile.write("Request is invalid unqueue command".encode('utf-8'))
+                self.wfile.write("{'error': 'Request is invalid unqueue command'}")
                 return
         elif command == SETLIST:
             if self.validate_setlist_command(data) is False:
                 self._set_response(400)
-                self.wfile.write("Request is invalid setlist command".encode('utf-8'))
+                self.wfile.write("{'error': 'Request is invalid setlist command'}")
                 return
 
         cmd = CMD(host=host, target=target, command=command, data=payload)
         self.queue_cmd(cmd)
 
         self._set_response()
-        self.wfile.write("OK".encode('utf-8'))
+        response = {
+            'payload': 'OK'
+        }
+        self.wfile.write("{}".format(json.dumps(response)).encode('utf-8'))
 
     def validate_queue_command(self, data):
         command = data["command"]
@@ -187,11 +202,11 @@ class TCPServer:
         })
         self.httpd.logger = self.logger
         self.httpd.name = self.name
-        self.httpd.cmd_queue = cmd_queue
 
         while not self.__stop:
             sys.stdout.flush()
             self.httpd.handle_request()
+
         return 0
 
     def stop(self):

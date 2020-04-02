@@ -1,66 +1,77 @@
 import os
-import json
+# import json
 from datetime import datetime
-from dateutil.parser import parse
 from dateutil.tz import tzlocal
-from command import QUEUE, UNQUEUE, SETLIST
-from django_utils.db.db import DBControl
+from command import QUEUE, UNQUEUE, SETLIST, CMD
+from process.shared import ns, cmd_queue
+# from django_utils.db.db import DBControl
 from logger import Logger
 
 
 class MusicDaemon:
     name = None
-    PLAYLIST = []
-    is_publishing = False
 
-    # DB control
-    db = None
+    # # DB control
+    # db = None
 
     def __init__(self, name):
         self.name = name
         self.__stop = False
-        self.is_publishing = False
         self.logger = Logger(MusicDaemon.__name__, name)
 
-        db_username = os.environ.get('DB_USERNAME')
-        db_password = os.environ.get('DB_PASSWORD')
-        db_host = os.environ.get('DB_HOST')
-        db_port = os.environ.get('DB_PORT')
-        db_name = os.environ.get('DB_NAME')
+        ns_object = {"PLAYLIST": []}
+        setattr(ns, name, ns_object)
 
-        # Example of DBControl
-        self.db = DBControl(
-            db_username,
-            db_password,
-            db_host,
-            db_port,
-            db_name
-        )
-        max_connections = self.query("select * from pg_settings where name='max_connections';")
-        self.logger.log("max_connections", max_connections)
+        # db_username = os.environ.get('DB_USERNAME')
+        # db_password = os.environ.get('DB_PASSWORD')
+        # db_host = os.environ.get('DB_HOST')
+        # db_port = os.environ.get('DB_PORT')
+        # db_name = os.environ.get('DB_NAME')
+        #
+        # # Example of DBControl
+        # self.db = DBControl(
+        #     db_username,
+        #     db_password,
+        #     db_host,
+        #     db_port,
+        #     db_name
+        # )
+        # max_connections = self.query("select * from pg_settings where name='max_connections';")
+        # self.logger.log("max_connections", max_connections)
 
     def __del__(self):
         pass
 
-    def query(self, sql):
-        connection = self.db.connect()
-        cursor = self.db.get_cursor(connection)
-        self.db.query(cursor, sql)
-        result = cursor.fetchall()
-        cursor.close()
-        self.db.close(connection)
-        return result
+    # def query(self, sql):
+    #     connection = self.db.connect()
+    #     cursor = self.db.get_cursor(connection)
+    #     self.db.query(cursor, sql)
+    #     result = cursor.fetchall()
+    #     cursor.close()
+    #     self.db.close(connection)
+    #     return result
+
+    @property
+    def PLAYLIST(self):
+        ns_object = getattr(ns, self.name)
+        return ns_object["PLAYLIST"]
+
+    @PLAYLIST.setter
+    def PLAYLIST(self, value):
+        ns_object = getattr(ns, self.name)
+        ns_object["PLAYLIST"] = value
+        setattr(ns, self.name, ns_object)
 
     def now(self, tz=tzlocal()):
         return datetime.now(tz=tz).isoformat()
 
-    def main(self, cmd_queue=None):
+    def main(self,):
         self.logger.log('start', {
             'pid': os.getpid()
         })
 
         while not self.__stop:
-            self.loop(cmd_queue)
+            self.loop()
 
         self.logger.log('stop', {
             'pid': os.getpid()
@@ -86,6 +97,7 @@ class MusicDaemon:
                 except KeyError as e:
                     self.logger.log('error', str(e))
                 else:
+                    self.PLAYLIST.append(cmd.data)
                     self.logger.log('QUEUE', {"location": location, "artist": artist, "title": title})
 
     def process_unqueue(self, cmd):
@@ -94,6 +106,7 @@ class MusicDaemon:
         except KeyError as e:
             self.logger.log('error', str(e))
         else:
+            self.PLAYLIST.pop(index_at)
             self.logger.log('UNQUEUE', {"index_at": index_at})
 
     def process_setlist(self, cmd):
@@ -117,12 +130,10 @@ class MusicDaemon:
                         is_no_error = True
 
         if is_no_error or len(cmd.data) == 0:
-            self.logger.log('SETLIST', cmd.data)
+            self.PLAYLIST = cmd.data
+            self.logger.log('SETLIST', self.PLAYLIST)
 
-    def loop(self, cmd_queue):
-        # self.logger.log('sing', {
-        #     'song': song
-        # })
+    def loop(self):
         if cmd_queue is not None and cmd_queue.empty() is False:
             cmd = cmd_queue.get()
             if self.name == cmd.target:
@@ -135,3 +146,5 @@ class MusicDaemon:
                     self.process_unqueue(cmd)
                 elif SETLIST == cmd.command:
                     self.process_setlist(cmd)
+            else:
+                cmd_queue.put(cmd)
