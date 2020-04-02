@@ -3,33 +3,33 @@ from serializable import Serializable
 # Commands of CMD command properties
 QUEUE = "queue"
 UNQUEUE = "unqueue"
+SETLIST = "setlist"
 
 
-COMMAND_LIST = [QUEUE, UNQUEUE]
+COMMAND_LIST = [QUEUE, UNQUEUE, SETLIST]
 
 
 # Data of Queue command
 class Queue(Serializable):
-    # Track ID
-    track_id = None
+    location = None
+    artist = None
+    title = None
 
-    # Queue track at date-time
-    queue_at = None
-
-    def __init__(self, track_id, queue_at=None, *args, **kwargs):
+    def __init__(self, location, artist, title, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.track_id = track_id
-        self.queue_at = queue_at
+        self.location = location
+        self.artist = artist
+        self.title = title
 
 
 # Data of UnQueue command
 class UnQueue(Serializable):
     # Queue ID
-    track_id = None
+    index_at = None
 
-    def __init__(self, track_id, *args, **kwargs):
+    def __init__(self, index_at, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.track_id = track_id
+        self.index_at = index_at
 
 
 class CMD(Serializable):

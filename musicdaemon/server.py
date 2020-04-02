@@ -4,7 +4,7 @@ import json
 from dateutil.parser import parse
 from socketserver import ThreadingMixIn
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from command import CMD, COMMAND_LIST, QUEUE, UNQUEUE
+from command import CMD, COMMAND_LIST, QUEUE, UNQUEUE, SETLIST
 from logger import Logger
 
 
@@ -53,7 +53,9 @@ class TCPHandler(BaseHTTPRequestHandler):
 
         target = data["target"]
         if target is None or target is "":
-            target = "yui"
+            self._set_response(400)
+            self.wfile.write("No target".encode('utf-8'))
+            return
 
         command = data["command"]
         payload = data["data"]
@@ -76,6 +78,11 @@ class TCPHandler(BaseHTTPRequestHandler):
                 self._set_response(400)
                 self.wfile.write("Request is invalid unqueue command".encode('utf-8'))
                 return
+        elif command == SETLIST:
+            if self.validate_setlist_command(data) is False:
+                self._set_response(400)
+                self.wfile.write("Request is invalid setlist command".encode('utf-8'))
+                return
 
         cmd = CMD(host=host, target=target, command=command, data=payload)
         self.queue_cmd(cmd)
@@ -92,22 +99,22 @@ class TCPHandler(BaseHTTPRequestHandler):
             return False
 
         try:
-            _ = payload["track_id"]
+            _ = payload["location"]
         except KeyError as e:
-            self.log_message("'track_id' is a must have requirement")
+            self.log_message("'location' is a must have requirement")
             return False
 
         try:
-            queue_at = payload["queue_at"]
-        except KeyError:
-            queue_at = None
+            _ = payload["artist"]
+        except KeyError as e:
+            self.log_message("'artist' is a must have requirement")
+            return False
 
-        if queue_at is not None:
-            try:
-                parse(queue_at, fuzzy=False)
-            except ValueError:
-                self.log_message("'queue_at' is invalid datetime format")
-                return False
+        try:
+            _ = payload["title"]
+        except KeyError as e:
+            self.log_message("'title' is a must have requirement")
+            return False
 
         return True
 
@@ -120,12 +127,39 @@ class TCPHandler(BaseHTTPRequestHandler):
             return False
 
         try:
-            _ = payload["track_id"]
+            _ = payload["index_at"]
         except KeyError:
-            self.log_message("'track_id' is a must have requirement")
+            self.log_message("'index_at' is a must have requirement")
             return False
 
         return True
+
+    def validate_setlist_command(self, data):
+        command = data["command"]
+        payload = data["data"]
+
+        if command not in SETLIST:
+            self.log_message("Not a setlist command")
+            return False
+
+        for queue in payload:
+            try:
+                _ = queue["location"]
+            except KeyError as e:
+                self.log_message("'location' is a must have requirement")
+                return False
+
+            try:
+                _ = queue["artist"]
+            except KeyError as e:
+                self.log_message("'artist' is a must have requirement")
+                return False
+
+            try:
+                _ = queue["title"]
+            except KeyError as e:
+                self.log_message("'title' is a must have requirement")
+                return False
 
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):

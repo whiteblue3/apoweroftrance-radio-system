@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 from dateutil.parser import parse
 from dateutil.tz import tzlocal
-from command import QUEUE, UNQUEUE
+from command import QUEUE, UNQUEUE, SETLIST
 from django_utils.db.db import DBControl
 from logger import Logger
 
@@ -72,30 +72,52 @@ class MusicDaemon:
 
     def process_queue(self, cmd):
         try:
-            track_id = cmd.data["track_id"]
+            location = cmd.data["location"]
         except KeyError as e:
             self.logger.log('error', str(e))
         else:
             try:
-                queue_at = cmd.data["queue_at"]
-            except KeyError:
-                queue_at = None
-
-            if queue_at is not None:
+                artist = cmd.data["artist"]
+            except KeyError as e:
+                self.logger.log('error', str(e))
+            else:
                 try:
-                    parse(queue_at, fuzzy=False)
-                except ValueError as e:
+                    title = cmd.data["title"]
+                except KeyError as e:
                     self.logger.log('error', str(e))
-
-            self.logger.log('QUEUE', {"track_id": track_id, "queue_at": queue_at})
+                else:
+                    self.logger.log('QUEUE', {"location": location, "artist": artist, "title": title})
 
     def process_unqueue(self, cmd):
         try:
-            track_id = cmd.data["track_id"]
+            index_at = cmd.data["index_at"]
         except KeyError as e:
             self.logger.log('error', str(e))
         else:
-            self.logger.log('UNQUEUE', {"track_id": track_id})
+            self.logger.log('UNQUEUE', {"index_at": index_at})
+
+    def process_setlist(self, cmd):
+        is_no_error = False
+        for queue in cmd.data:
+            try:
+                _ = queue["location"]
+            except KeyError as e:
+                self.logger.log('error', str(e))
+            else:
+                try:
+                    _ = queue["artist"]
+                except KeyError as e:
+                    self.logger.log('error', str(e))
+                else:
+                    try:
+                        _ = queue["title"]
+                    except KeyError as e:
+                        self.logger.log('error', str(e))
+                    else:
+                        is_no_error = True
+
+        if is_no_error or len(cmd.data) == 0:
+            self.logger.log('SETLIST', cmd.data)
 
     def loop(self, cmd_queue):
         # self.logger.log('sing', {
@@ -111,3 +133,5 @@ class MusicDaemon:
                     self.process_queue(cmd)
                 elif UNQUEUE == cmd.command:
                     self.process_unqueue(cmd)
+                elif SETLIST == cmd.command:
+                    self.process_setlist(cmd)
