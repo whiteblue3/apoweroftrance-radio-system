@@ -39,6 +39,8 @@ services:
       - "8080:8080"
     networks:
       - music_stack
+    volumes:
+      - ~/.config/gcloud/:/root/.config/gcloud
 
 networks:
   music_stack:
