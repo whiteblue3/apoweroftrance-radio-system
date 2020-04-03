@@ -6,7 +6,7 @@ WORKDIR /daemon
 RUN mkdir -p /srv/media
 
 VOLUME ["/srv/media"]
-#COPY mpd.conf /etc/mpd.conf
+COPY config.ini ./config.ini
 
 RUN apk update && \
     apk add postgresql-libs && \

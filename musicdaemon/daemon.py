@@ -3,13 +3,14 @@ import os
 from datetime import datetime
 from dateutil.tz import tzlocal
 from commands import QUEUE, UNQUEUE, SETLIST, CMD
-from process.shared import ns, cmd_queue, get_ns_obj, set_ns_obj
+from process.shared import ns, cmd_queue, get_ns_obj, set_ns_obj, ns_config
 # from django_utils.db.db import DBControl
 from logger import Logger
 
 
 class MusicDaemon:
     name = None
+    icecast2_config = None
 
     # # DB control
     # db = None
@@ -28,6 +29,13 @@ class MusicDaemon:
             "playlist": []
         }
         setattr(ns, name, ns_object)
+
+        try:
+            self.icecast2_config = ns_config.icecast2[name]
+        except KeyError:
+            pass
+
+        self.logger.log("icecast2_config", self.icecast2_config)
 
         # db_username = os.environ.get('DB_USERNAME')
         # db_password = os.environ.get('DB_PASSWORD')

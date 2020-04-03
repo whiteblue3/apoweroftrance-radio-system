@@ -4,6 +4,8 @@ import multiprocessing
 cmd_queue = multiprocessing.Queue()
 
 manager = multiprocessing.Manager()
+
+# MusicDaemon variable
 ns = manager.Namespace()
 
 
@@ -16,3 +18,7 @@ def set_ns_obj(namespace, objname, value):
     ns_object = getattr(ns, namespace)
     ns_object[objname] = value
     setattr(ns, namespace, ns_object)
+
+
+# Application config
+ns_config = manager.Namespace()
