@@ -4,7 +4,7 @@ import json
 # from dateutil.parser import parse
 from socketserver import ThreadingMixIn
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from format import CMD, COMMAND_LIST, QUEUE, UNQUEUE, SETLIST
+from commands import CMD, COMMAND_LIST, QUEUE, UNQUEUE, SETLIST
 from process.shared import ns, cmd_queue, get_ns_obj
 from logger import Logger
 
@@ -44,13 +44,13 @@ class TCPHandler(BaseHTTPRequestHandler):
             self.wfile.write("{}".format(json.dumps(response)).encode('utf-8'))
             return
 
-        current_playing = get_ns_obj(target, "current_playing")
+        now_playing = get_ns_obj(target, "now_playing")
         playlist = get_ns_obj(target, "playlist")
 
         self._set_response()
         response = {
             'payload': {
-                'current_playing': current_playing,
+                'now_playing': now_playing,
                 'playlist': playlist
             }
         }

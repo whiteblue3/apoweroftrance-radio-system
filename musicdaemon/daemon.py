@@ -2,7 +2,7 @@ import os
 # import json
 from datetime import datetime
 from dateutil.tz import tzlocal
-from format import QUEUE, UNQUEUE, SETLIST, CMD
+from commands import QUEUE, UNQUEUE, SETLIST, CMD
 from process.shared import ns, cmd_queue, get_ns_obj, set_ns_obj
 # from django_utils.db.db import DBControl
 from logger import Logger
@@ -20,7 +20,7 @@ class MusicDaemon:
         self.logger = Logger(MusicDaemon.__name__, name)
 
         ns_object = {
-            "current_playing": {
+            "now_playing": {
                 "artist": None,
                 "title": None,
                 "location": None
@@ -59,12 +59,12 @@ class MusicDaemon:
     #     return result
 
     @property
-    def current_playing(self):
-        return get_ns_obj(self.name, "current_playing")
+    def now_playing(self):
+        return get_ns_obj(self.name, "now_playing")
 
-    @current_playing.setter
-    def current_playing(self, value):
-        set_ns_obj(self.name, "current_playing", value)
+    @now_playing.setter
+    def now_playing(self, value):
+        set_ns_obj(self.name, "now_playing", value)
 
     @property
     def playlist(self):
