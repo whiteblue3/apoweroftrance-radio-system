@@ -51,10 +51,12 @@ if __name__ == '__main__':
 
     on_startup_callback = config.get('callback', 'on_startup')
     on_play_callback = config.get('callback', 'on_play')
+    on_stop_callback = config.get('callback', 'on_stop')
 
     ns_config.icecast2 = icecast2_config
     ns_config.on_startup_callback = on_startup_callback
     ns_config.on_play_callback = on_play_callback
+    ns_config.on_stop_callback = on_stop_callback
 
     process_list = []
     if musicdaemon:

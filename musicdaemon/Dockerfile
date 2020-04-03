@@ -9,7 +9,7 @@ VOLUME ["/srv/media"]
 COPY config.ini ./config.ini
 
 RUN apt-get -y update
-RUN apt-get install -y python3.6 python3-pip software-properties-common libshout3
+RUN apt-get install -y python3.6 python3-pip software-properties-common libshout3-dev
 
 RUN python3 -m pip install -r requirement.txt
 

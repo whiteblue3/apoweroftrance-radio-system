@@ -1,4 +1,4 @@
-shouty
+python-shout
 
 pytz
 python-dateutil

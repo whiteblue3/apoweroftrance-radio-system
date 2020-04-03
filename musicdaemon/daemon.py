@@ -1,5 +1,6 @@
 import os
-import shouty
+# import shouty
+import shout
 # import json
 from datetime import datetime
 from dateutil.tz import tzlocal
@@ -11,7 +12,9 @@ from logger import Logger
 class MusicDaemon:
     name = None
     icecast2_config = None
-    shouty_params = None
+
+    # Local playlist
+    PLAYLIST = []
 
     def __init__(self, name):
         self.name = name
@@ -32,20 +35,6 @@ class MusicDaemon:
             self.icecast2_config = ns_config.icecast2[name]
         except KeyError:
             pass
-        else:
-            self.shouty_params = {
-                'format': shouty.Format.MP3,
-                'mount': '/' + self.icecast2_config["mount"],
-                'audio_info': {
-                    'samplerate': '44100',
-                    'channels': '2',
-                    'quality': '6'
-                },
-                'user': self.icecast2_config["user"],
-                'ICECAST_HOST': self.icecast2_config["host"],
-                'ICECAST_PORT': self.icecast2_config["port"],
-                'ICECAST_SOURCE_PASSWORD': self.icecast2_config["source_password"]
-            }
 
         self.logger.log("icecast2_config", self.icecast2_config)
 
@@ -60,6 +49,7 @@ class MusicDaemon:
     def now_playing(self, value):
         set_ns_obj(self.name, "now_playing", value)
 
+    # playlist for ns
     @property
     def playlist(self):
         return get_ns_obj(self.name, "playlist")
@@ -76,9 +66,70 @@ class MusicDaemon:
             'pid': os.getpid()
         })
 
-        # self.stream()
+        s = shout.Shout()
+
+        s.host = self.icecast2_config["host"]
+        s.port = int(self.icecast2_config["port"])
+        s.user = self.icecast2_config["user"]
+        s.password = self.icecast2_config["password"]
+        s.mount = '/' + self.icecast2_config["mount"]
+        s.format = self.icecast2_config["codec"]
+        s.protocol = 'http'
+        s.name = self.icecast2_config["name"]
+        s.genre = self.icecast2_config["genre"]
+        # s.url = ''
+        s.public = 1    # 0 | 1
+        s.audio_info = {
+            shout.SHOUT_AI_BITRATE: '128000',
+            shout.SHOUT_AI_SAMPLERATE: '44100'
+        }
+
+        is_connected = True
+        try:
+            s.open()
+        except shout.ShoutException as e:
+            is_connected = False
+            self.logger.log('icecast2', "{}".format(e))
+        else:
+            self.logger.log('icecast2', "connected")
+            # TODO: 데몬 시작 콜백
+
+        is_streaming = False
+        f = None
+
         while not self.__stop:
             self.loop()
+
+            if is_connected is True:
+                if is_streaming is False:
+                    if len(self.PLAYLIST) > 0:
+                        try:
+                            self.now_playing = self.PLAYLIST.pop()
+                            self.playlist = self.PLAYLIST
+
+                            filename = str(self.now_playing["location"])
+                            s.set_metadata({'song': "{0} - {1}".format(self.now_playing["artist"], self.now_playing["title"])})
+
+                            # TODO: 재생 시작 콜백
+
+                            f = open(filename, 'rb')
+                        except IndexError:
+                            continue
+                        else:
+                            is_streaming = True
+                else:
+                    chunk = f.read(4096)
+                    if not chunk:
+                        is_streaming = False
+                        f.close()
+                        self.now_playing = None
+
+                        # TODO: 재생 종료 콜백
+                    else:
+                        s.send(chunk)
+                        s.sync()
+
+        s.close()
 
         self.logger.log('stop', {
             'pid': os.getpid()
@@ -87,26 +138,6 @@ class MusicDaemon:
 
     def stop(self):
         self.__stop = True
-
-    def _send_file(self, connection, file_name):
-        with open(file_name, 'rb') as f:
-            while True:
-                chunk = f.read(4096)
-                if not chunk:
-                    break
-                connection.send(chunk)
-                connection.sync()
-
-    def stream(self):
-        with shouty.connect(**self.shouty_params) as connection:
-            while not self.__stop:
-                try:
-                    track = self.playlist.pop()
-                    filepath = track["location"]
-                except IndexError:
-                    continue
-                else:
-                    self._send_file(connection, str(filepath))
 
     def process_queue(self, cmd):
         try:
@@ -125,6 +156,7 @@ class MusicDaemon:
                     self.logger.log('error', str(e))
                 else:
                     self.playlist.append(cmd.data)
+                    self.PLAYLIST.append(cmd.data)
                     self.logger.log('QUEUE', {"location": location, "artist": artist, "title": title})
 
     def process_unqueue(self, cmd):
@@ -134,6 +166,7 @@ class MusicDaemon:
             self.logger.log('error', str(e))
         else:
             self.playlist.pop(index_at)
+            self.PLAYLIST.pop(index_at)
             self.logger.log('UNQUEUE', {"index_at": index_at})
 
     def process_setlist(self, cmd):
@@ -158,6 +191,7 @@ class MusicDaemon:
 
         if is_no_error or len(cmd.data) == 0:
             self.playlist = cmd.data
+            self.PLAYLIST = cmd.data
             self.logger.log('SETLIST', self.playlist)
 
     def loop(self):
