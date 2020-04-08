@@ -4,6 +4,7 @@ import shout
 import json
 import asyncio
 import aiohttp
+from urllib.parse import urlencode
 from datetime import datetime
 from dateutil.tz import tzlocal
 from commands import QUEUE, UNQUEUE, SETLIST, CMD, Queue
@@ -117,7 +118,7 @@ class MusicDaemon:
             ):
                 pass
             else:
-                self.request_callback(self.on_startup_callback, self.on_startup_event)
+                self.request_callback("GET", self.on_startup_callback, self.on_startup_event)
 
         is_streaming = False
         f = None
@@ -143,7 +144,9 @@ class MusicDaemon:
                             ):
                                 pass
                             else:
-                                self.request_callback(self.on_play_callback, self.on_play_event)
+                                self.request_callback(
+                                    "POST", self.on_play_callback, self.on_play_event, json.dumps(self.now_playing)
+                                )
 
                             f = open(filename, 'rb')
                         except IndexError:
@@ -163,7 +166,7 @@ class MusicDaemon:
                         ):
                             pass
                         else:
-                            self.request_callback(self.on_stop_callback, self.on_stop_event)
+                            self.request_callback("GET", self.on_stop_callback, self.on_stop_event)
 
                     else:
                         s.send(chunk)
@@ -179,12 +182,12 @@ class MusicDaemon:
     def stop(self):
         self.__stop = True
 
-    def request_callback(self, url, callback):
+    def request_callback(self, method, url, callback, data=None):
         if sys.version_info >= (3, 7):
-            tasks = [self.request(url, callback)]
+            tasks = [self.request(method, url, callback, data)]
             asyncio.run(asyncio.wait(tasks))
         else:
-            futures = [self.request(url, callback)]
+            futures = [self.request(method, url, callback, data)]
             loop = asyncio.get_event_loop()
             loop.run_until_complete(asyncio.wait(futures))
 
@@ -198,7 +201,7 @@ class MusicDaemon:
     def on_play_event(self, resp):
         try:
             data = json.loads(resp)
-            self.process_queue(data)
+            self.logger.log('on_play', data)
         except Exception as e:
             self.logger.log('on_play_error', str(e))
 
@@ -209,11 +212,21 @@ class MusicDaemon:
         except Exception as e:
             self.logger.log('on_stop_error', str(e))
 
-    async def request(self, url, callback):
+    async def request(self, method, url, callback, data=None):
         async with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
-                response = await resp.read()
-                callback(response)
+            if method == "GET":
+                if data is not None:
+                    query_string = urlencode(data)
+                    request_url = "{0}?{1}".format(url, query_string)
+                else:
+                    request_url = url
+                async with session.get(request_url) as resp:
+                    response = await resp.read()
+                    callback(response)
+            elif method == "POST":
+                async with session.post(url, data=data) as resp:
+                    response = await resp.read()
+                    callback(response)
 
     def process_queue(self, data):
         is_no_error = self.validate_queue(data)
