@@ -1,0 +1,3 @@
+[submodule "musicdaemon"]
+	path = musicdaemon
+	url = https://github.com/whiteblue3/apoweroftrance-musicdaemon.git
