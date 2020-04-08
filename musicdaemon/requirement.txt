@@ -3,6 +3,3 @@ aiohttp
 
 pytz
 python-dateutil
-
-# Database
-psycopg2-binary

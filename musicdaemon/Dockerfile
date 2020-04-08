@@ -1,7 +1,12 @@
 FROM ubuntu:18.04
 
-COPY . /daemon
-WORKDIR /daemon
+COPY ./service/musicdaemon /etc/logrotate.d/musicdaemon
+COPY ./service/musicdaemon.service /etc/systemd/system
+
+RUN chmod a+x /etc/systemd/system/musicdaemon.service
+
+COPY . /opt/musicdaemon
+WORKDIR /opt/musicdaemon
 
 RUN mkdir -p /srv/media
 
@@ -19,9 +24,12 @@ RUN apt-get install -y python3.6 python3-pip software-properties-common libshout
 #RUN make
 #RUN make install
 
-WORKDIR /daemon
+WORKDIR /opt/musicdaemon
 RUN python3 -m pip install -r requirement.txt
 
 EXPOSE 9000
 
 ENTRYPOINT ["python3", "main.py"]
+
+#CMD ["systemctl enable /etc/systemd/system/musicdaemon.service"]
+#CMD ["systemctl start /etc/systemd/system/musicdaemon.service"]

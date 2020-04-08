@@ -106,11 +106,12 @@ class MusicDaemon:
         is_connected = True
         try:
             s.open()
+            self.logger.log('icecast2', "connecting icecast2 server")
         except shout.ShoutException as e:
             is_connected = False
             self.logger.log('icecast2', "{}".format(e))
         else:
-            self.logger.log('icecast2', "connected")
+            self.logger.log('icecast2', "icecast2 server connected")
 
             if (
                 self.on_startup_callback is None or
@@ -150,6 +151,11 @@ class MusicDaemon:
 
                             f = open(filename, 'rb')
                         except IndexError:
+                            continue
+                        except FileNotFoundError as e:
+                            self.now_playing = None
+                            is_streaming = False
+                            self.logger.log('streaming', "{}".format(e))
                             continue
                         else:
                             is_streaming = True
