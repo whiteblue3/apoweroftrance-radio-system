@@ -76,9 +76,15 @@ on_startup and on_stop is called by 'GET' method and parameters can be include i
 on_play is called by 'POST' method and post data is a JSON format like below queue format
 
 # Queue Format
+Queue format used for queue-in music or replace playlist.
 
+- on_startup callback response must be array of queue format.
+- also on_stop callback response must be this format.
+- on_play callback only using 'id' parameter.
+
+## Format detail
     {
-        "id": 0,
+        "id": "0",
         "location": "/Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/volumes/demo.mp3",
         "artist": "MOBIUS",
         "title": "Trance Template"
@@ -96,23 +102,24 @@ This interface include 'GET' and 'POST' method.
 - GET method used for retrieve status of daemon
 - POST method used for queue-in the track to playlist
 
-## GET calliing rule
+## GET calling rule
+Call like this
+
     http://127.0.0.1:9000/[music daemon name]
 
 ## POST calling rule
+Call like this
+
     http://127.0.0.1:9000
 
-Also post data must be like this
-
-### POST: queue command
-queue command is add music to playlist
+You can post data like this
 
     {
         "host": "server",
         "target": "yui",
         "command": "queue",
         "data": {
-            "id": 0,
+            "id": "0",
             "location": "/Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/volumes/demo.mp3",
             "artist": "MOBIUS",
             "title": "Trance Template"
@@ -123,7 +130,26 @@ queue command is add music to playlist
 - target: Name of Music Damon
 - command: queue, unqueue or setlist
 
-### POST: unqueue command
+data format like below
+
+### queue data
+queue command is add music to playlist
+
+    {
+        "host": "server",
+        "target": "yui",
+        "command": "queue",
+        "data": {
+            "id": "0",
+            "location": "/Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/volumes/demo.mp3",
+            "artist": "MOBIUS",
+            "title": "Trance Template"
+        }
+    }
+
+data format is same for queue format
+
+### unqueue data
 unqueue command is remove music from playlist.
 data format like this
 
@@ -138,16 +164,16 @@ data format like this
 
 - index_at: Index of playlist
 
-### POST: setlist command
+### setlist data
 setlist command is replace the playlist
 
     {
         "host": "server",
         "target": "yui",
-        "command": "queue",
+        "command": "setlist",
         "data": [
             {
-                "id": 0,
+                "id": "0",
                 "location": "/Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/volumes/demo.mp3",
                 "artist": "MOBIUS",
                 "title": "Trance Template"
@@ -155,4 +181,4 @@ setlist command is replace the playlist
         ]
     }
 
-data format of setlist command is same of queue command, but it can be array.
+data format is array of queue format
