@@ -39,6 +39,7 @@ if __name__ == '__main__':
         server.pop(empty_index_server)
 
     icecast2_config = {}
+    callback_config = {}
     for daemon in musicdaemon:
         try:
             icecast2_daemon_config = config.options("icecast2_{0}".format(daemon))
@@ -49,14 +50,17 @@ if __name__ == '__main__':
         except NoSectionError:
             pass
 
-    on_startup_callback = config.get('callback', 'on_startup')
-    on_play_callback = config.get('callback', 'on_play')
-    on_stop_callback = config.get('callback', 'on_stop')
+        try:
+            callback_daemon_config = config.options("callback_{0}".format(daemon))
+            callback_config[daemon] = {}
+
+            for key in callback_daemon_config:
+                callback_config[daemon][key] = config.get("callback_{0}".format(daemon), key)
+        except NoSectionError:
+            pass
 
     ns_config.icecast2 = icecast2_config
-    ns_config.on_startup_callback = on_startup_callback
-    ns_config.on_play_callback = on_play_callback
-    ns_config.on_stop_callback = on_stop_callback
+    ns_config.callback = callback_config
 
     process_list = []
     if musicdaemon:

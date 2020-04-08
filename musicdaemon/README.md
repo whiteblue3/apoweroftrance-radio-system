@@ -19,3 +19,6 @@ run code in terminal
 
     pip3 install -r requirement.txt
 
+# TODO
+- [ ] AAC 지원
+- [ ] Google Cloud Storage 마운트

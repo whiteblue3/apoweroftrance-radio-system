@@ -11,12 +11,14 @@ COMMAND_LIST = [QUEUE, UNQUEUE, SETLIST]
 
 # Data of Queue command
 class Queue(Serializable):
+    id = None
     location = None
     artist = None
     title = None
 
-    def __init__(self, location, artist, title, *args, **kwargs):
+    def __init__(self, id, location, artist, title, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.id = id
         self.location = location
         self.artist = artist
         self.title = title

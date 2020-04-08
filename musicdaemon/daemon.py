@@ -1,10 +1,12 @@
+import sys
 import os
-# import shouty
 import shout
-# import json
+import json
+import asyncio
+import aiohttp
 from datetime import datetime
 from dateutil.tz import tzlocal
-from commands import QUEUE, UNQUEUE, SETLIST, CMD
+from commands import QUEUE, UNQUEUE, SETLIST, CMD, Queue
 from process.shared import ns, cmd_queue, get_ns_obj, set_ns_obj, ns_config
 from logger import Logger
 
@@ -12,6 +14,11 @@ from logger import Logger
 class MusicDaemon:
     name = None
     icecast2_config = None
+    callback_config = None
+
+    on_startup_callback = None
+    on_play_callback = None
+    on_stop_callback = None
 
     # Local playlist
     PLAYLIST = []
@@ -37,6 +44,17 @@ class MusicDaemon:
             pass
 
         self.logger.log("icecast2_config", self.icecast2_config)
+
+        try:
+            self.callback_config = ns_config.callback[name]
+        except KeyError:
+            pass
+
+        self.on_startup_callback = self.callback_config["on_startup"]
+        self.on_play_callback = self.callback_config["on_play"]
+        self.on_stop_callback = self.callback_config["on_stop"]
+
+        self.logger.log("callback_config", self.callback_config)
 
     def __del__(self):
         pass
@@ -77,11 +95,11 @@ class MusicDaemon:
         s.protocol = 'http'
         s.name = self.icecast2_config["name"]
         s.genre = self.icecast2_config["genre"]
-        # s.url = ''
+        s.url = self.icecast2_config["url"]
         s.public = 1    # 0 | 1
         s.audio_info = {
-            shout.SHOUT_AI_BITRATE: '128000',
-            shout.SHOUT_AI_SAMPLERATE: '44100'
+            shout.SHOUT_AI_BITRATE: self.icecast2_config["bitrate"],
+            shout.SHOUT_AI_SAMPLERATE: self.icecast2_config["samplerate"]
         }
 
         is_connected = True
@@ -92,7 +110,14 @@ class MusicDaemon:
             self.logger.log('icecast2', "{}".format(e))
         else:
             self.logger.log('icecast2', "connected")
-            # TODO: 데몬 시작 콜백
+
+            if (
+                self.on_startup_callback is None or
+                self.on_startup_callback is ""
+            ):
+                pass
+            else:
+                self.request_callback(self.on_startup_callback, self.on_startup_event)
 
         is_streaming = False
         f = None
@@ -108,9 +133,17 @@ class MusicDaemon:
                             self.playlist = self.PLAYLIST
 
                             filename = str(self.now_playing["location"])
-                            s.set_metadata({'song': "{0} - {1}".format(self.now_playing["artist"], self.now_playing["title"])})
+                            s.set_metadata(
+                                {'song': "{0} - {1}".format(self.now_playing["artist"], self.now_playing["title"])}
+                            )
 
-                            # TODO: 재생 시작 콜백
+                            if (
+                                self.on_play_callback is None or
+                                self.on_play_callback is ""
+                            ):
+                                pass
+                            else:
+                                self.request_callback(self.on_play_callback, self.on_play_event)
 
                             f = open(filename, 'rb')
                         except IndexError:
@@ -124,7 +157,14 @@ class MusicDaemon:
                         f.close()
                         self.now_playing = None
 
-                        # TODO: 재생 종료 콜백
+                        if (
+                            self.on_stop_callback is None or
+                            self.on_stop_callback is ""
+                        ):
+                            pass
+                        else:
+                            self.request_callback(self.on_stop_callback, self.on_stop_event)
+
                     else:
                         s.send(chunk)
                         s.sync()
@@ -139,29 +179,52 @@ class MusicDaemon:
     def stop(self):
         self.__stop = True
 
-    def process_queue(self, cmd):
-        try:
-            location = cmd.data["location"]
-        except KeyError as e:
-            self.logger.log('error', str(e))
+    def request_callback(self, url, callback):
+        if sys.version_info >= (3, 7):
+            tasks = [self.request(url, callback)]
+            asyncio.run(asyncio.wait(tasks))
         else:
-            try:
-                artist = cmd.data["artist"]
-            except KeyError as e:
-                self.logger.log('error', str(e))
-            else:
-                try:
-                    title = cmd.data["title"]
-                except KeyError as e:
-                    self.logger.log('error', str(e))
-                else:
-                    self.playlist.append(cmd.data)
-                    self.PLAYLIST.append(cmd.data)
-                    self.logger.log('QUEUE', {"location": location, "artist": artist, "title": title})
+            futures = [self.request(url, callback)]
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(asyncio.wait(futures))
 
-    def process_unqueue(self, cmd):
+    def on_startup_event(self, resp):
         try:
-            index_at = cmd.data["index_at"]
+            data = json.loads(resp)
+            self.process_setlist(data)
+        except Exception as e:
+            self.logger.log('on_startup_error', str(e))
+
+    def on_play_event(self, resp):
+        try:
+            data = json.loads(resp)
+            self.process_queue(data)
+        except Exception as e:
+            self.logger.log('on_play_error', str(e))
+
+    def on_stop_event(self, resp):
+        try:
+            data = json.loads(resp)
+            self.process_queue(data)
+        except Exception as e:
+            self.logger.log('on_stop_error', str(e))
+
+    async def request(self, url, callback):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                response = await resp.read()
+                callback(response)
+
+    def process_queue(self, data):
+        is_no_error = self.validate_queue(data)
+        if is_no_error:
+            self.playlist.append(data)
+            self.PLAYLIST.append(data)
+            self.logger.log('QUEUE', data)
+
+    def process_unqueue(self, data):
+        try:
+            index_at = data["index_at"]
         except KeyError as e:
             self.logger.log('error', str(e))
         else:
@@ -169,9 +232,23 @@ class MusicDaemon:
             self.PLAYLIST.pop(index_at)
             self.logger.log('UNQUEUE', {"index_at": index_at})
 
-    def process_setlist(self, cmd):
+    def process_setlist(self, data):
         is_no_error = False
-        for queue in cmd.data:
+        for queue in data:
+            is_no_error = self.validate_queue(queue)
+
+        if is_no_error or len(data) == 0:
+            self.playlist = data
+            self.PLAYLIST = data
+            self.logger.log('SETLIST', self.playlist)
+
+    def validate_queue(self, queue):
+        is_no_error = False
+        try:
+            _ = queue["id"]
+        except KeyError as e:
+            self.logger.log('error', str(e))
+        else:
             try:
                 _ = queue["location"]
             except KeyError as e:
@@ -189,10 +266,7 @@ class MusicDaemon:
                     else:
                         is_no_error = True
 
-        if is_no_error or len(cmd.data) == 0:
-            self.playlist = cmd.data
-            self.PLAYLIST = cmd.data
-            self.logger.log('SETLIST', self.playlist)
+        return is_no_error
 
     def loop(self):
         if cmd_queue is not None and cmd_queue.empty() is False:
@@ -203,11 +277,11 @@ class MusicDaemon:
                 self.logger.log('CMD RECV', cmd)
 
                 if QUEUE == cmd.command:
-                    self.process_queue(cmd)
+                    self.process_queue(cmd.data)
                 elif UNQUEUE == cmd.command:
-                    self.process_unqueue(cmd)
+                    self.process_unqueue(cmd.data)
                 elif SETLIST == cmd.command:
-                    self.process_setlist(cmd)
+                    self.process_setlist(cmd.data)
             else:
                 # If else, rollback to queue
                 cmd_queue.put(cmd)

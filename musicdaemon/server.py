@@ -120,6 +120,12 @@ class TCPHandler(BaseHTTPRequestHandler):
             return False
 
         try:
+            _ = payload["id"]
+        except KeyError as e:
+            self.log_message("'id' is a must have requirement")
+            return False
+
+        try:
             _ = payload["location"]
         except KeyError as e:
             self.log_message("'location' is a must have requirement")
@@ -164,6 +170,12 @@ class TCPHandler(BaseHTTPRequestHandler):
             return False
 
         for queue in payload:
+            try:
+                _ = queue["id"]
+            except KeyError as e:
+                self.log_message("'id' is a must have requirement")
+                return False
+
             try:
                 _ = queue["location"]
             except KeyError as e:
