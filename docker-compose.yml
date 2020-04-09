@@ -9,6 +9,8 @@ services:
     networks:
       apoweroftrance:
         ipv4_address: 10.0.0.2
+    volumes:
+      - ./icecast/icecast.xml:/usr/share/icecast/icecast.xml
 
   musicdeamon:
 #    build: musicdaemon
@@ -24,6 +26,7 @@ services:
       apoweroftrance:
         ipv4_address: 10.0.0.3
     volumes:
+      - ./musicdaemon/config.ini:/opt/musicdaemon/config.ini
       - ./apoweroftrance-525255671db2.json:/root/service-account-key.json
 #      - ./volumes:/srv/media
 
