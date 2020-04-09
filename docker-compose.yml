@@ -2,8 +2,8 @@ version: '2'
 
 services:
   icecast:
-#    image: vitiman/alpine-icecast:latest
-    build: icecast
+#    build: icecast
+    image: gcr.io/apoweroftrance/icecast2:2.4.4
     ports:
       - "8000:8000"
     networks:
@@ -11,14 +11,21 @@ services:
         ipv4_address: 10.0.0.2
 
   musicdeamon:
-    build: musicdaemon
+#    build: musicdaemon
+    image: gcr.io/apoweroftrance/musicdaemon:0.0.1
+    environment:
+      FUSE: gcs
+      BUCKET: apoweroftrance-media
+      GOOGLE_APPLICATION_CREDENTIALS: /root/service-account-key.json
+    privileged: true
     ports:
       - "9000:9000"
     networks:
       apoweroftrance:
         ipv4_address: 10.0.0.3
     volumes:
-      - ./volumes:/srv/media
+      - ./apoweroftrance-525255671db2.json:/root/service-account-key.json
+#      - ./volumes:/srv/media
 
   backend:
     build: backend
