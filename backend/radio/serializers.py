@@ -1,4 +1,5 @@
 from datetime import datetime
+from dateutil.tz import tzlocal
 from rest_framework import serializers
 from accounts.serializers import UserSerializer
 from .models import (
@@ -26,7 +27,7 @@ class TrackSerializer(serializers.ModelSerializer):
         allow_null=False, allow_blank=False
     )
 
-    uploaded_at = serializers.DateTimeField(default=datetime.now(), default_timezone="Asia/Seoul")
+    uploaded_at = serializers.DateTimeField(default=datetime.now(), default_timezone=tzlocal())
     last_played_at = serializers.DateTimeField(allow_null=True, allow_blank=True)
 
     class Meta:
@@ -47,7 +48,7 @@ class LikeSerializer(serializers.ModelSerializer):
 
     like = serializers.BooleanField(default=None, allow_null=True, allow_blank=True)
 
-    created_at = serializers.DateTimeField(default=datetime.now(), default_timezone="Asia/Seoul")
+    created_at = serializers.DateTimeField(default=datetime.now(), default_timezone=tzlocal())
 
     class Meta:
         model = Like

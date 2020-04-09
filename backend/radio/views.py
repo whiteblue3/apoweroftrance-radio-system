@@ -5,11 +5,11 @@ from django.shortcuts import render
 Namespace: radio
 
 Required API
-- GET track/{id}: 특정 곡에 대한 정보 조회. AllowAny
-- GET track/all: 모든 서비스중인 트랙. 페이징 처리 필요. AllowAny
-- POST track/like: 사용자가 특정 트랙을 좋아요, 싫어요
-- POST track/upload: 신규 트랙 업로드
-- DELETE track/delete: 트랙 삭제. 플레이큐에서도 제거. 뮤직데몬에도 반영
+- GET track: 모든 서비스중인 트랙. 페이징 처리 필요. AllowAny
+- GET track/{track_id}: 특정 곡에 대한 정보 조회. AllowAny
+- POST track: 신규 트랙 업로드
+- DELETE track/{track_id}: 트랙 삭제. 플레이큐에서도 제거. 뮤직데몬에도 반영
+- POST like/{track_id}: 사용자가 특정 트랙을 좋아요, 싫어요 및 해제
 - GET playqueue: 현재 플레이 리스트 조회. 페이징 처리 필요. AllowAny
 
 Admin/Staff ONLY

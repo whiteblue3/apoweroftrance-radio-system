@@ -1,4 +1,10 @@
+from datetime import datetime
+from dateutil.tz import tzlocal
 from django_utils import storage
+
+
+def now():
+    return str(datetime.now(tz=tzlocal()).isoformat())
 
 
 def upload_audio(request):
