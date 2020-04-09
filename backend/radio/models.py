@@ -5,11 +5,17 @@ from django.utils.translation import ugettext_lazy as _
 
 
 CHANNEL = [
-    ("yui", _("Trance")),
-    ("alice", _("POP")),
-    ("miku", _("Subculture")),
+    ("yui", _("YUI")),
+    # ("alice", _("ALICE")),
+    # ("miku", _("MIKU")),
 ]
 DEFAULT_CHANNEL = "yui"
+
+FORMAT = [
+    ("mp3", _("MP3")),
+    # ("aac", _("AAC")),
+]
+DEFAULT_FORMAT = "mp3"
 
 
 class Track(models.Model):
@@ -18,9 +24,12 @@ class Track(models.Model):
     )
 
     location = models.FilePathField(null=False, blank=False)
+    format = models.CharField(choices=FORMAT, default=DEFAULT_FORMAT, null=False, blank=False, max_length=3)
 
-    name = models.CharField(null=False, blank=False, max_length=100)
+    title = models.CharField(null=False, blank=False, max_length=100)
     artist = models.CharField(null=False, blank=False, max_length=30)
+
+    description = models.TextField(null=True, blank=True)
 
     duration = models.TimeField(null=False, blank=False)
     play_count = models.PositiveIntegerField(default=0, null=False)
@@ -38,7 +47,25 @@ class Track(models.Model):
         verbose_name_plural = '음원'
 
     def __str__(self):
-        return "%s - %s" % (self.artist, self.name)
+        return "%s - %s" % (self.artist, self.title)
+
+
+class Like(models.Model):
+    track = models.ForeignKey(
+        'radio.Track', on_delete=models.CASCADE, null=False, blank=False
+    )
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=False, blank=False
+    )
+
+    like = models.BooleanField(default=None, null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = '좋아요'
+        verbose_name_plural = '좋아요'
 
 
 class PlayHistory(models.Model):
