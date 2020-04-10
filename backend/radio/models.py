@@ -25,6 +25,7 @@ class Track(models.Model):
 
     location = models.FilePathField(null=False, blank=False)
     format = models.CharField(choices=FORMAT, default=DEFAULT_FORMAT, null=False, blank=False, max_length=3)
+    is_service = models.BooleanField(default=True, null=False, blank=False)
 
     title = models.CharField(null=False, blank=False, max_length=100)
     artist = models.CharField(null=False, blank=False, max_length=30)

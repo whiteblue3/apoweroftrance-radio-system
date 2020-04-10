@@ -322,11 +322,11 @@ AES_SECRET = "I6V8HN5DMUPM4AES"
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = "hd2dj07@gmail.com"
-EMAIL_HOST_PASSWORD = '"!Triace07"'
-# EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "apoweroftrance@gmail.com"
+EMAIL_HOST_PASSWORD = "\"!Triace07\""
+EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
+SERVER_EMAIL = EMAIL_HOST_USER
 
 #################
 # Account Setup #
@@ -345,6 +345,24 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 
 DOMAIN_URL = "127.0.0.1:8080"
 ACCOUNT_API_PATH = "/v1/user"
+
+
+ACTIVATE_ACCOUNT_EMAIL_TITLE = "회원가입 이메일 인증 안내"
+ACTIVATE_ACCOUNT_EMAIL_BODY = "안녕하세요.\n" \
+                              "\n" \
+                              "A Power of Trance 의 회원이 되신 것을 진심으로 축하드립니다\n" \
+                              "아래 링크를 클릭하면 회원가입 인증이 완료됩니다\n" \
+                              "\n" \
+                              "%s\n" \
+                              "\n" \
+                              "감사합니다\n"
+ACTIVATE_ACCOUNT_EMAIL_HTML = "<!DOCTYPE html><html lang='kr'><body>안녕하세요.<br />" \
+                              "<br />" \
+                              "A Power of Trance 의 회원이 되신 것을 진심으로 축하드립니다<br />" \
+                              "아래 링크를 클릭하면 회원가입 인증이 완료됩니다<br />" \
+                              "<br />" \
+                              "<a href='%s' target='_blank'>회원가입 완료하기</a><br />" \
+                              "감사합니다</body></html>"
 
 RESET_PASSWORD_EMAIL_TITLE = "비밀번호 재설정 안내"
 RESET_PASSWORD_EMAIL_BODY = "회원님 안녕하세요.\n" \

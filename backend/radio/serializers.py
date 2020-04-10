@@ -13,6 +13,7 @@ class TrackSerializer(serializers.ModelSerializer):
 
     location = serializers.FilePathField(allow_null=False, allow_blank=False)
     format = serializers.ChoiceField(choices=FORMAT, default=DEFAULT_FORMAT, allow_null=False, allow_blank=False)
+    is_service = serializers.BooleanField(default=True, allow_null=False, allow_blank=False)
 
     title = serializers.CharField(allow_null=False, allow_blank=False, max_length=100)
     artist = serializers.CharField(allow_null=False, allow_blank=False, max_length=30)
@@ -34,7 +35,7 @@ class TrackSerializer(serializers.ModelSerializer):
         model = Track
         fields = (
             'id', 'user',
-            'location', 'format',
+            'location', 'format', 'is_service',
             'title', 'artist', 'description',
             'duration', 'play_count',
             'channel', 'uploaded_at', 'last_played_at',
