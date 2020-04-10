@@ -9,6 +9,3 @@ python3 manage.py makemigrations radio
 python3 manage.py migrate
 
 uwsgi --ini uwsgi.ini
-
-#python3 manage.py runsslserver 0.0.0.0:8080
-#exec "$@"
