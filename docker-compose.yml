@@ -1,9 +1,11 @@
-version: '2'
+version: '3'
 
 services:
   icecast:
+    container_name: icecast
+    restart: always
 #    build: icecast
-    image: gcr.io/apoweroftrance/icecast2:2.4.4
+    image: gcr.io/apoweroftrance/icecast2:latest
     ports:
       - "8000:8000"
     networks:
@@ -13,8 +15,10 @@ services:
       - ./icecast.xml:/usr/share/icecast/icecast.xml
 
   musicdeamon:
+    container_name: musicdaemon
+    restart: always
 #    build: musicdaemon
-    image: gcr.io/apoweroftrance/musicdaemon:0.0.1
+    image: gcr.io/apoweroftrance/musicdaemon:latest
     environment:
       FUSE: gcs
       BUCKET: apoweroftrance-media
@@ -30,8 +34,31 @@ services:
       - ./apoweroftrance-525255671db2.json:/root/service-account-key.json
 #      - ./volumes:/srv/media
 
-  backend:
-    build: backend
+  nginx:
+    container_name: nginx
+    restart: always
+    image: gcr.io/apoweroftrance/nginx:latest
+#    build: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - backend_data:/backend
+      - ./nginx/config/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/config/sites-available/default:/etc/nginx/sites-available/default
+      - ./nginx/config/useragent.rules:/etc/nginx/useragent.rules
+      - ./nginx/config/cors:/etc/nginx/cors
+      - ./nginx/config/whitelist.conf:/etc/nginx/whitelist.conf
+    depends_on:
+      - radio
+    networks:
+      apoweroftrance:
+        ipv4_address: 10.0.0.4
+
+  radio:
+    container_name: radio
+    restart: always
+    image: gcr.io/apoweroftrance/django:latest
+#    build: backend
     environment:
       DB_NAME: radio-dev
       DB_HOST: 34.66.75.237
@@ -39,13 +66,16 @@ services:
       DB_PASSWORD: ?!Triace07
       DB_PORT: 5432
       DJANGO_SETTINGS: local
-    ports:
-      - "8080:8080"
-    networks:
-      apoweroftrance:
-        ipv4_address: 10.0.0.4
     volumes:
+      - backend_data:/backend
       - ~/.config/gcloud/:/root/.config/gcloud
+
+volumes:
+  backend_data:
+    driver_opts:
+      type: none
+      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/backend #NOTE needs full path (~ doesn't work)
+      o: bind
 
 networks:
   apoweroftrance:
@@ -55,4 +85,3 @@ networks:
     ipam:
       config:
         - subnet: 10.0.0.0/16
-          gateway: 10.0.0.1

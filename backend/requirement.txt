@@ -1,6 +1,13 @@
 django>=2.0,<3.0
 
+django-admin-rangefilter
+django-admin-list-filter-dropdown
+django-admin-numeric-filter
+django-monthfield
+
 django-pgcrypto
+
+uwsgi==2.0.18
 
 django_utils-0.0.1.tar.gz
 accounts-0.0.1.tar.gz
