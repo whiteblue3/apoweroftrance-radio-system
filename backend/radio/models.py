@@ -44,8 +44,8 @@ class Track(models.Model):
     last_played_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        verbose_name = '음원'
-        verbose_name_plural = '음원'
+        verbose_name = 'Music'
+        verbose_name_plural = 'Music'
 
     def __str__(self):
         return "%s - %s" % (self.artist, self.title)
@@ -65,8 +65,8 @@ class Like(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = '좋아요'
-        verbose_name_plural = '좋아요'
+        verbose_name = 'Like'
+        verbose_name_plural = 'Like'
 
 
 class PlayHistory(models.Model):
@@ -79,8 +79,8 @@ class PlayHistory(models.Model):
     played_at = models.DateTimeField(null=False, blank=False)
 
     class Meta:
-        verbose_name = '송출 이력'
-        verbose_name_plural = '송출 이력'
+        verbose_name = 'Play History'
+        verbose_name_plural = 'Play History'
 
 
 class PlayQueue(models.Model):
@@ -93,5 +93,5 @@ class PlayQueue(models.Model):
     will_play_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        verbose_name = '편성표'
-        verbose_name_plural = '편성표'
+        verbose_name = 'Play List'
+        verbose_name_plural = 'Play List'

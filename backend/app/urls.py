@@ -22,6 +22,11 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
 
+admin.site.site_header = "A Power of Trance"
+admin.site.site_title = "Welcome to A Power of Trance"
+admin.site.index_title = "Radio Admin"
+
+
 schema_url_patterns = [
     path('v1/user/', include('accounts.urls', namespace='user')),
     path('v1/radio/', include('radio.urls', namespace='radio')),

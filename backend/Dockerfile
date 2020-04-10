@@ -2,12 +2,10 @@ FROM python:3.6-slim
 
 ENV PYTHONUNBUFFERED 0
 
-VOLUME ["/backend"]
-
 #COPY . /backend
 WORKDIR /backend
 
-COPY startup.sh /backend/startup.sh
+COPY ./startup.sh /backend/startup.sh
 
 RUN apt-get -y update
 RUN apt-get -y install build-essential vim
