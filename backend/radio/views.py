@@ -20,5 +20,5 @@ Admin/Staff ONLY
 Required Callback
 - GET on_startup/{channel}: 서비스 구동시 최초의 플레이 리스트 셋업
 - POST on_play/{channel}: 플레이 History 기록 
-- GET on_stop/{channel}: 새로운 곡을 플레이 리스트에 queuein
+- POST on_stop/{channel}: 새로운 곡을 플레이 리스트에 queuein
 """
