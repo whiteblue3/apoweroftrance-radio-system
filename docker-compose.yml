@@ -17,8 +17,8 @@ services:
   musicdeamon:
     container_name: musicdaemon
     restart: always
-#    build: musicdaemon
-    image: gcr.io/apoweroftrance/musicdaemon:latest
+    build: musicdaemon
+#    image: gcr.io/apoweroftrance/musicdaemon:latest
     environment:
       FUSE: gcs
       BUCKET: apoweroftrance-media
@@ -30,6 +30,7 @@ services:
       apoweroftrance:
         ipv4_address: 10.0.0.3
     volumes:
+      - musicdaemon_data:/opt/musicdaemon
       - ./config.ini:/opt/musicdaemon/config.ini
       - ./apoweroftrance-525255671db2.json:/root/service-account-key.json
 #      - ./volumes:/srv/media
@@ -42,7 +43,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - backend_data:/backend
+      - radio_data:/backend
       - ./nginx/config/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/config/sites-available/default:/etc/nginx/sites-available/default
       - ./nginx/config/useragent.rules:/etc/nginx/useragent.rules
@@ -67,14 +68,19 @@ services:
       DB_PORT: 5432
       DJANGO_SETTINGS: local
     volumes:
-      - backend_data:/backend
+      - radio_data:/backend
       - ~/.config/gcloud/:/root/.config/gcloud
 
 volumes:
-  backend_data:
+  radio_data:
     driver_opts:
       type: none
       device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/backend #NOTE needs full path (~ doesn't work)
+      o: bind
+  musicdaemon_data:
+    driver_opts:
+      type: none
+      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/musicdaemon #NOTE needs full path (~ doesn't work)
       o: bind
 
 networks:
