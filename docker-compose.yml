@@ -18,7 +18,7 @@ services:
     restart: always
     image: gcr.io/apoweroftrance/musicdaemon:latest
     environment:
-      FUSE: gcs
+      FUSE: none
       BUCKET: apoweroftrance-media
       GOOGLE_APPLICATION_CREDENTIALS: /root/service-account-key.json
     privileged: true
