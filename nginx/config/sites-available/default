@@ -1,5 +1,6 @@
 upstream uwsgi {
     server unix:/backend/app.sock;
+    #server http://10.0.0.5:8080;
 }
 
 # HTTP to HTTPS redirect forcely TLS
@@ -50,7 +51,8 @@ server {
         #try_files $uri $uri/ /;
 
         uwsgi_pass uwsgi;
-        include uwsgi_params;
+        #proxy_pass uwsgi;
+        include /backend/uwsgi_params;
         proxy_set_header REMOTE_ADDR $remote_addr;
     }
 

@@ -16,11 +16,12 @@ services:
   musicdeamon:
     container_name: musicdaemon
     restart: always
-    image: gcr.io/apoweroftrance/musicdaemon:latest
+#    image: gcr.io/apoweroftrance/musicdaemon:latest
+    build: musicdaemon
     environment:
-      FUSE: none
+      FUSE: gcs
       BUCKET: apoweroftrance-media
-      GOOGLE_APPLICATION_CREDENTIALS: /root/service-account-key.json
+      GOOGLE_APPLICATION_CREDENTIALS: /opt/musicdaemon/service-account-key.json
     privileged: true
     ports:
       - "9000:9000"
@@ -30,7 +31,7 @@ services:
     volumes:
       - musicdaemon_data:/opt/musicdaemon
       - ./config.ini:/opt/musicdaemon/config.ini
-      - ./apoweroftrance-525255671db2.json:/root/service-account-key.json
+      - ./apoweroftrance-525255671db2.json:/opt/musicdaemon/service-account-key.json
 #      - ./volumes:/srv/media
 
   nginx:
@@ -55,7 +56,8 @@ services:
   radio:
     container_name: radio
     restart: always
-    image: gcr.io/apoweroftrance/django:latest
+#    image: gcr.io/apoweroftrance/django:latest
+    build: backend
     environment:
       DB_NAME: radio-dev
       DB_HOST: 34.66.75.237
