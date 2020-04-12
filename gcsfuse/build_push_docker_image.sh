@@ -1,7 +1,7 @@
 #!/bin/bash
 
-APP_NAME=nginx
-VERSION=1.17.9
+APP_NAME=gcsfuse
+VERSION=0.0.1
 
 docker build -t ${APP_NAME}:${VERSION} .
 docker tag ${APP_NAME}:${VERSION} gcr.io/apoweroftrance/${APP_NAME}:${VERSION}

@@ -18,11 +18,15 @@ services:
     restart: always
 #    image: gcr.io/apoweroftrance/musicdaemon:latest
     build: musicdaemon
-    environment:
-      FUSE: gcs
-      BUCKET: apoweroftrance-media
-      GOOGLE_APPLICATION_CREDENTIALS: /opt/musicdaemon/service-account-key.json
+#    environment:
+#      FUSE: gcs
+#      BUCKET: apoweroftrance-media
+#      GOOGLE_APPLICATION_CREDENTIALS: /opt/musicdaemon/service-account-key.json
     privileged: true
+    cap_add:
+      - SYS_ADMIN
+    devices:
+      - "/dev/fuse"
     ports:
       - "9000:9000"
     networks:
@@ -31,8 +35,8 @@ services:
     volumes:
       - musicdaemon_data:/opt/musicdaemon
       - ./config.ini:/opt/musicdaemon/config.ini
-      - ./apoweroftrance-525255671db2.json:/opt/musicdaemon/service-account-key.json
-#      - ./volumes:/srv/media
+#      - ./apoweroftrance-525255671db2.json:/opt/musicdaemon/service-account-key.json
+      - ./volumes:/srv/media:ro
 
   nginx:
     container_name: nginx
@@ -56,18 +60,19 @@ services:
   radio:
     container_name: radio
     restart: always
-#    image: gcr.io/apoweroftrance/django:latest
-    build: backend
+    image: gcr.io/apoweroftrance/radio:latest
+#    build: backend
     environment:
       DB_NAME: radio-dev
       DB_HOST: 34.66.75.237
       DB_USERNAME: postgres
       DB_PASSWORD: ?!Triace07
       DB_PORT: 5432
-      DJANGO_SETTINGS: local
+      GOOGLE_APPLICATION_CREDENTIALS: /backend/service-account-key.json
     volumes:
       - radio_data:/backend
-      - ~/.config/gcloud/:/root/.config/gcloud
+      - ./apoweroftrance-525255671db2.json:/backend/service-account-key.json
+#      - ~/.config/gcloud/:/home/ubuntu/.config/gcloud
 
 volumes:
   radio_data:
