@@ -16,27 +16,34 @@ services:
   musicdeamon:
     container_name: musicdaemon
     restart: always
-#    image: gcr.io/apoweroftrance/musicdaemon:latest
-    build: musicdaemon
-#    environment:
-#      FUSE: gcs
-#      BUCKET: apoweroftrance-media
-#      GOOGLE_APPLICATION_CREDENTIALS: /opt/musicdaemon/service-account-key.json
-    privileged: true
-    cap_add:
-      - SYS_ADMIN
-    devices:
-      - "/dev/fuse"
+    image: gcr.io/apoweroftrance/musicdaemon:latest
+#    build: musicdaemon
     ports:
       - "9000:9000"
+    depends_on:
+      - gcsfuse
     networks:
       apoweroftrance:
         ipv4_address: 10.0.0.3
     volumes:
       - musicdaemon_data:/opt/musicdaemon
       - ./config.ini:/opt/musicdaemon/config.ini
-#      - ./apoweroftrance-525255671db2.json:/opt/musicdaemon/service-account-key.json
-      - ./volumes:/srv/media:ro
+#      - ./volumes:/srv/media:ro
+
+
+  gcsfuse:
+    container_name: gcsfuse
+    image: gcr.io/apoweroftrance/gcsfuse:latest
+    environment:
+      MOUNT_POINT: /srv/media
+      BUCKET: apoweroftrance-media
+    privileged: true
+    cap_add:
+      - SYS_ADMIN
+    devices:
+      - "/dev/fuse"
+    volumes:
+      - ./apoweroftrance-525255671db2.json:/etc/gcloud/service-account-key.json
 
   nginx:
     container_name: nginx

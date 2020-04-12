@@ -1,15 +1,24 @@
-FROM debian:stretch-slim
-ENV GCSFUSE_REPO gcsfuse-stretch
+FROM ubuntu:xenial
 
-RUN apt-get update && apt-get install --yes --no-install-recommends \
-    ca-certificates \
-    curl \
-    gnupg \
-  && echo "deb http://packages.cloud.google.com/apt $GCSFUSE_REPO main" \
-    | tee /etc/apt/sources.list.d/gcsfuse.list \
-  && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
-  && apt-get update \
-  && apt-get install --yes gcsfuse \
-  && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+ENV MOUNT_POINT /mnt
 
-CMD ["sleep", "3600"]
+# ignore when FUSE is none
+ENV BUCKET ""
+
+# using when FUSE is gcs
+ENV GOOGLE_APPLICATION_CREDENTIALS /etc/gcloud/service-account-key.json
+
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates wget \
+  && echo "deb http://packages.cloud.google.com/apt cloud-sdk-xenial main" | tee /etc/apt/sources.list.d/google-cloud.sdk.list \
+  && echo "deb http://packages.cloud.google.com/apt gcsfuse-xenial main" | tee /etc/apt/sources.list.d/gcsfuse.list \
+  && wget -qO- https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
+  && apt-get update && apt-get install -y --no-install-recommends google-cloud-sdk gcsfuse \
+  && rm -rf /var/lib/apt/lists
+
+WORKDIR /etc/gcloud
+
+VOLUME /mnt
+
+COPY mount.sh /etc/gcloud
+
+ENTRYPOINT ["/etc/gcloud/mount.sh"]
