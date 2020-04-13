@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+export UWSGI_ROUTE_HOST="^(?!${NGINX}$) break:400"
+
 gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
 
 cd /backend
