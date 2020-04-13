@@ -2,12 +2,7 @@ FROM python:3.6-slim
 
 ENV PYTHONUNBUFFERED 0
 
-# using when FUSE is gcs
-ENV GOOGLE_APPLICATION_CREDENTIALS /backend/service-account-key.json
-
 RUN mkdir /backend
-# Uncomment when production
-#COPY . /backend/
 WORKDIR /backend
 
 RUN apt-get update && apt-get -y install --no-install-recommends build-essential vim gnupg curl \
@@ -24,29 +19,36 @@ RUN apt-get install --no-install-recommends -y google-cloud-sdk \
 
 RUN rm -f /var/cache/apt/archives/*.rpm /var/cache/apt/*.bin /var/lib/apt/lists/*.*;
 
+ENV NGINX 127.0.0.1:80
+
 ENV DJANGO_SETTINGS_MODULE=app.settings
 ENV UWSGI_WSGI_FILE=/backend/app/wsgi.py
-ENV UWSGI_SOCKET=/backend/app.sock UWSGI_CHMOD_SOCKET=644 UWSGI_MASTER=1 UWSGI_HTTP_AUTO_CHUNKED=1 UWSGI_HTTP_KEEPALIVE=1 UWSGI_LAZY_APPS=1 UWSGI_WSGI_ENV_BEHAVIOR=holy
+#ENV UWSGI_SOCKET=/backend/app.sock UWSGI_CHMOD_SOCKET=644
+ENV UWSGI_HTTP=0.0.0.0:8080
+ENV UWSGI_MASTER=1 UWSGI_HTTP_AUTO_CHUNKED=1 UWSGI_HTTP_KEEPALIVE=1 UWSGI_LAZY_APPS=1 UWSGI_WSGI_ENV_BEHAVIOR=holy
 ENV UWSGI_WORKERS=2 UWSGI_THREADS=4
 ENV UWSGI_STATIC_MAP="/static/=/backend/.static/" UWSGI_STATIC_EXPIRES_URI="/static/.*\.[a-f0-9]{12,}\.(css|js|png|jpg|jpeg|gif|ico|woff|ttf|otf|svg|scss|map|txt) 315360000"
-#ENV UWSGI_ROUTE_HOST="^(?!10.0.0.4:8080$) break:400"
+ENV UWSGI_ROUTE_HOST="^(?!${NGINX}$) break:400"
+
+EXPOSE 8080
 
 ENV USER=ubuntu
 RUN useradd -rm -d /home/${USER} -s /bin/bash --no-log-init ${USER}
 
-#RUN chown -R ${USER}:${USER} /backend
+RUN chown -R ${USER}:${USER} /backend
 
 COPY ./startup.sh /backend/startup.sh
 RUN chmod a+x /backend/startup.sh
 
-#COPY ./django_utils-0.0.1.tar.gz /backend/
-#COPY ./accounts-0.0.1.tar.gz /backend/
-#COPY ./requirement.txt /backend/
-
 RUN python3 -m pip install --upgrade pip \
     && python3 -m pip install uwsgi==2.0.18
 
+ENV GOOGLE_APPLICATION_CREDENTIALS /etc/gcloud/service-account-key.json
+
+RUN mkdir -p /etc/gcloud
+
 # Uncomment when production
+#COPY . /backend/
 #RUN python3 -m pip install --no-cache-dir -r requirement.txt
 
 USER ${USER}

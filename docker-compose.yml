@@ -18,41 +18,34 @@ services:
     restart: always
     image: gcr.io/apoweroftrance/musicdaemon:latest
 #    build: musicdaemon
+    environment:
+      FUSE: gcs
+      BUCKET: apoweroftrance-media
+      MOUNT_POINT: /srv/media
+    privileged: true
+    cap_add:
+      - SYS_ADMIN
+    devices:
+      - "/dev/fuse"
     ports:
       - "9000:9000"
-    depends_on:
-      - gcsfuse
     networks:
       apoweroftrance:
         ipv4_address: 10.0.0.3
     volumes:
       - musicdaemon_data:/opt/musicdaemon
       - ./config.ini:/opt/musicdaemon/config.ini
-#      - ./volumes:/srv/media:ro
-
-
-  gcsfuse:
-    container_name: gcsfuse
-    image: gcr.io/apoweroftrance/gcsfuse:latest
-    environment:
-      MOUNT_POINT: /srv/media
-      BUCKET: apoweroftrance-media
-    privileged: true
-    cap_add:
-      - SYS_ADMIN
-    devices:
-      - "/dev/fuse"
-    volumes:
       - ./apoweroftrance-525255671db2.json:/etc/gcloud/service-account-key.json
+#      - ./volumes:/srv/media:ro
 
   nginx:
     container_name: nginx
     restart: always
     image: gcr.io/apoweroftrance/nginx:latest
+#    build: nginx
     ports:
       - "80:80"
     volumes:
-      - radio_data:/backend
       - ./nginx/config/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/config/sites-available/default:/etc/nginx/sites-available/default
       - ./nginx/config/useragent.rules:/etc/nginx/useragent.rules
@@ -75,11 +68,15 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: ?!Triace07
       DB_PORT: 5432
-      GOOGLE_APPLICATION_CREDENTIALS: /backend/service-account-key.json
+      NGINX: 10.0.0.4:80
+    ports:
+      - "8080:8080"
+    networks:
+      apoweroftrance:
+        ipv4_address: 10.0.0.5
     volumes:
       - radio_data:/backend
-      - ./apoweroftrance-525255671db2.json:/backend/service-account-key.json
-#      - ~/.config/gcloud/:/home/ubuntu/.config/gcloud
+      - ./apoweroftrance-525255671db2.json:/etc/gcloud/service-account-key.json
 
 volumes:
   radio_data:
