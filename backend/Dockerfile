@@ -19,7 +19,7 @@ RUN apt-get install --no-install-recommends -y google-cloud-sdk \
 
 RUN rm -f /var/cache/apt/archives/*.rpm /var/cache/apt/*.bin /var/lib/apt/lists/*.*;
 
-ENV NGINX 127.0.0.1:80
+ENV NGINX=127.0.0.1:80
 
 ENV DJANGO_SETTINGS_MODULE=app.settings
 ENV UWSGI_WSGI_FILE=/backend/app/wsgi.py
