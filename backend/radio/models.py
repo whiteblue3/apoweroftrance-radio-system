@@ -10,12 +10,21 @@ CHANNEL = [
     # ("miku", _("MIKU")),
 ]
 DEFAULT_CHANNEL = "yui"
-
-FORMAT = [
-    ("mp3", _("MP3")),
-    # ("aac", _("AAC")),
+SERVICE_CHANNEL = [
+    "yui"
 ]
-DEFAULT_FORMAT = "mp3"
+
+FORMAT_MP3 = "mp3"
+FORMAT_M4A = "m4a"
+FORMAT = [
+    (FORMAT_MP3, _("MP3")),
+    # (FORMAT_M4A, _("M4A")),
+]
+DEFAULT_FORMAT = FORMAT_MP3
+SUPPORT_FORMAT = [
+    FORMAT_MP3,
+    # FORMAT_M4A
+]
 
 
 class Track(models.Model):

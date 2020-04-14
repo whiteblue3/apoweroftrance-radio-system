@@ -24,3 +24,6 @@ pyjwt
 
 # AES
 pycrypto
+
+# Audio Tag
+mutagen
