@@ -516,7 +516,7 @@ class PlayQueueResetAPI(RetrieveAPIView):
 
         PlayQueue.objects.filter(channel__icontains=channel).delete()
 
-        random_tracks = get_random_track(channel, 30)
+        random_tracks = get_random_track(channel, 8)
 
         response = []
         response_daemon_data = []
@@ -731,16 +731,7 @@ class CallbackOnStopAPI(CreateAPIView):
         if channel not in SERVICE_CHANNEL:
             raise ValidationError(_("Invalid service channel"))
 
-        # Remove last played track from queue
-        try:
-            queue = PlayQueue.objects.filter(channel__icontains=channel).order_by('id').distinct()[0]
-        except IndexError:
-            raise ValidationError(_("Out of index"))
-        else:
-            queue.delete()
-
-        # Select random track except for last played in 3 hours
-        random_tracks = get_random_track(channel, 1)
+        random_tracks = get_random_track(channel, 1, True)
 
         if len(random_tracks) > 0:
             # Add next track to queue at last
