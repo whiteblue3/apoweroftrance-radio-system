@@ -1,3 +1,8 @@
 from django.contrib import admin
 
-# Register your models here.
+"""
+- Track admin
+- PlayQueue admin
+- PlayHistory view
+"""
+

@@ -16,12 +16,15 @@ services:
   musicdeamon:
     container_name: musicdaemon
     restart: always
-    image: gcr.io/apoweroftrance/musicdaemon:latest
-#    build: musicdaemon
+#    image: gcr.io/apoweroftrance/musicdaemon:latest
+    build: musicdaemon
     environment:
       FUSE: gcs
       BUCKET: apoweroftrance-media
       MOUNT_POINT: /srv/media
+      WAIT_SERVICE: 1
+      WAIT_URL: 10.0.0.5
+      WAIT_PORT: 8090
     privileged: true
     cap_add:
       - SYS_ADMIN

@@ -713,6 +713,30 @@ class CallbackOnPlayAPI(CreateAPIView):
         track.play_count += 1
         track.save()
 
+        # Sync playlist
+        queryset = PlayQueue.objects.filter(channel__icontains=channel)
+        count_queryset = queryset.count()
+        if count_queryset > 8:
+            count_queryset = 8
+        # Set index 0 as nowplaying, so ignore it
+        queuelist = queryset.order_by('id').distinct()[1:count_queryset]
+        response_daemon_data = []
+        for queue in queuelist:
+            queue_track = queue.track
+            response_daemon_data.append({
+                "id": queue_track.id,
+                "location": "/srv/media/%s" % queue_track.location,
+                "artist": queue_track.artist,
+                "title": queue_track.title
+            })
+        response_daemon = {
+            "host": "server",
+            "target": channel,
+            "command": "setlist",
+            "data": response_daemon_data
+        }
+        api.request_async_threaded("POST", settings.MUSICDAEMON_URL, callback=None, data=response_daemon)
+
         return api.response_json("OK", status.HTTP_200_OK)
 
 
