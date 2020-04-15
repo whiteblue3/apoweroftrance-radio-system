@@ -36,7 +36,12 @@ schema_view = get_schema_view(
     openapi.Info(
         title="A Power of Trance Radio API",
         default_version='v1',
-        description="사용법: 로그인 -> 리스폰스의 Token을 복사 -> 우상단의 Authorize클릭 -> Bearer <토큰> 입력후 Authorize클릭 -> 다른API 테스트"
+        description="Usage: <br />"
+                    "1. user/authenticate to signin <br />"
+                    "2. copy token in response <br />"
+                    "3. click authenticate at right-top <br />"
+                    "4. input like 'Bearer <Token>' and click Authorize <br />"
+                    "5. Use other API <br />"
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),

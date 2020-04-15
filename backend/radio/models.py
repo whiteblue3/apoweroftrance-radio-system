@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from .util import now
 
 
 CHANNEL = [
@@ -50,6 +51,7 @@ class Track(models.Model):
     )
 
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     last_played_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -71,7 +73,7 @@ class Like(models.Model):
 
     like = models.BooleanField(default=None, null=True, blank=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = 'Like'
@@ -80,8 +82,11 @@ class Like(models.Model):
 
 class PlayHistory(models.Model):
     track = models.ForeignKey(
-        'radio.Track', on_delete=models.CASCADE, null=False, blank=False
+        'radio.Track', on_delete=models.SET_NULL, null=True
     )
+
+    title = models.CharField(null=True, blank=True, max_length=100)
+    artist = models.CharField(null=True, blank=True, max_length=30)
 
     channel = models.CharField(choices=CHANNEL, default=DEFAULT_CHANNEL, null=False, blank=False, max_length=15)
 
@@ -97,9 +102,11 @@ class PlayQueue(models.Model):
         'radio.Track', on_delete=models.CASCADE, null=False, blank=False
     )
 
-    channel = models.CharField(choices=CHANNEL, default=DEFAULT_CHANNEL, null=False, blank=False, max_length=15)
+    location = models.FilePathField(null=True, blank=True)
+    title = models.CharField(null=True, blank=True, max_length=100)
+    artist = models.CharField(null=True, blank=True, max_length=30)
 
-    will_play_at = models.DateTimeField(null=True, blank=True)
+    channel = models.CharField(choices=CHANNEL, default=DEFAULT_CHANNEL, null=False, blank=False, max_length=15)
 
     class Meta:
         verbose_name = 'Play List'

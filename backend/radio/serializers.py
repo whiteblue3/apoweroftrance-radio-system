@@ -30,6 +30,7 @@ class TrackSerializer(serializers.ModelSerializer):
     )
 
     uploaded_at = serializers.DateTimeField(default=datetime.now(), default_timezone=tzlocal())
+    updated_at = serializers.DateTimeField(default=datetime.now(), default_timezone=tzlocal())
     last_played_at = serializers.DateTimeField(allow_null=True)
 
     class Meta:
@@ -39,8 +40,42 @@ class TrackSerializer(serializers.ModelSerializer):
             'location', 'format', 'is_service',
             'title', 'artist', 'description',
             'duration', 'play_count',
-            'channel', 'uploaded_at', 'last_played_at',
+            'channel', 'uploaded_at', 'updated_at', 'last_played_at',
         )
+
+
+class TrackAPISerializer(serializers.Serializer):
+    is_service = serializers.BooleanField(default=True, allow_null=False)
+
+    title = serializers.CharField(allow_null=False, allow_blank=False, max_length=100)
+    artist = serializers.CharField(allow_null=False, allow_blank=False, max_length=30)
+
+    description = serializers.CharField(allow_null=True, allow_blank=True)
+
+    channel = serializers.ListField(
+        child=serializers.ChoiceField(choices=CHANNEL, default=DEFAULT_CHANNEL, allow_null=False, allow_blank=False),
+        allow_null=False
+    )
+
+    class Meta:
+        model = Track
+        fields = (
+            'is_service',
+            'title', 'artist', 'description',
+            'channel',
+        )
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
+        # for (key, value) in validated_data.items():
+        #     setattr(instance, key, value)
+        #
+        # instance.save()
+        #
+        # return instance
 
 
 class LikeSerializer(serializers.ModelSerializer):
@@ -52,19 +87,38 @@ class LikeSerializer(serializers.ModelSerializer):
 
     like = serializers.BooleanField(default=None, allow_null=True)
 
-    created_at = serializers.DateTimeField(default=datetime.now(), default_timezone=tzlocal())
+    updated_at = serializers.DateTimeField(default=datetime.now(), default_timezone=tzlocal())
 
     class Meta:
         model = Like
         fields = (
             'id', 'track', 'track_id', 'user', 'user_id',
-            'like', 'created_at',
+            'like', 'updated_at',
         )
+
+
+class LikeAPISerializer(serializers.Serializer):
+    like = serializers.BooleanField(default=None, allow_null=True)
+
+    class Meta:
+        model = Like
+        fields = (
+            'like',
+        )
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
 
 
 class PlayHistorySerializer(serializers.ModelSerializer):
     track = TrackSerializer(read_only=True)
     track_id = serializers.IntegerField(write_only=True)
+
+    title = serializers.CharField(allow_null=True, allow_blank=True, max_length=100)
+    artist = serializers.CharField(allow_null=True, allow_blank=True, max_length=30)
 
     channel = serializers.ChoiceField(
         choices=CHANNEL, default=DEFAULT_CHANNEL, allow_null=False
@@ -75,23 +129,20 @@ class PlayHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = PlayHistory
         fields = (
-            'id', 'track', 'track_id', 'channel', 'played_at',
+            'id', 'track', 'track_id', 'artist', 'title', 'channel', 'played_at',
         )
 
 
 class PlayQueueSerializer(serializers.ModelSerializer):
-    track = TrackSerializer(read_only=True)
     track_id = serializers.IntegerField(write_only=True)
 
-    channel = serializers.ChoiceField(
-        choices=CHANNEL, default=DEFAULT_CHANNEL, allow_null=False
-    )
-
-    will_play_at = serializers.DateTimeField(allow_null=True)
+    location = serializers.CharField(allow_null=True, allow_blank=True, max_length=255)
+    title = serializers.CharField(allow_null=True, allow_blank=True, max_length=100)
+    artist = serializers.CharField(allow_null=True, allow_blank=True, max_length=30)
 
     class Meta:
         model = PlayQueue
         fields = (
-            'id', 'track', 'track_id', 'channel', 'will_play_at',
+            'id', 'track_id', 'location', 'artist', 'title',
         )
 

@@ -434,3 +434,10 @@ NOTIFY_SECURITY_ALERT_EMAIL_HTML = "<!DOCTYPE html><html lang='kr'><body>" \
                                    "A Power of Trance에서 보낸 이메일인지 어떻게 알 수 있나요?<br />" \
                                    "본 이메일의 링크는 “https://”로 시작하고 “apoweroftrance.com”을 포함합니다.<br />" \
                                    "브라우저에 표시된 자물쇠 아이콘을 통해서도 안전한 사이트인지 확인할 수 있습니다.</body></html>"
+
+
+###############
+# Radio Setup #
+###############
+
+MUSICDAEMON_URL = "http://10.0.0.3:9000"
