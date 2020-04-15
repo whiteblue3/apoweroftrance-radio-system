@@ -1,6 +1,4 @@
-import random
 from datetime import datetime, timedelta
-from dateutil.tz import tzlocal
 from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.utils.datastructures import MultiValueDictKeyError
@@ -13,7 +11,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.generics import RetrieveAPIView, CreateAPIView, DestroyAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly
 from rest_framework.renderers import JSONRenderer
-from rest_framework.serializers import Serializer, BaseSerializer
+from rest_framework.serializers import Serializer
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
 from drf_yasg.utils import swagger_auto_schema
@@ -25,13 +23,13 @@ from mutagen.mp4 import MP4
 from mutagen.easyid3 import EasyID3
 from .models import (
     SUPPORT_FORMAT, FORMAT_MP3, FORMAT_M4A, SERVICE_CHANNEL,
-    Track, Like, PlayQueue, PlayHistory
+    Track, Like, PlayQueue
 )
 from .serializers import (
     TrackSerializer, TrackAPISerializer, LikeSerializer, LikeAPISerializer,
     PlayQueueSerializer, PlayHistorySerializer
 )
-from .util import now
+from .util import now, get_random_track
 
 
 class TrackListAPI(RetrieveAPIView):
@@ -476,6 +474,32 @@ class PlayQueueAPI(RetrieveAPIView):
         return api.response_json(response, status.HTTP_200_OK)
 
 
+class NowPlayingAPI(RetrieveAPIView):
+    permission_classes = (AllowAny,)
+    renderer_classes = (JSONRenderer,)
+
+    @swagger_auto_schema(
+        operation_summary="Now Playing",
+        operation_description="Public API",
+        responses={'200': PlayQueueSerializer})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request, channel, *args, **kwargs):
+        queue_list = PlayQueue.objects.filter(channel__icontains=channel).order_by('id').distinct()
+        if queue_list.count() > 0:
+            queue = queue_list[0]
+            track = queue.track
+
+            return api.response_json({
+                "id": track.id,
+                "location": track.location,
+                "artist": track.artist,
+                "title": track.title
+            }, status.HTTP_200_OK)
+        else:
+            return api.response_json(None, status.HTTP_200_OK)
+
+
 class PlayQueueResetAPI(RetrieveAPIView):
     permission_classes = (IsAdminUser,)
     renderer_classes = (JSONRenderer,)
@@ -487,22 +511,12 @@ class PlayQueueResetAPI(RetrieveAPIView):
     @transaction.atomic
     @method_decorator(ensure_csrf_cookie)
     def get(self, request, channel, *args, **kwargs):
-        now = datetime.now(tz=tzlocal())
-        delta_3hour = timedelta(hours=3)
-        base_time = now - delta_3hour
-
         if channel not in SERVICE_CHANNEL:
             raise ValidationError(_("Invalid service channel"))
 
         PlayQueue.objects.filter(channel__icontains=channel).delete()
 
-        tracks = Track.objects.filter(
-            (Q(last_played_at__lt=base_time) | Q(last_played_at=None)) and Q(channel__icontains=channel)
-        )
-        count_tracks = tracks.count()
-        if count_tracks > 30:
-            count_tracks = 30
-        random_tracks = random.sample(list(tracks), count_tracks)
+        random_tracks = get_random_track(channel, 30)
 
         response = []
         response_daemon_data = []
@@ -643,17 +657,7 @@ class CallbackOnStartupAPI(RetrieveAPIView):
                 })
         else:
             # Select random track except for last played in 3 hours
-            now = datetime.now(tz=tzlocal())
-            delta_3hour = timedelta(hours=3)
-            base_time = now - delta_3hour
-
-            tracks = Track.objects.filter(
-                (Q(last_played_at__lt=base_time) | Q(last_played_at=None)) and Q(channel__icontains=channel)
-            )
-            count_track = tracks.count()
-            if count_track > 8:
-                count_track = 8
-            queue_tracks = random.sample(list(tracks), count_track)
+            queue_tracks = get_random_track(channel, 8)
 
             # Set playlist
             for track in queue_tracks:
@@ -736,14 +740,7 @@ class CallbackOnStopAPI(CreateAPIView):
             queue.delete()
 
         # Select random track except for last played in 3 hours
-        now = datetime.now(tz=tzlocal())
-        delta_3hour = timedelta(hours=3)
-        base_time = now - delta_3hour
-
-        tracks = Track.objects.filter(
-            (Q(last_played_at__lt=base_time) | Q(last_played_at=None)) and Q(channel__icontains=channel)
-        )
-        random_tracks = random.sample(list(tracks), 1)
+        random_tracks = get_random_track(channel, 1)
 
         if len(random_tracks) > 0:
             # Add next track to queue at last

@@ -10,6 +10,7 @@ urlpatterns = [
     path('track/<int:track_id>', views.TrackAPI.as_view()),
     path('like/<int:track_id>', views.LikeAPI.as_view()),
     path('playqueue', views.PlayQueueAPI.as_view()),
+    path('playqueue/nowplaying/<str:channel>', views.NowPlayingAPI.as_view()),
     path('playqueue/reset/<str:channel>', views.PlayQueueResetAPI.as_view()),
     path('playqueue/in/<str:channel>/<int:track_id>', views.QueueINAPI.as_view()),
     path('playqueue/out/<str:channel>/<int:index>', views.QueueOUTAPI.as_view()),
