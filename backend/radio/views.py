@@ -506,9 +506,9 @@ class PlayQueueResetAPI(RetrieveAPIView):
         if channel not in SERVICE_CHANNEL:
             raise ValidationError(_("Invalid service channel"))
 
-        random_tracks = get_random_track(channel, 8)
+        track_count = Track.objects.all().count()
+        random_tracks = get_random_track(channel, int(track_count/2))
 
-        response = []
         response_daemon_data = []
         for track in random_tracks:
             location = track.location
@@ -530,7 +530,7 @@ class PlayQueueResetAPI(RetrieveAPIView):
 
         api.request_async_threaded("POST", settings.MUSICDAEMON_URL, callback=None, data=response_daemon)
 
-        return api.response_json(response, status.HTTP_202_ACCEPTED)
+        return api.response_json(response_daemon, status.HTTP_202_ACCEPTED)
 
 
 class QueueINAPI(RetrieveAPIView):
@@ -633,7 +633,8 @@ class CallbackOnStartupAPI(RetrieveAPIView):
             response = playlist
         else:
             # Select random track except for last played in 3 hours
-            queue_tracks = get_random_track(channel, 8)
+            track_count = Track.objects.all().count()
+            queue_tracks = get_random_track(channel, int(track_count/2))
 
             # Set playlist
             for track in queue_tracks:
