@@ -25,6 +25,14 @@ services:
       WAIT_SERVICE: 1
       WAIT_URL: 10.0.0.5
       WAIT_PORT: 8090
+      REDIS_URL: 10.0.0.6
+      REDIS_PORT: 6379
+    command:
+      - /bin/bash
+      - -c
+      - |
+        python3 -m pip install -r requirement.txt
+        python3 /opt/musicdaemon/main.py
     privileged: true
     cap_add:
       - SYS_ADMIN
@@ -60,8 +68,8 @@ services:
   radio:
     container_name: radio
     restart: always
-    image: gcr.io/apoweroftrance/radio:latest
-#    build: backend
+#    image: gcr.io/apoweroftrance/radio:latest
+    build: backend
     environment:
       DB_NAME: radio-dev
       DB_HOST: 34.66.75.237
@@ -69,6 +77,20 @@ services:
       DB_PASSWORD: ?!Triace07
       DB_PORT: 5432
       NGINX: 10.0.0.4:8080
+      REDIS_URL: 10.0.0.6
+      REDIS_PORT: 6379
+    depends_on:
+      - redis
+    links:
+      - redis
+    command:
+      - /bin/bash
+      - -c
+      - |
+        python3 -m pip install -r requirement.txt
+        python3 manage.py collectstatic --noinput -i yes
+        python3 manage.py migrate
+        uwsgi --show-config
     ports:
       - "8090:8090"
     networks:
@@ -77,6 +99,23 @@ services:
     volumes:
       - radio_data:/backend
       - ./apoweroftrance-525255671db2.json:/etc/gcloud/service-account-key.json
+
+  redis:
+    container_name: redis
+    restart: always
+    image: bitnami/redis:latest
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    healthcheck:
+      test: ["CMD", "redis-cli","ping"]
+      interval: 3s
+      timeout: 1s
+      retries: 5
+    ports:
+      - "6379:6379"
+    networks:
+      apoweroftrance:
+        ipv4_address: 10.0.0.6
 
 volumes:
   radio_data:

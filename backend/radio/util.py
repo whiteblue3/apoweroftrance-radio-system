@@ -1,4 +1,7 @@
+import os
 import random
+import json
+import redis
 from datetime import datetime, timedelta
 from dateutil.tz import tzlocal
 from django.db.models import Q
@@ -8,25 +11,66 @@ def now():
     return str(datetime.now(tz=tzlocal()).isoformat())
 
 
-def get_random_track(channel, samples, is_delete_now_play=False):
+def connect_redis():
+    redis_host = os.environ.get('REDIS_URL')
+    redis_port = os.environ.get('REDIS_PORT')
+    return redis.StrictRedis(host=redis_host, port=redis_port, db=0)
+
+
+def get_redis_data(channel):
+    redis_server = connect_redis()
+
+    raw_json = redis_server.get(channel)
+    if raw_json is None:
+        default_data = {
+            "now_playing": None,
+            "playlist": None
+        }
+        redis_server.set(channel, json.dumps(default_data, ensure_ascii=False).encode('utf-8'))
+    try:
+        data_json = json.loads(raw_json)
+    except Exception as e:
+        print('redis error: {}'.format(e))
+        return None
+    return dict(data_json)
+
+
+def set_redis_data(channel, key, value):
+    redis_server = connect_redis()
+
+    redis_data = get_redis_data(channel)
+    redis_data[key] = value
+    redis_server.set(channel, json.dumps(redis_data, ensure_ascii=False).encode('utf-8'))
+
+
+def get_random_track(channel, samples):
     from .models import (
-        Track, PlayQueue
+        Track
     )
 
     # Remove last played track from queue
     now_play_track_id = None
     last_play_track_id = None
     try:
-        queue = PlayQueue.objects.filter(channel__icontains=channel).order_by('id').distinct()
+        redis_data = get_redis_data(channel)
+        now_playing = redis_data["now_playing"]
+        playlist = redis_data["playlist"]
     except IndexError:
         pass
     else:
-        nowplay = queue[0]
-        lastplay = queue[queue.count()-1]
-        now_play_track_id = nowplay.track.id
-        last_play_track_id = lastplay.track.id
-        if is_delete_now_play:
-            nowplay.delete()
+        try:
+            if now_playing:
+                now_play_track_id = now_playing["id"]
+        except KeyError:
+            pass
+
+        try:
+            if playlist:
+                last_play_track_id = playlist[-1]["id"]
+        except KeyError:
+            pass
+        except IndexError:
+            pass
 
     # According to International Radio Law, Once played track cannot restream in 3 hours
     now = datetime.now(tz=tzlocal())

@@ -52,6 +52,9 @@ RUN mkdir -p /etc/gcloud
 #COPY . /backend/
 #RUN python3 -m pip install --no-cache-dir -r requirement.txt
 
+ENV REDIS_URL "127.0.0.1"
+ENV REDIS_PORT 6379
+
 USER ${USER}
 
-CMD ["./startup.sh"]
+ENTRYPOINT ["./startup.sh"]

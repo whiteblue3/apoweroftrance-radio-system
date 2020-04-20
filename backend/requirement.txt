@@ -8,6 +8,7 @@ django-monthfield
 django-pgcrypto
 
 aiohttp
+redis
 
 django_utils-0.0.1.tar.gz
 accounts-0.0.1.tar.gz

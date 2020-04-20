@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from django.core.cache import cache
 from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.utils.datastructures import MultiValueDictKeyError
@@ -23,13 +24,13 @@ from mutagen.mp4 import MP4
 from mutagen.easyid3 import EasyID3
 from .models import (
     SUPPORT_FORMAT, FORMAT_MP3, FORMAT_M4A, SERVICE_CHANNEL,
-    Track, Like, PlayQueue
+    Track, Like
 )
 from .serializers import (
     TrackSerializer, TrackAPISerializer, LikeSerializer, LikeAPISerializer,
     PlayQueueSerializer, PlayHistorySerializer
 )
-from .util import now, get_random_track
+from .util import now, get_random_track, get_redis_data, set_redis_data
 
 
 class TrackListAPI(RetrieveAPIView):
@@ -326,17 +327,25 @@ class TrackAPI(
         except Track.DoesNotExist:
             raise ValidationError(_("Music does not exist"))
 
-        unqueue_list = []
         if track.user.id == user.id:
-            # Find index of channel queue
-            queuelist = PlayQueue.objects.filter(track_id=track_id)
-            if queuelist.count() > 0:
-                for queue in queuelist:
-                    channel = queue.channel
+            # Remove from playlist
+            channel_list = track.channel
+            for channel in channel_list:
+                redis_data = get_redis_data(channel)
 
-                    queue_channel = PlayQueue.objects.filter(channel__icontains=channel)
-                    index_channel = queue_channel.index(queue)
-                    unqueue_list.append((channel, index_channel,))
+                now_playing = redis_data["now_playing"]
+
+                if int(now_playing["id"]) == track.id:
+                    raise ValidationError(_("Music cannot delete because current playing"))
+
+                playlist = redis_data["playlist"]
+
+                for music in playlist:
+                    if int(music["id"]) == track.id:
+                        index = playlist.index(music)
+                        playlist.pop(index)
+
+                set_redis_data(channel, "playlist", playlist)
 
             location_split = location.split("/")
 
@@ -344,16 +353,6 @@ class TrackAPI(
             storage.delete_file('music', location_split[-1], storage_driver)
 
             track.delete()
-
-            for unqueue_channel, index in unqueue_list:
-                api.request_async_threaded("POST", settings.MUSICDAEMON_URL, callback=None, data={
-                    "host": "server",
-                    "target": unqueue_channel,
-                    "command": "unqueue",
-                    "data": {
-                        "index_at": index
-                    }
-                })
         else:
             raise ValidationError(_("You have NOT permission to delete track"))
 
@@ -462,16 +461,15 @@ class PlayQueueAPI(RetrieveAPIView):
         except MultiValueDictKeyError:
             limit = 30
 
-        queryset = PlayQueue.objects.filter(channel__icontains=channel)
+        redis_data = get_redis_data(channel)
+        if redis_data:
+            playlist = redis_data["playlist"]
+            if playlist:
+                return api.response_json(playlist[(page * limit):((page * limit) + limit)], status.HTTP_200_OK)
+            else:
+                return api.response_json(None, status.HTTP_200_OK)
 
-        queue_list = queryset.order_by('id').distinct()[(page * limit):((page * limit) + limit)]
-        response = []
-
-        for queue in queue_list:
-            serializer = PlayQueueSerializer(queue)
-            response.append(serializer.data)
-
-        return api.response_json(response, status.HTTP_200_OK)
+        return api.response_json(None, status.HTTP_200_OK)
 
 
 class NowPlayingAPI(RetrieveAPIView):
@@ -485,19 +483,12 @@ class NowPlayingAPI(RetrieveAPIView):
     @transaction.atomic
     @method_decorator(ensure_csrf_cookie)
     def get(self, request, channel, *args, **kwargs):
-        queue_list = PlayQueue.objects.filter(channel__icontains=channel).order_by('id').distinct()
-        if queue_list.count() > 0:
-            queue = queue_list[0]
-            track = queue.track
+        redis_data = get_redis_data(channel)
+        if redis_data:
+            now_playing = redis_data["now_playing"]
+            return api.response_json(now_playing, status.HTTP_200_OK)
 
-            return api.response_json({
-                "id": track.id,
-                "location": track.location,
-                "artist": track.artist,
-                "title": track.title
-            }, status.HTTP_200_OK)
-        else:
-            return api.response_json(None, status.HTTP_200_OK)
+        return api.response_json(None, status.HTTP_200_OK)
 
 
 class PlayQueueResetAPI(RetrieveAPIView):
@@ -514,8 +505,6 @@ class PlayQueueResetAPI(RetrieveAPIView):
         if channel not in SERVICE_CHANNEL:
             raise ValidationError(_("Invalid service channel"))
 
-        PlayQueue.objects.filter(channel__icontains=channel).delete()
-
         random_tracks = get_random_track(channel, 8)
 
         response = []
@@ -524,15 +513,6 @@ class PlayQueueResetAPI(RetrieveAPIView):
             location = track.location
             artist = track.artist
             title = track.title
-            serializer = PlayQueueSerializer(data={
-                "track_id": track.id,
-                "location": location,
-                "artist": artist,
-                "title": title
-            })
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            response.append(serializer.data)
             response_daemon_data.append({
                 "id": track.id,
                 "location": "/srv/media/%s" % location,
@@ -571,24 +551,24 @@ class QueueINAPI(RetrieveAPIView):
         except Track.DoesNotExist:
             raise ValidationError(_("Music does not exist"))
 
-        PlayQueue(
-            track=track,
-            location=track.location,
-            artist=track.artist,
-            title=track.title,
-            channel=channel
-        ).save()
+        redis_data = get_redis_data(channel)
+        playlist = redis_data["playlist"]
+
+        new_track = {
+            "id": track.id,
+            "location": "/srv/media/%s" % track.location,
+            "artist": track.artist,
+            "title": track.title
+        }
+
+        playlist.append(new_track)
+        set_redis_data(channel, "playlist", playlist)
 
         api.request_async_threaded("POST", settings.MUSICDAEMON_URL, callback=None, data={
             "host": "server",
             "target": channel,
             "command": "queue",
-            "data": {
-                "id": track.id,
-                "location": "/srv/media/%s" % track.location,
-                "artist": track.artist,
-                "title": track.title
-            }
+            "data": new_track
         })
 
         return api.response_json("OK", status.HTTP_201_CREATED)
@@ -608,12 +588,11 @@ class QueueOUTAPI(DestroyAPIView):
         if channel not in SERVICE_CHANNEL:
             raise ValidationError(_("Invalid service channel"))
 
-        try:
-            queue = PlayQueue.objects.filter(channel__icontains=channel).order_by('id').distinct()[index]
-        except IndexError:
-            raise ValidationError(_("Out of index"))
-        else:
-            queue.delete()
+        redis_data = get_redis_data(channel)
+        playlist = redis_data["playlist"]
+
+        playlist.pop(index)
+        set_redis_data(channel, "playlist", playlist)
 
         api.request_async_threaded("POST", settings.MUSICDAEMON_URL, callback=None, data={
             "host": "server",
@@ -641,40 +620,30 @@ class CallbackOnStartupAPI(RetrieveAPIView):
         if channel not in SERVICE_CHANNEL:
             raise ValidationError(_("Invalid service channel"))
 
-        play_queue = PlayQueue.objects.filter(channel__icontains=channel)
-        count_queue = play_queue.count()
+        redis_data = get_redis_data(channel)
+        if redis_data:
+            playlist = redis_data["playlist"]
+        else:
+            playlist = []
 
         response = []
-        if count_queue > 0:
+        if playlist:
             # Use pre exist queue
-            for queue in play_queue:
-                track = queue.track
-                response.append({
-                    "id": int(track.id),
-                    "location": "/srv/media/%s" % track.location,
-                    "artist": track.artist,
-                    "title": track.title
-                })
+            response = playlist
         else:
             # Select random track except for last played in 3 hours
             queue_tracks = get_random_track(channel, 8)
 
             # Set playlist
             for track in queue_tracks:
-                serializer = PlayQueueSerializer(data={
-                    "track_id": track.id,
-                    "location": track.location,
-                    "artist": track.artist,
-                    "title": track.title
-                })
-                serializer.is_valid(raise_exception=True)
-                serializer.save()
                 response.append({
                     "id": int(track.id),
                     "location": "/srv/media/%s" % track.location,
                     "artist": track.artist,
                     "title": track.title
                 })
+
+            set_redis_data(channel, "playlist", response)
 
         return api.response_json_payload(response, status.HTTP_200_OK)
 
@@ -713,30 +682,6 @@ class CallbackOnPlayAPI(CreateAPIView):
         track.play_count += 1
         track.save()
 
-        # Sync playlist
-        queryset = PlayQueue.objects.filter(channel__icontains=channel)
-        count_queryset = queryset.count()
-        if count_queryset > 8:
-            count_queryset = 8
-        # Set index 0 as nowplaying, so ignore it
-        queuelist = queryset.order_by('id').distinct()[1:count_queryset]
-        response_daemon_data = []
-        for queue in queuelist:
-            queue_track = queue.track
-            response_daemon_data.append({
-                "id": queue_track.id,
-                "location": "/srv/media/%s" % queue_track.location,
-                "artist": queue_track.artist,
-                "title": queue_track.title
-            })
-        response_daemon = {
-            "host": "server",
-            "target": channel,
-            "command": "setlist",
-            "data": response_daemon_data
-        }
-        api.request_async_threaded("POST", settings.MUSICDAEMON_URL, callback=None, data=response_daemon)
-
         return api.response_json("OK", status.HTTP_200_OK)
 
 
@@ -760,20 +705,19 @@ class CallbackOnStopAPI(CreateAPIView):
         if len(random_tracks) > 0:
             # Add next track to queue at last
             next_track = random_tracks[0]
-            serializer = PlayQueueSerializer(data={
-                "track_id": next_track.id,
-                "location": next_track.location,
-                "artist": next_track.artist,
-                "title": next_track.title
-            })
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
 
-            return api.response_json_payload({
+            new_track = {
                 "id": int(next_track.id),
                 "location": "/srv/media/%s" % next_track.location,
                 "artist": next_track.artist,
                 "title": next_track.title
-            }, status.HTTP_200_OK)
+            }
+
+            redis_data = get_redis_data(channel)
+            playlist = redis_data["playlist"]
+            playlist.append(new_track)
+            set_redis_data(channel, "playlist", playlist)
+
+            return api.response_json_payload(new_track, status.HTTP_200_OK)
         else:
             return api.response_json_payload(None, status.HTTP_200_OK)

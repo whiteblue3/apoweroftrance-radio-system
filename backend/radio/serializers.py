@@ -4,7 +4,7 @@ from rest_framework import serializers
 from accounts.serializers import UserSerializer
 from .models import (
     FORMAT, DEFAULT_FORMAT, CHANNEL, DEFAULT_CHANNEL,
-    Track, Like, PlayHistory, PlayQueue
+    Track, Like, PlayHistory
 )
 
 
@@ -133,16 +133,20 @@ class PlayHistorySerializer(serializers.ModelSerializer):
         )
 
 
-class PlayQueueSerializer(serializers.ModelSerializer):
-    track_id = serializers.IntegerField(write_only=True)
+class PlayQueueSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
 
     location = serializers.CharField(allow_null=True, allow_blank=True, max_length=255)
     title = serializers.CharField(allow_null=True, allow_blank=True, max_length=100)
     artist = serializers.CharField(allow_null=True, allow_blank=True, max_length=30)
 
     class Meta:
-        model = PlayQueue
         fields = (
-            'id', 'track_id', 'location', 'artist', 'title',
+            'id', 'location', 'artist', 'title',
         )
 
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass

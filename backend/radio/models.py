@@ -97,17 +97,17 @@ class PlayHistory(models.Model):
         verbose_name_plural = 'Play History'
 
 
-class PlayQueue(models.Model):
-    track = models.ForeignKey(
-        'radio.Track', on_delete=models.CASCADE, null=False, blank=False
-    )
-
-    location = models.FilePathField(null=True, blank=True)
-    title = models.CharField(null=True, blank=True, max_length=100)
-    artist = models.CharField(null=True, blank=True, max_length=30)
-
-    channel = models.CharField(choices=CHANNEL, default=DEFAULT_CHANNEL, null=False, blank=False, max_length=15)
-
-    class Meta:
-        verbose_name = 'Play List'
-        verbose_name_plural = 'Play List'
+# class PlayQueue(models.Model):
+#     track = models.ForeignKey(
+#         'radio.Track', on_delete=models.CASCADE, null=False, blank=False
+#     )
+#
+#     location = models.FilePathField(null=True, blank=True)
+#     title = models.CharField(null=True, blank=True, max_length=100)
+#     artist = models.CharField(null=True, blank=True, max_length=30)
+#
+#     channel = models.CharField(choices=CHANNEL, default=DEFAULT_CHANNEL, null=False, blank=False, max_length=15)
+#
+#     class Meta:
+#         verbose_name = 'Play List'
+#         verbose_name_plural = 'Play List'

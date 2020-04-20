@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django_utils.input_filter import InputFilter
 from rangefilter.filter import DateRangeFilter, DateTimeRangeFilter
-from .models import Track, PlayHistory, PlayQueue, CHANNEL
+from .models import Track, PlayHistory, CHANNEL
 
 """
 Track admin
@@ -99,47 +99,6 @@ class TrackAdmin(admin.ModelAdmin):
 class TrackInline(admin.StackedInline):
     model = Track
     can_delete = False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_view_permission(self, request, obj=None):
-        return True
-
-    def has_module_permission(self, request):
-        return True
-
-
-@admin.register(PlayQueue)
-class PlayQueueAdmin(admin.ModelAdmin):
-    list_display = (
-        'id', 'track_link', 'channel', 'artist', 'title',
-    )
-    search_fields = (
-        'artist', 'title'
-    )
-    list_filter = (
-        ChannelFilter,
-    )
-    ordering = ('id',)
-    # actions = ['send_result_email']
-
-    def track_link(self, obj):
-        track = Track.objects.get(id=obj.track.id)
-        url = reverse("admin:radio_track_change", args=[track.id])
-        link = '<a href="%s">%s</a>' % (url, obj.track.id)
-        return mark_safe(link)
-    track_link.short_description = 'Track'
-
-    # def send_result_email(self, request, queryset):
-    #     pass
-    # send_result_email.short_description = "Send email"
-
-    def has_add_permission(self, request):
-        return False
 
     def has_delete_permission(self, request, obj=None):
         return False
