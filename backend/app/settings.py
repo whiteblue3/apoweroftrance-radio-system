@@ -112,6 +112,14 @@ DATABASES = {
     #     'HOST': "127.0.0.1",
     #     'PORT': 5432
     # },
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME': "radio-dev",
+    #     'HOST': "34.66.75.237",
+    #     'USER': "postgres",
+    #     'PASSWORD': "?!Triace07",
+    #     'PORT': 5432
+    # },
 }
 
 
