@@ -7,19 +7,16 @@ from dateutil.tz import tzlocal
 from django.db.models import Q
 
 
+redis_host = os.environ.get('REDIS_URL')
+redis_port = os.environ.get('REDIS_PORT')
+redis_server = redis.StrictRedis(host=redis_host, port=redis_port, db=0)
+
+
 def now():
     return str(datetime.now(tz=tzlocal()).isoformat())
 
 
-def connect_redis():
-    redis_host = os.environ.get('REDIS_URL')
-    redis_port = os.environ.get('REDIS_PORT')
-    return redis.StrictRedis(host=redis_host, port=redis_port, db=0)
-
-
 def get_redis_data(channel):
-    redis_server = connect_redis()
-
     raw_json = redis_server.get(channel)
     if raw_json is None:
         default_data = {
@@ -36,8 +33,6 @@ def get_redis_data(channel):
 
 
 def set_redis_data(channel, key, value):
-    redis_server = connect_redis()
-
     redis_data = get_redis_data(channel)
     redis_data[key] = value
     redis_server.set(channel, json.dumps(redis_data, ensure_ascii=False).encode('utf-8'))
