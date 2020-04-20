@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from django.core.cache import cache
 from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.utils.datastructures import MultiValueDictKeyError
@@ -332,20 +331,22 @@ class TrackAPI(
             channel_list = track.channel
             for channel in channel_list:
                 redis_data = get_redis_data(channel)
+                if redis_data:
+                    if redis_data["now_playing"]:
+                        now_playing = redis_data["now_playing"]
 
-                now_playing = redis_data["now_playing"]
+                        if int(now_playing["id"]) == track.id:
+                            raise ValidationError(_("Music cannot delete because now playing"))
 
-                if int(now_playing["id"]) == track.id:
-                    raise ValidationError(_("Music cannot delete because current playing"))
+                    if redis_data["playlist"]:
+                        playlist = redis_data["playlist"]
 
-                playlist = redis_data["playlist"]
+                        for music in playlist:
+                            if int(music["id"]) == track.id:
+                                index = playlist.index(music)
+                                playlist.pop(index)
 
-                for music in playlist:
-                    if int(music["id"]) == track.id:
-                        index = playlist.index(music)
-                        playlist.pop(index)
-
-                set_redis_data(channel, "playlist", playlist)
+                        set_redis_data(channel, "playlist", playlist)
 
             location_split = location.split("/")
 
@@ -700,7 +701,7 @@ class CallbackOnStopAPI(CreateAPIView):
         if channel not in SERVICE_CHANNEL:
             raise ValidationError(_("Invalid service channel"))
 
-        random_tracks = get_random_track(channel, 1, True)
+        random_tracks = get_random_track(channel, 1)
 
         if len(random_tracks) > 0:
             # Add next track to queue at last
