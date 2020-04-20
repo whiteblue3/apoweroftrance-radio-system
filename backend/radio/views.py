@@ -621,15 +621,11 @@ class CallbackOnStartupAPI(RetrieveAPIView):
             raise ValidationError(_("Invalid service channel"))
 
         redis_data = get_redis_data(channel)
-        if redis_data:
-            playlist = redis_data["playlist"]
-        else:
-            playlist = []
 
         response = []
-        if playlist:
+        if redis_data and redis_data["playlist"]:
             # Use pre exist queue
-            response = playlist
+            response = redis_data["playlist"]
         else:
             # Select random track except for last played in 3 hours
             queue_tracks = get_random_track(channel, 8)
@@ -718,11 +714,6 @@ class CallbackOnStopAPI(CreateAPIView):
             playlist.append(new_track)
             set_redis_data(channel, "playlist", playlist)
 
-            return api.response_json_payload({
-                "host": "server",
-                "target": channel,
-                "command": "queue",
-                "data": new_track
-            }, status.HTTP_200_OK)
+            return api.response_json_payload(new_track, status.HTTP_200_OK)
         else:
             return api.response_json_payload(None, status.HTTP_200_OK)
