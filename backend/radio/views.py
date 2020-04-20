@@ -506,8 +506,7 @@ class PlayQueueResetAPI(RetrieveAPIView):
         if channel not in SERVICE_CHANNEL:
             raise ValidationError(_("Invalid service channel"))
 
-        track_count = Track.objects.all().count()
-        random_tracks = get_random_track(channel, int(track_count/2))
+        random_tracks = get_random_track(channel, 8)
 
         response_daemon_data = []
         for track in random_tracks:
@@ -633,8 +632,7 @@ class CallbackOnStartupAPI(RetrieveAPIView):
             response = playlist
         else:
             # Select random track except for last played in 3 hours
-            track_count = Track.objects.all().count()
-            queue_tracks = get_random_track(channel, int(track_count/2))
+            queue_tracks = get_random_track(channel, 8)
 
             # Set playlist
             for track in queue_tracks:
@@ -704,7 +702,7 @@ class CallbackOnStopAPI(CreateAPIView):
 
         random_tracks = get_random_track(channel, 1)
 
-        if len(random_tracks) > 0:
+        if random_tracks:
             # Add next track to queue at last
             next_track = random_tracks[0]
 
@@ -720,6 +718,11 @@ class CallbackOnStopAPI(CreateAPIView):
             playlist.append(new_track)
             set_redis_data(channel, "playlist", playlist)
 
-            return api.response_json_payload(new_track, status.HTTP_200_OK)
+            return api.response_json_payload({
+                "host": "server",
+                "target": channel,
+                "command": "queue",
+                "data": new_track
+            }, status.HTTP_200_OK)
         else:
             return api.response_json_payload(None, status.HTTP_200_OK)
