@@ -29,10 +29,10 @@ SUPPORT_FORMAT = [
 
 class Track(models.Model):
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=False, blank=False
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=False, blank=False, editable=False
     )
 
-    location = models.FilePathField(null=False, blank=False)
+    location = models.CharField(null=False, blank=False, max_length=254)
     format = models.CharField(choices=FORMAT, default=DEFAULT_FORMAT, null=False, blank=False, max_length=3)
     is_service = models.BooleanField(default=True, null=False, blank=False)
 
@@ -42,16 +42,16 @@ class Track(models.Model):
     description = models.TextField(null=True, blank=True)
 
     duration = models.TimeField(null=False, blank=False)
-    play_count = models.PositiveIntegerField(default=0, null=False)
+    play_count = models.PositiveIntegerField(default=0, null=False, editable=False)
 
     channel = ArrayField(
         models.CharField(choices=CHANNEL, default=DEFAULT_CHANNEL, null=False, blank=False, max_length=15),
-        null=False, blank=False
+        null=False, blank=False, editable=True
     )
 
-    uploaded_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    last_played_at = models.DateTimeField(null=True, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    last_played_at = models.DateTimeField(null=True, blank=True, editable=False)
 
     class Meta:
         verbose_name = 'Music'
@@ -63,16 +63,16 @@ class Track(models.Model):
 
 class Like(models.Model):
     track = models.ForeignKey(
-        'radio.Track', on_delete=models.CASCADE, null=False, blank=False
+        'radio.Track', on_delete=models.CASCADE, null=False, blank=False, editable=False
     )
 
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=False, blank=False
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=False, blank=False, editable=False
     )
 
     like = models.BooleanField(default=None, null=True, blank=True)
 
-    updated_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True, editable=False)
 
     class Meta:
         verbose_name = 'Like'
@@ -81,15 +81,17 @@ class Like(models.Model):
 
 class PlayHistory(models.Model):
     track = models.ForeignKey(
-        'radio.Track', on_delete=models.SET_NULL, null=True
+        'radio.Track', on_delete=models.SET_NULL, null=True, editable=False
     )
 
-    title = models.CharField(null=True, blank=True, max_length=100)
-    artist = models.CharField(null=True, blank=True, max_length=30)
+    title = models.CharField(null=True, blank=True, max_length=100, editable=False)
+    artist = models.CharField(null=True, blank=True, max_length=30, editable=False)
 
-    channel = models.CharField(choices=CHANNEL, default=DEFAULT_CHANNEL, null=False, blank=False, max_length=15)
+    channel = models.CharField(
+        choices=CHANNEL, default=DEFAULT_CHANNEL, null=False, blank=False, max_length=15, editable=False
+    )
 
-    played_at = models.DateTimeField(null=False, blank=False)
+    played_at = models.DateTimeField(null=False, blank=False, editable=False)
 
     class Meta:
         verbose_name = 'Play History'

@@ -110,6 +110,7 @@ DATABASES = {
         'USER': "whiteblue3",
         'PASSWORD': "?!Triace07",
         'HOST': "10.0.0.7",
+        # 'HOST': "127.0.0.1",
         'PORT': 5432
     },
 }
@@ -441,3 +442,4 @@ NOTIFY_SECURITY_ALERT_EMAIL_HTML = "<!DOCTYPE html><html lang='kr'><body>" \
 ###############
 
 MUSICDAEMON_URL = "http://10.0.0.3:9000"
+

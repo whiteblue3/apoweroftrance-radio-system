@@ -56,14 +56,14 @@ class TrackAdmin(admin.ModelAdmin):
         'format', 'is_service',
         'channel', 'artist', 'title',
         'duration_field', 'play_count',
-        'uploaded_at', 'last_played_at',
+        'uploaded_at', 'updated_at', 'last_played_at',
     )
     search_fields = (
         'title', 'artist',
     )
     list_filter = (
         UserFilter, ChannelFilter,
-        ('uploaded_at', DateTimeRangeFilter), ('last_played_at', DateTimeRangeFilter),
+        ('uploaded_at', DateTimeRangeFilter), ('updated_at', DateTimeRangeFilter), ('last_played_at', DateTimeRangeFilter),
     )
     ordering = ('-id',)
 
