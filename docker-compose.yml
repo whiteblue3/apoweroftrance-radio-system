@@ -22,13 +22,14 @@ services:
       FUSE: gcs
       BUCKET: apoweroftrance-media
       MOUNT_POINT: /srv/media
-      WAIT_SERVICE: 1
-      WAIT_URL: 10.0.0.5
-      WAIT_PORT: 8090
     command:
       - /bin/bash
       - -c
       - |
+        while ! nc 10.0.0.5 8090; do
+          >&2 echo "Wait backend service - sleeping"
+          sleep 1
+        done
         python3 -m pip install -r requirement.txt
         python3 /opt/musicdaemon/main.py
     privileged: true
@@ -69,9 +70,9 @@ services:
     image: gcr.io/apoweroftrance/radio:latest
 #    build: backend
     environment:
-#      DB_NAME: radio-dev
-#      DB_HOST: 104.154.248.234
-#      DB_USERNAME: postgres
+#      DB_NAME: radio
+#      DB_HOST: 10.0.0.7
+#      DB_USERNAME: whiteblue3
 #      DB_PASSWORD: ?!Triace07
 #      DB_PORT: 5432
       NGINX: 10.0.0.4:8080
