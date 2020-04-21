@@ -96,30 +96,22 @@ WSGI_APPLICATION = 'app.wsgi.application'
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = {
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME': os.environ.get('DB_NAME'),
+    #     'USER': os.environ.get('DB_USERNAME'),
+    #     'PASSWORD': os.environ.get('DB_PASSWORD'),
+    #     'HOST': os.environ.get('DB_HOST'),
+    #     'PORT': os.environ.get('DB_PORT')
+    # },
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USERNAME'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT')
+        'NAME': "radio",
+        'USER': "whiteblue3",
+        'PASSWORD': "?!Triace07",
+        'HOST': "10.0.0.7",
+        'PORT': 5432
     },
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': "radio",
-    #     'USER': "whiteblue3",
-    #     'PASSWORD': "",
-    #     'HOST': "127.0.0.1",
-    #     'PORT': 5432
-    # },
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': "radio-dev",
-    #     'HOST': "34.66.75.237",
-    #     'USER': "postgres",
-    #     'PASSWORD': "?!Triace07",
-    #     'PORT': 5432
-    # },
 }
 
 
