@@ -2,7 +2,6 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from .util import now
 
 
 CHANNEL = [
@@ -95,19 +94,3 @@ class PlayHistory(models.Model):
     class Meta:
         verbose_name = 'Play History'
         verbose_name_plural = 'Play History'
-
-
-# class PlayQueue(models.Model):
-#     track = models.ForeignKey(
-#         'radio.Track', on_delete=models.CASCADE, null=False, blank=False
-#     )
-#
-#     location = models.FilePathField(null=True, blank=True)
-#     title = models.CharField(null=True, blank=True, max_length=100)
-#     artist = models.CharField(null=True, blank=True, max_length=30)
-#
-#     channel = models.CharField(choices=CHANNEL, default=DEFAULT_CHANNEL, null=False, blank=False, max_length=15)
-#
-#     class Meta:
-#         verbose_name = 'Play List'
-#         verbose_name_plural = 'Play List'
