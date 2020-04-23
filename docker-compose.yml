@@ -72,8 +72,8 @@ services:
   radio:
     container_name: radio
     restart: always
-#    image: gcr.io/apoweroftrance/radio:latest
-    build: backend
+    image: gcr.io/apoweroftrance/radio:latest
+#    build: backend
     environment:
 #      DB_NAME: radio
 #      DB_HOST: 10.0.0.7
