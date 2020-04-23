@@ -31,7 +31,7 @@ from .serializers import (
     TrackSerializer, TrackAPISerializer, LikeSerializer, LikeAPISerializer,
     PlayQueueSerializer, PlayHistorySerializer
 )
-from .util import now, get_random_track, get_redis_data, set_redis_data
+from .util import now, get_random_track, get_redis_data, set_redis_data, delete_track
 from django_utils.api import response_html
 
 
@@ -41,8 +41,19 @@ def view_playlist(request):
         if not user.is_superuser:
             return response_html("Unauthorized", status=status.HTTP_401_UNAUTHORIZED)
 
+        try:
+            channel = request.GET["channel"]
+        except MultiValueDictKeyError:
+            channels = CHANNEL
+        else:
+            channels = []
+            for in_service_channel, in_service_channel_name in CHANNEL:
+                if in_service_channel == channel:
+                    channels.append((in_service_channel, in_service_channel_name))
+
         return render(request, 'radio/view_playlist.html', {
-            'editable': False
+            'editable': False,
+            'channels': channels
         })
     else:
         return response_html("Method Not Allowed", status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -181,8 +192,6 @@ class UploadAPI(CreateAPIView):
     @transaction.atomic
     @method_decorator(ensure_csrf_cookie)
     def post(self, request, *args, **kwargs):
-        # TODO: 파일 업로드시 nginx timeout 문제 있음. 업로드는 정상적
-
         user = request.user
 
         if len(request.FILES.getlist('audio')) > 1:
@@ -338,38 +347,11 @@ class TrackAPI(
 
         try:
             track = Track.objects.get(id=track_id)
-            location = track.location
         except Track.DoesNotExist:
             raise ValidationError(_("Music does not exist"))
 
         if track.user.id == user.id:
-            # Remove from playlist
-            channel_list = track.channel
-            for channel in channel_list:
-                redis_data = get_redis_data(channel)
-                if redis_data:
-                    if redis_data["now_playing"]:
-                        now_playing = redis_data["now_playing"]
-
-                        if int(now_playing["id"]) == track.id:
-                            raise ValidationError(_("Music cannot delete because now playing"))
-
-                    if redis_data["playlist"]:
-                        playlist = redis_data["playlist"]
-
-                        for music in playlist:
-                            if int(music["id"]) == track.id:
-                                index = playlist.index(music)
-                                playlist.pop(index)
-
-                        set_redis_data(channel, "playlist", playlist)
-
-            location_split = location.split("/")
-
-            storage_driver = 'gcs'
-            storage.delete_file('music', location_split[-1], storage_driver)
-
-            track.delete()
+            delete_track(track)
         else:
             raise ValidationError(_("You have NOT permission to delete track"))
 
@@ -495,7 +477,8 @@ class ChannelNameAPI(RetrieveAPIView):
 
     @swagger_auto_schema(
         operation_summary="Channel Name",
-        operation_description="Public API")
+        operation_description="Public API",
+        responses={'200': Serializer})
     @transaction.atomic
     @method_decorator(ensure_csrf_cookie)
     def get(self, request, channel, *args, **kwargs):

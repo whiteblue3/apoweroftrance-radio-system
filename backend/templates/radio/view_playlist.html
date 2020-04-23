@@ -29,8 +29,6 @@
         body{ padding-top: 50px; }
 
         .table-wrapper{
-          width: 500px;
-          max-width: 70%;
           margin: 0 auto;
         }
 
@@ -38,21 +36,12 @@
     </style>
 
     <script type="text/javascript">
-        var channel_name = null;
         var nowplaying = null;
         var playlist = null;
 
-        var channel_id = 'yui';
         var domain = '127.0.0.1:8080';
 
         function updateData(channel) {
-            $.getJSON('http://' + domain + '/v1/radio/channelname/' + channel, function(data) {
-                channel_name = data.payload;
-
-                var dvTable = document.getElementById('channel_name');
-                dvTable.innerHTML = '<center>' + channel_name + '</center>';
-            });
-
             $.getJSON('http://' + domain + '/v1/radio/playqueue/nowplaying/' + channel, function(data) {
                 nowplaying = data.payload;
 
@@ -82,11 +71,15 @@
             dvTable.innerHTML = innerHTML;
         }
 
-        updateData(channel_id);
+        {% for channel, channelname in channels %}
+            updateData('{{channel}}');
+        {% endfor %}
 
         $(document).ready(function(){
             setInterval(function(){
-                updateData(channel_id);
+                {% for channel, channelname in channels %}
+                    updateData('{{channel}}');
+                {% endfor %}
             }, 3000);
         });
     </script>
@@ -95,34 +88,45 @@
 
   <body>
 
-    <div id="channel_name" class="panel-heading">
-      <center>{{channel_name}}</center>
-    </div>
-
-    <div class="table-wrapper panel panel-default responsive-table">
-      <div class="panel-heading">Now Playing</div>
-      <table class="table_nowplaying">
+    <table>
         <tbody>
-          <tr data-toggle="collapse" draggable="false" class="music-row" aria-expanded="false"> <!-- figure out jinja syntax to insert index # into "data-target" (above) ^^ and "id" (below) vv -->
-            <td id="nowplaying">
-<!--              {{nowplaying.artist}} - {{nowplaying.title}}-->
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <br />
-      <div class="panel-heading">Playlist</div>
-      <table id="sortable">
-        <tbody id="ui-sortable">
-<!--          {% for music in playlist %}-->
-<!--          <tr data-toggle="collapse" data-target="#collapse{{index}}" data-parent="#playList" draggable="true" class="ui-sortable-handle music-row" aria-expanded="false"> &lt;!&ndash; figure out jinja syntax to insert index # into "data-target" (above) ^^ and "id" (below) vv &ndash;&gt;-->
-<!--            <td>{{music.artist}} - {{music.title}}</td>-->
-<!--          </tr>-->
-<!--          {% endfor %}-->
-        </tbody>
-      </table>
-    </div>
+            <tr>
+                {% for channel, channelname in channels %}
+                <td>
+                    <div id="channel_name" class="panel-heading">
+                      <center>
+                          {{channelname}}
+                      </center>
+                    </div>
 
+                    <div class="table-wrapper panel panel-default responsive-table">
+                      <div class="panel-heading">Now Playing</div>
+                      <table class="table_nowplaying">
+                        <tbody>
+                          <tr data-toggle="collapse" draggable="false" class="music-row" aria-expanded="false"> <!-- figure out jinja syntax to insert index # into "data-target" (above) ^^ and "id" (below) vv -->
+                            <td id="nowplaying">
+                <!--              {{nowplaying.artist}} - {{nowplaying.title}}-->
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <br />
+                      <div class="panel-heading">Playlist</div>
+                      <table id="sortable">
+                        <tbody id="ui-sortable">
+                <!--          {% for music in playlist %}-->
+                <!--          <tr data-toggle="collapse" data-target="#collapse{{index}}" data-parent="#playList" draggable="true" class="ui-sortable-handle music-row" aria-expanded="false"> &lt;!&ndash; figure out jinja syntax to insert index # into "data-target" (above) ^^ and "id" (below) vv &ndash;&gt;-->
+                <!--            <td>{{music.artist}} - {{music.title}}</td>-->
+                <!--          </tr>-->
+                <!--          {% endfor %}-->
+                        </tbody>
+                      </table>
+                    </div>
+                </td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
 
     <!-- Bootstrap core JavaScript
     ================================================== -->

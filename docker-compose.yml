@@ -60,15 +60,20 @@ services:
       - ./nginx/useragent.rules:/etc/nginx/useragent.rules
       - ./nginx/cors:/etc/nginx/cors
       - ./nginx/whitelist.conf:/etc/nginx/whitelist.conf
+      - ./nginx/uwsgi_params:/etc/nginx/uwsgi_params
     networks:
       apoweroftrance:
         ipv4_address: 10.0.0.4
+    depends_on:
+      - radio
+    links:
+      - radio
 
   radio:
     container_name: radio
     restart: always
-    image: gcr.io/apoweroftrance/radio:latest
-#    build: backend
+#    image: gcr.io/apoweroftrance/radio:latest
+    build: backend
     environment:
 #      DB_NAME: radio
 #      DB_HOST: 10.0.0.7

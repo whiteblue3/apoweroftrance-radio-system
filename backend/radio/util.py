@@ -5,6 +5,10 @@ import redis
 from datetime import datetime, timedelta
 from dateutil.tz import tzlocal
 from django.db.models import Q
+from django_utils import storage
+from django.utils.translation import ugettext_lazy as _
+from google.api_core.exceptions import NotFound
+from rest_framework.exceptions import ValidationError
 
 
 redis_host = os.environ.get('REDIS_URL')
@@ -95,3 +99,37 @@ def get_random_track(channel, samples):
     random_tracks = random.sample(list(tracks), count_track)
 
     return random_tracks
+
+
+def delete_track(track):
+    # Remove from playlist
+    channel_list = track.channel
+    location = track.location
+    for channel in channel_list:
+        redis_data = get_redis_data(channel)
+        if redis_data:
+            if redis_data["now_playing"]:
+                now_playing = redis_data["now_playing"]
+
+                if int(now_playing["id"]) == track.id:
+                    raise ValidationError(_("Music cannot delete because now playing"))
+
+            if redis_data["playlist"]:
+                playlist = redis_data["playlist"]
+
+                for music in playlist:
+                    if int(music["id"]) == track.id:
+                        index = playlist.index(music)
+                        playlist.pop(index)
+
+                set_redis_data(channel, "playlist", playlist)
+
+    try:
+        location_split = location.split("/")
+
+        storage_driver = 'gcs'
+        storage.delete_file('music', location_split[-1], storage_driver)
+    except NotFound:
+        pass
+
+    track.delete()

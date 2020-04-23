@@ -312,6 +312,15 @@ GCP_STORAGE_BUCKET_NAME = "apoweroftrance-media"
 STORAGE_DOMAIN = "https://storage.cloud.google.com/apoweroftrance-media"
 
 
+#####################
+# File Upload Setup #
+#####################
+
+FILE_UPLOAD_PERMISSIONS = 0o777
+FILE_UPLOAD_MAX_MEMORY_SIZE = 512000000
+DATA_UPLOAD_MAX_MEMORY_SIZE = 512000000
+
+
 #############
 # AES Setup #
 #############
