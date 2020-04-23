@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 from django.conf import settings
+# from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -22,7 +24,7 @@ from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
 from mutagen.easyid3 import EasyID3
 from .models import (
-    SUPPORT_FORMAT, FORMAT_MP3, FORMAT_M4A, SERVICE_CHANNEL,
+    SUPPORT_FORMAT, FORMAT_MP3, FORMAT_M4A, SERVICE_CHANNEL, CHANNEL,
     Track, Like
 )
 from .serializers import (
@@ -30,6 +32,20 @@ from .serializers import (
     PlayQueueSerializer, PlayHistorySerializer
 )
 from .util import now, get_random_track, get_redis_data, set_redis_data
+from django_utils.api import response_html
+
+
+def view_playlist(request):
+    user = request.user
+    if request.method == 'GET':
+        if not user.is_superuser:
+            return response_html("Unauthorized", status=status.HTTP_401_UNAUTHORIZED)
+
+        return render(request, 'radio/view_playlist.html', {
+            'editable': False
+        })
+    else:
+        return response_html("Method Not Allowed", status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class TrackListAPI(RetrieveAPIView):
@@ -471,6 +487,24 @@ class PlayQueueAPI(RetrieveAPIView):
                 return api.response_json(None, status.HTTP_200_OK)
 
         return api.response_json(None, status.HTTP_200_OK)
+
+
+class ChannelNameAPI(RetrieveAPIView):
+    permission_classes = (AllowAny,)
+    renderer_classes = (JSONRenderer,)
+
+    @swagger_auto_schema(
+        operation_summary="Channel Name",
+        operation_description="Public API")
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request, channel, *args, **kwargs):
+        channel_name = None
+        for in_service_channel, in_service_channel_name in CHANNEL:
+            if in_service_channel == channel:
+                channel_name = in_service_channel_name
+
+        return api.response_json(channel_name, status.HTTP_200_OK)
 
 
 class NowPlayingAPI(RetrieveAPIView):

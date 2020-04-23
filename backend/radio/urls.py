@@ -9,6 +9,7 @@ urlpatterns = [
     path('upload', views.UploadAPI.as_view()),
     path('track/<int:track_id>', views.TrackAPI.as_view()),
     path('like/<int:track_id>', views.LikeAPI.as_view()),
+    path('channelname/<str:channel>', views.ChannelNameAPI.as_view()),
     path('playqueue', views.PlayQueueAPI.as_view()),
     path('playqueue/nowplaying/<str:channel>', views.NowPlayingAPI.as_view()),
     path('playqueue/reset/<str:channel>', views.PlayQueueResetAPI.as_view()),
