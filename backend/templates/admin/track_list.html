@@ -16,6 +16,107 @@
       #changelist table thead th:first-child {width: inherit}
     </style>
   {% endif %}
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.18.4/utils/Draggable.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+  <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.24/themes/smoothness/jquery-ui.css" />
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.24/jquery-ui.min.js"></script>
+
+  <style>
+    .music-row{ cursor: pointer; height: 30px; }
+    .sortable { list-style-type: none; margin: 0; padding: 0; width: 60%; }
+    .sortable li { margin: 0 3px 3px 3px; padding: 0.4em; padding-left: 1.5em; font-size: 1.4em; height: 18px; }
+    .sortable li span { position: absolute; margin-left: -1.3em; }
+  </style>
+
+  <script type="text/javascript">
+    var nowplaying = null;
+    var playlist = null;
+    var playlist_data = {};
+
+    var scheme = 'http';
+    var domain = '127.0.0.1:8080';
+
+    var interval_id = null;
+
+    function updateData(channel) {
+      $.getJSON(scheme + '://' + domain + '/v1/radio/playqueue/nowplaying/' + channel, function(data) {
+        nowplaying = data.payload;
+
+        var dv = document.getElementById('nowplaying_' + channel);
+        dv.innerHTML = '<li class="ui-state-default">' + nowplaying["artist"] + ' - ' + nowplaying["title"] + '</li>';
+      });
+
+      $.getJSON(scheme + '://' + domain + '/v1/radio/playqueue?channel=' + channel + '&page=0&limit=30', function(data) {
+        playlist = new Array();
+        playlist_data[channel] = new Array();
+
+        $.each(data.payload, function(i,item) {
+          playlist_data[channel].push(item);
+          playlist.push( item["artist"] + ' - ' + item["title"] );
+        });
+
+        update_playlist('playlist_' + channel, playlist, channel);
+      });
+    }
+
+    function update_playlist(id, data, channel) {
+      //Add the data rows.
+      innerHTML = '';
+      for (var i = 0; i < data.length; i++) {
+        innerHTML += '<li class="ui-state-default">' + data[i] + '</li>';
+      }
+
+      var dv = document.getElementById(id);
+      dv.innerHTML = innerHTML;
+
+      $("#" + id).sortable({
+        start: function (e, ui) {
+          $(this).attr('data-previndex', ui.item.index());
+          clearInterval(interval_id);
+        },
+        update: function(e, ui) {
+          // gets the new and old index then removes the temporary attribute
+          var newIndex = ui.item.index();
+          var oldIndex = $(this).attr('data-previndex');
+          var element_id = ui.item.attr('id');
+
+<!--          alert('id of Item moved = '+element_id+' old position = '+oldIndex+' new position = '+newIndex);-->
+
+          var item = playlist_data[channel].splice(oldIndex, 1);
+          playlist_data[channel].splice(newIndex, 0, item[0]);
+
+          $.getJSON(scheme + '://' + domain + '/v1/radio/playqueue/move/' + channel + '/' + oldIndex + '/' + newIndex, function(data) {
+            start_update();
+          });
+          $(this).removeAttr('data-previndex');
+        }
+      });
+    }
+
+    function show_playlist(id) {
+      var dv = document.getElementById(id);
+      dv.style.display=(dv.style.display=='block') ? 'none' : 'block';
+    }
+
+    function start_update() {
+      interval_id = setInterval(function(){
+        {% for channel, channelname in channels %}
+          updateData('{{channel}}');
+        {% endfor %}
+      }, 3000);
+    }
+
+    {% for channel, channelname in channels %}
+      updateData('{{channel}}');
+    {% endfor %}
+
+    $(document).ready(function() {
+      start_update();
+    });
+  </script>
 {% endblock %}
 
 {% block extrahead %}
@@ -42,7 +143,27 @@
     {% block object-tools %}
         <ul class="object-tools">
           {% block object-tools-items %}
-            {% change_list_object_tools %}
+            {% if has_add_permission %}
+            <li style="display: flex; align-items: center;">
+              {% url cl.opts|admin_urlname:'add' as add_url %}
+              <a href="{% add_preserved_filters add_url is_popup to_field %}" class="addlink">
+                {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}
+              </a>
+            </li>
+            {% endif %}
+
+            {% for channel, channelname in channels %}
+            <li style="display: flex; align-items: center;">{{channelname}}</li>
+            <li style="display: flex; align-items: center;">
+              <a href="javascript:show_playlist('channel_{{channel}}');">Playlist</a>
+            </li>
+            <li style="display: flex; align-items: center;">
+              {% url 'admin:track-reset' channel as reset_url %}
+              <a href="{{reset_url}}" class="button">
+                Reset
+              </a>
+            </li>
+            {% endfor %}
           {% endblock %}
         </ul>
     {% endblock %}
@@ -52,8 +173,24 @@
         </p>
         {{ cl.formset.non_form_errors }}
     {% endif %}
-    {% include '../radio/view_playlist.html' %}
+
     <div class="module{% if cl.has_filters %} filtered{% endif %}" id="changelist">
+      {% for channel, channelname in channels %}
+        {% block playlist_{{channel}} %}
+          <div id="channel_{{channel}}" class="table-wrapper panel panel-default responsive-table xfull" style="display: none;">
+            <div id="channel_name" class="panel-heading">
+              <center>
+                  {{channelname}}
+              </center>
+            </div>
+            <h4 class="panel-heading">Now Playing</h4>
+            <ul id="nowplaying_{{channel}}"></ul>
+            <h4 class="panel-heading">Playlist</h4>
+            <ul id="playlist_{{channel}}"></ul>
+          </div>
+        {% endblock %}
+      {% endfor %}
+
       {% block search %}{% search_form cl %}{% endblock %}
       {% block date_hierarchy %}{% if cl.date_hierarchy %}{% date_hierarchy cl %}{% endif %}{% endblock %}
 

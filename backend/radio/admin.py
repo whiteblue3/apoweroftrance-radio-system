@@ -12,18 +12,16 @@ from django_utils.input_filter import InputFilter
 from rest_framework.exceptions import ValidationError
 from rangefilter.filter import DateRangeFilter, DateTimeRangeFilter
 from .models import Track, PlayHistory, CHANNEL
-from .util import get_redis_data, set_redis_data, delete_track
+from .util import get_redis_data, set_redis_data, delete_track, get_random_track
 from django_utils import api
 
 """
 Track admin
-- 일괄 업로드
-
-PlayQueue admin
-- 플레이리스트 리셋
-- 큐인
-- 큐아웃
-- 데몬과 플레이리스트 싱크 맞추기
+- [x] 플레이리스트 리셋 버튼
+- [ ] 음원 추가 Custom 폼
+- [x] 플레이리스트 이쁘게 배치
+- [x] 플레이리스트 안에서 순서 변경
+- [ ] 플레이리스트 안에서 삭제
 """
 
 
@@ -66,7 +64,7 @@ class TrackAdmin(admin.ModelAdmin):
         'channel', 'artist', 'title',
         'duration_field',
         'play_count',
-        'queue_in_playlist', 'queue_out_playlist',
+        'queue_in_playlist',
         'uploaded_at', 'updated_at', 'last_played_at',
     )
     search_fields = (
@@ -94,20 +92,21 @@ class TrackAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
         extra_context['channels'] = CHANNEL
+        extra_context['editable'] = True
         return super().changelist_view(request, extra_context=extra_context)
 
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
             re_path(
-                r'^(?P<track_id>.+)/(?P<channel>.+)/queuein$',
+                r'^(?P<track_id>.+)/(?P<channel>.+)/(?P<index>.+)/queuein$',
                 self.admin_site.admin_view(self.process_queuein),
                 name='track-queuein',
             ),
             re_path(
-                r'^(?P<track_id>.+)/(?P<channel>.+)/queueout$',
-                self.admin_site.admin_view(self.process_queueout),
-                name='track-queueout',
+                r'^(?P<channel>.+)/reset',
+                self.admin_site.admin_view(self.process_reset),
+                name='track-reset',
             ),
         ]
         return custom_urls + urls
@@ -182,29 +181,53 @@ class TrackAdmin(admin.ModelAdmin):
         )
         return HttpResponseRedirect(url)
 
+    def process_reset(self, request, channel, *args, **kwargs):
+        redis_data = get_redis_data(channel)
+        if not redis_data:
+            self.message_user(request, 'Channel does not exist', level=ERROR)
+        else:
+            random_tracks = get_random_track(channel, 8)
+
+            response_daemon_data = []
+            for track in random_tracks:
+                location = track.location
+                artist = track.artist
+                title = track.title
+                response_daemon_data.append({
+                    "id": track.id,
+                    "location": "/srv/media/%s" % location,
+                    "artist": artist,
+                    "title": title
+                })
+
+            response_daemon = {
+                "host": "server",
+                "target": channel,
+                "command": "setlist",
+                "data": response_daemon_data
+            }
+
+            api.request_async_threaded("POST", settings.MUSICDAEMON_URL, callback=None, data=response_daemon)
+
+            self.message_user(request, 'Success')
+
+        url = reverse(
+            'admin:radio_track_changelist',
+            current_app=self.admin_site.name,
+        )
+        return HttpResponseRedirect(url)
+
     def queue_in_playlist(self, obj):
         html = ''
         args = []
         for in_service_channel, in_service_channel_name in CHANNEL:
             html += '<a class="button" href="{}">%s</a>&nbsp;' % in_service_channel_name
             args.append(
-                reverse('admin:track-queuein', args=[obj.pk, in_service_channel]),
+                reverse('admin:track-queuein', args=[obj.pk, in_service_channel, -1]),
             )
         return format_html(html, *args)
     queue_in_playlist.short_description = 'Queue In'
     queue_in_playlist.allow_tags = True
-
-    def queue_out_playlist(self, obj):
-        html = ''
-        args = []
-        for in_service_channel, in_service_channel_name in CHANNEL:
-            html += '<a class="button" href="{}">%s</a>&nbsp;' % in_service_channel_name
-            args.append(
-                reverse('admin:track-queueout', args=[obj.pk, in_service_channel]),
-            )
-        return format_html(html, *args)
-    queue_out_playlist.short_description = 'Queue Out'
-    queue_out_playlist.allow_tags = True
 
     def delete_queryset(self, request, queryset):
         print('========================delete_queryset========================')

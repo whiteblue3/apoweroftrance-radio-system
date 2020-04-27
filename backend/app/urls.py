@@ -20,7 +20,6 @@ from django.urls import path, re_path, include
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-from radio import views as radio
 
 
 admin.site.site_header = "A Power of Trance"
@@ -51,7 +50,6 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('playlist', radio.view_playlist, name='index'),
 ] + schema_url_patterns + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 urlpatterns += [

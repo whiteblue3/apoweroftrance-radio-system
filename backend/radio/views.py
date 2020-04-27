@@ -1,7 +1,5 @@
 from datetime import datetime, timedelta
 from django.conf import settings
-# from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -32,31 +30,6 @@ from .serializers import (
     PlayQueueSerializer, PlayHistorySerializer
 )
 from .util import now, get_random_track, get_redis_data, set_redis_data, delete_track
-from django_utils.api import response_html
-
-
-def view_playlist(request):
-    user = request.user
-    if request.method == 'GET':
-        if not user.is_superuser:
-            return response_html("Unauthorized", status=status.HTTP_401_UNAUTHORIZED)
-
-        try:
-            channel = request.GET["channel"]
-        except MultiValueDictKeyError:
-            channels = CHANNEL
-        else:
-            channels = []
-            for in_service_channel, in_service_channel_name in CHANNEL:
-                if in_service_channel == channel:
-                    channels.append((in_service_channel, in_service_channel_name))
-
-        return render(request, 'radio/view_playlist.html', {
-            'editable': False,
-            'channels': channels
-        })
-    else:
-        return response_html("Method Not Allowed", status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class TrackListAPI(RetrieveAPIView):
@@ -559,7 +532,7 @@ class QueueINAPI(RetrieveAPIView):
         responses={'201': "OK"})
     @transaction.atomic
     @method_decorator(ensure_csrf_cookie)
-    def get(self, request, channel, track_id, *args, **kwargs):
+    def get(self, request, channel, track_id, index, *args, **kwargs):
         if channel not in SERVICE_CHANNEL:
             raise ValidationError(_("Invalid service channel"))
 
@@ -578,14 +551,44 @@ class QueueINAPI(RetrieveAPIView):
             "title": track.title
         }
 
-        playlist.append(new_track)
+        playlist.insert(int(index), new_track)
         set_redis_data(channel, "playlist", playlist)
 
         api.request_async_threaded("POST", settings.MUSICDAEMON_URL, callback=None, data={
             "host": "server",
             "target": channel,
-            "command": "queue",
-            "data": new_track
+            "command": "setlist",
+            "data": playlist
+        })
+
+        return api.response_json("OK", status.HTTP_201_CREATED)
+
+
+class QueueMoveAPI(RetrieveAPIView):
+    permission_classes = (IsAdminUser,)
+    renderer_classes = (JSONRenderer,)
+
+    @swagger_auto_schema(
+        operation_summary="Move Music from PlayQueue",
+        operation_description="Admin Only API",
+        responses={'201': "OK"})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request, channel, from_index, to_index, *args, **kwargs):
+        if channel not in SERVICE_CHANNEL:
+            raise ValidationError(_("Invalid service channel"))
+
+        redis_data = get_redis_data(channel)
+        playlist = redis_data["playlist"]
+
+        playlist.insert(to_index, playlist.pop(from_index))
+        set_redis_data(channel, "playlist", playlist)
+
+        api.request_async_threaded("POST", settings.MUSICDAEMON_URL, callback=None, data={
+            "host": "server",
+            "target": channel,
+            "command": "setlist",
+            "data": playlist
         })
 
         return api.response_json("OK", status.HTTP_201_CREATED)
