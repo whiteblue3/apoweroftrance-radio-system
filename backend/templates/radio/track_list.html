@@ -36,20 +36,20 @@
     var playlist = null;
     var playlist_data = {};
 
-    var scheme = 'http';
+    var protocol = 'http';
     var domain = '127.0.0.1:8080';
 
     var interval_id = null;
 
     function updateData(channel) {
-      $.getJSON(scheme + '://' + domain + '/v1/radio/playqueue/nowplaying/' + channel, function(data) {
+      $.getJSON(protocol + '://' + domain + '/v1/radio/playqueue/nowplaying/' + channel, function(data) {
         nowplaying = data.payload;
 
         var dv = document.getElementById('nowplaying_' + channel);
         dv.innerHTML = '<li class="ui-state-default">' + nowplaying["artist"] + ' - ' + nowplaying["title"] + '</li>';
       });
 
-      $.getJSON(scheme + '://' + domain + '/v1/radio/playqueue?channel=' + channel + '&page=0&limit=30', function(data) {
+      $.getJSON(protocol + '://' + domain + '/v1/radio/playqueue?channel=' + channel + '&page=0&limit=30', function(data) {
         playlist = new Array();
         playlist_data[channel] = new Array();
 
@@ -66,7 +66,16 @@
       //Add the data rows.
       innerHTML = '';
       for (var i = 0; i < data.length; i++) {
-        innerHTML += '<li class="ui-state-default">' + data[i] + '</li>';
+        removeAPI = protocol + '://' + domain + '/admin/radio/track/' + channel + '/' + i + '/queueout';
+
+        var a = document.createElement('a');
+        var text = document.createTextNode("Remove");
+        a.appendChild(text);
+        a.title = "Remove";
+        a.href = removeAPI;
+        a.classList.add('button');
+
+        innerHTML += '<li class="ui-state-default">' + a.outerHTML + '&nbsp;|&nbsp;' + data[i] + '</li>';
       }
 
       var dv = document.getElementById(id);
@@ -88,7 +97,7 @@
           var item = playlist_data[channel].splice(oldIndex, 1);
           playlist_data[channel].splice(newIndex, 0, item[0]);
 
-          $.getJSON(scheme + '://' + domain + '/v1/radio/playqueue/move/' + channel + '/' + oldIndex + '/' + newIndex, function(data) {
+          $.getJSON(protocol + '://' + domain + '/v1/radio/playqueue/move/' + channel + '/' + oldIndex + '/' + newIndex, function(data) {
             start_update();
           });
           $(this).removeAttr('data-previndex');

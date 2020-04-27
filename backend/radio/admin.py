@@ -19,11 +19,7 @@ from django_utils import api
 
 """
 Track admin
-- [x] 플레이리스트 리셋 버튼
 - [ ] 음원 추가 Custom 폼
-- [x] 플레이리스트 이쁘게 배치
-- [x] 플레이리스트 안에서 순서 변경
-- [ ] 플레이리스트 안에서 삭제
 """
 
 
@@ -128,6 +124,11 @@ class TrackAdmin(admin.ModelAdmin):
                 name='track-queuein',
             ),
             re_path(
+                r'^(?P<channel>.+)/(?P<index>.+)/queueout$',
+                self.admin_site.admin_view(self.process_queueout),
+                name='track-queueout',
+            ),
+            re_path(
                 r'^(?P<channel>.+)/reset',
                 self.admin_site.admin_view(self.process_reset),
                 name='track-reset',
@@ -169,35 +170,24 @@ class TrackAdmin(admin.ModelAdmin):
         )
         return HttpResponseRedirect(url)
 
-    def process_queueout(self, request, track_id, channel, *args, **kwargs):
+    def process_queueout(self, request, channel, index, *args, **kwargs):
         redis_data = get_redis_data(channel)
         if not redis_data:
             self.message_user(request, 'Channel does not exist', level=ERROR)
         else:
             playlist = redis_data["playlist"]
 
-            track = Track.objects.get(id=track_id)
+            playlist.pop(int(index))
 
-            index = None
-            for music in playlist:
-                if int(music["id"]) == int(track.id):
-                    index = playlist.index(music)
-                    break
+            set_redis_data(channel, "playlist", playlist)
+            api.request_async_threaded("POST", settings.MUSICDAEMON_URL, callback=None, data={
+                "host": "server",
+                "target": channel,
+                "command": "setlist",
+                "data": playlist
+            })
 
-            if index is None:
-                self.message_user(request, 'Out of Index', level=ERROR)
-            else:
-                playlist.pop(index)
-
-                set_redis_data(channel, "playlist", playlist)
-                api.request_async_threaded("POST", settings.MUSICDAEMON_URL, callback=None, data={
-                    "host": "server",
-                    "target": channel,
-                    "command": "setlist",
-                    "data": playlist
-                })
-
-                self.message_user(request, 'Success')
+            self.message_user(request, 'Success')
 
         url = reverse(
             'admin:radio_track_changelist',
