@@ -16,6 +16,9 @@ redis_port = os.environ.get('REDIS_PORT')
 redis_server = redis.StrictRedis(host=redis_host, port=redis_port, db=0)
 
 
+NUM_SAMPLES = 21
+
+
 def now():
     return str(datetime.now(tz=tzlocal()).isoformat())
 

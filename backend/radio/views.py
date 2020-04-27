@@ -29,7 +29,7 @@ from .serializers import (
     TrackSerializer, TrackAPISerializer, LikeSerializer, LikeAPISerializer,
     PlayQueueSerializer, PlayHistorySerializer
 )
-from .util import now, get_random_track, get_redis_data, set_redis_data, delete_track
+from .util import now, get_random_track, get_redis_data, set_redis_data, delete_track, NUM_SAMPLES
 
 
 class TrackListAPI(RetrieveAPIView):
@@ -496,7 +496,7 @@ class PlayQueueResetAPI(RetrieveAPIView):
         if channel not in SERVICE_CHANNEL:
             raise ValidationError(_("Invalid service channel"))
 
-        random_tracks = get_random_track(channel, 8)
+        random_tracks = get_random_track(channel, NUM_SAMPLES)
 
         response_daemon_data = []
         for track in random_tracks:
@@ -648,7 +648,7 @@ class CallbackOnStartupAPI(RetrieveAPIView):
             response = redis_data["playlist"]
         else:
             # Select random track except for last played in 3 hours
-            queue_tracks = get_random_track(channel, 8)
+            queue_tracks = get_random_track(channel, NUM_SAMPLES)
 
             # Set playlist
             for track in queue_tracks:

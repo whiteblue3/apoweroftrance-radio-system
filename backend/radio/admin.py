@@ -11,8 +11,10 @@ from django.utils.safestring import mark_safe
 from django_utils.input_filter import InputFilter
 from rest_framework.exceptions import ValidationError
 from rangefilter.filter import DateRangeFilter, DateTimeRangeFilter
+from admin_numeric_filter.admin import RangeNumericFilter
+from django.contrib.admin.filters import SimpleListFilter
 from .models import Track, PlayHistory, CHANNEL
-from .util import get_redis_data, set_redis_data, delete_track, get_random_track
+from .util import get_redis_data, set_redis_data, delete_track, get_random_track, NUM_SAMPLES
 from django_utils import api
 
 """
@@ -54,9 +56,30 @@ class ChannelFilter(admin.SimpleListFilter):
             )
 
 
+class PlayedFilter(SimpleListFilter):
+    title = 'Played'
+    parameter_name = 'last_played_at'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('1', _('Played'),),
+            ('0', _('Unplayed'),),
+        )
+
+    def queryset(self, request, queryset):
+        kwargs = {
+            '%s' % self.parameter_name: None,
+        }
+        if self.value() == '0':
+            return queryset.filter(**kwargs)
+        if self.value() == '1':
+            return queryset.exclude(**kwargs)
+        return queryset
+
+
 @admin.register(Track)
 class TrackAdmin(admin.ModelAdmin):
-    change_list_template = "admin/track_list.html"
+    change_list_template = "radio/track_list.html"
 
     list_display = (
         'id', 'user_link',
@@ -71,8 +94,9 @@ class TrackAdmin(admin.ModelAdmin):
         'title', 'artist',
     )
     list_filter = (
-        UserFilter, ChannelFilter,
-        ('uploaded_at', DateTimeRangeFilter), ('updated_at', DateTimeRangeFilter), ('last_played_at', DateTimeRangeFilter),
+        UserFilter, ChannelFilter, ('play_count', RangeNumericFilter),
+        PlayedFilter, ('last_played_at', DateTimeRangeFilter),
+        ('uploaded_at', DateTimeRangeFilter), ('updated_at', DateTimeRangeFilter),
     )
     ordering = ('-id',)
 
@@ -186,7 +210,7 @@ class TrackAdmin(admin.ModelAdmin):
         if not redis_data:
             self.message_user(request, 'Channel does not exist', level=ERROR)
         else:
-            random_tracks = get_random_track(channel, 8)
+            random_tracks = get_random_track(channel, NUM_SAMPLES)
 
             response_daemon_data = []
             for track in random_tracks:
