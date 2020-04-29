@@ -54,8 +54,16 @@ RUN mkdir -p /etc/gcloud
 
 RUN apt-get update && apt-get install netcat-openbsd -y
 
+ENV DB_ENGINE 'django.db.backends.postgresql'
+ENV DB_NAME 'postgres'
+ENV DB_HOST '127.0.0.1'
+ENV DB_USERNAME 'postgres'
+ENV DB_PASSWORD ''
+ENV DB_PORT 5432
+
 ENV REDIS_URL "127.0.0.1"
 ENV REDIS_PORT 6379
+ENV REDIS_DB 0
 
 USER ${USER}
 

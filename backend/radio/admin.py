@@ -14,13 +14,9 @@ from rangefilter.filter import DateRangeFilter, DateTimeRangeFilter
 from admin_numeric_filter.admin import RangeNumericFilter
 from django.contrib.admin.filters import SimpleListFilter
 from .models import Track, PlayHistory, CHANNEL
+from .forms import UploadTrackForm, UpdateTrackForm
 from .util import get_redis_data, set_redis_data, delete_track, get_random_track, NUM_SAMPLES
 from django_utils import api
-
-"""
-Track admin
-- [ ] 음원 추가 Custom 폼
-"""
 
 
 class UserFilter(InputFilter):
@@ -77,6 +73,9 @@ class PlayedFilter(SimpleListFilter):
 class TrackAdmin(admin.ModelAdmin):
     change_list_template = "radio/track_list.html"
 
+    add_form = UploadTrackForm
+    change_form = UpdateTrackForm
+
     list_display = (
         'id', 'user_link',
         'format', 'is_service',
@@ -114,6 +113,14 @@ class TrackAdmin(admin.ModelAdmin):
         extra_context['channels'] = CHANNEL
         extra_context['editable'] = True
         return super().changelist_view(request, extra_context=extra_context)
+
+    def get_form(self, request, obj=None, **kwargs):
+        if not obj:
+            self.form = self.add_form
+        else:
+            self.form = self.change_form
+
+        return super().get_form(request, obj, **kwargs)
 
     def get_urls(self):
         urls = super().get_urls()
@@ -265,37 +272,37 @@ class TrackAdmin(admin.ModelAdmin):
 
         print('========================delete_queryset========================')
 
-    def has_add_permission(self, request):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return True
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_view_permission(self, request, obj=None):
-        return True
-
-    def has_module_permission(self, request):
-        return True
+    # def has_add_permission(self, request):
+    #     return False
+    #
+    # def has_delete_permission(self, request, obj=None):
+    #     return True
+    #
+    # def has_change_permission(self, request, obj=None):
+    #     return False
+    #
+    # def has_view_permission(self, request, obj=None):
+    #     return True
+    #
+    # def has_module_permission(self, request):
+    #     return True
 
 
 class TrackInline(admin.StackedInline):
     model = Track
     can_delete = False
 
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_view_permission(self, request, obj=None):
-        return True
-
-    def has_module_permission(self, request):
-        return True
+    # def has_delete_permission(self, request, obj=None):
+    #     return False
+    #
+    # def has_change_permission(self, request, obj=None):
+    #     return False
+    #
+    # def has_view_permission(self, request, obj=None):
+    #     return True
+    #
+    # def has_module_permission(self, request):
+    #     return True
 
 
 @admin.register(PlayHistory)
@@ -318,17 +325,17 @@ class PlayHistoryAdmin(admin.ModelAdmin):
         return mark_safe(link)
     track_link.short_description = 'Track'
 
-    def has_add_permission(self, request):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_view_permission(self, request, obj=None):
-        return True
-
-    def has_module_permission(self, request):
-        return True
+    # def has_add_permission(self, request):
+    #     return False
+    #
+    # def has_delete_permission(self, request, obj=None):
+    #     return False
+    #
+    # def has_change_permission(self, request, obj=None):
+    #     return False
+    #
+    # def has_view_permission(self, request, obj=None):
+    #     return True
+    #
+    # def has_module_permission(self, request):
+    #     return True

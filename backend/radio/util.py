@@ -13,7 +13,8 @@ from rest_framework.exceptions import ValidationError
 
 redis_host = os.environ.get('REDIS_URL')
 redis_port = os.environ.get('REDIS_PORT')
-redis_server = redis.StrictRedis(host=redis_host, port=redis_port, db=0)
+redis_db = os.environ.get('REDIS_DB')
+redis_server = redis.StrictRedis(host=redis_host, port=redis_port, db=redis_db)
 
 
 NUM_SAMPLES = 21

@@ -96,23 +96,27 @@ WSGI_APPLICATION = 'app.wsgi.application'
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': os.environ.get('DB_NAME'),
-    #     'USER': os.environ.get('DB_USERNAME'),
-    #     'PASSWORD': os.environ.get('DB_PASSWORD'),
-    #     'HOST': os.environ.get('DB_HOST'),
-    #     'PORT': os.environ.get('DB_PORT')
-    # },
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': "radio",
-        'USER': "whiteblue3",
-        'PASSWORD': "?!Triace07",
-        'HOST': "10.0.0.7",
-        # 'HOST': "127.0.0.1",
-        'PORT': 5432
+        'ENGINE': os.environ.get('DB_ENGINE'),
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USERNAME'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': os.environ.get('DB_PORT')
     },
+}
+
+# https://jupiny.com/2018/02/27/caching-using-redis-on-django/
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://{0}:{1}/{2}".format(
+            os.environ.get('REDIS_URL'), os.environ.get('REDIS_PORT'), os.environ.get('REDIS_DB')
+        ),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
 }
 
 

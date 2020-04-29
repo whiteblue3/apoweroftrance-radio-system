@@ -75,14 +75,16 @@ services:
     image: gcr.io/apoweroftrance/radio:latest
 #    build: backend
     environment:
-#      DB_NAME: radio
-#      DB_HOST: 10.0.0.7
-#      DB_USERNAME: whiteblue3
-#      DB_PASSWORD: ?!Triace07
-#      DB_PORT: 5432
+      DB_ENGINE: django.db.backends.postgresql
+      DB_NAME: radio
+      DB_HOST: 10.0.0.7
+      DB_USERNAME: whiteblue3
+      DB_PASSWORD: ?!Triace07
+      DB_PORT: 5432
       NGINX: 10.0.0.4:8080
       REDIS_URL: 10.0.0.6
       REDIS_PORT: 6379
+      REDIS_DB: 0
     depends_on:
       - redis
       - db
