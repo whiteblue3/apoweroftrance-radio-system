@@ -22,6 +22,7 @@ services:
       FUSE: gcs
       BUCKET: apoweroftrance-media
       MOUNT_POINT: /srv/media
+    # https://stackoverflow.com/questions/33887194/how-to-set-multiple-commands-in-one-yaml-file-with-kubernetes
     command:
       - /bin/bash
       - -c
@@ -54,6 +55,7 @@ services:
     image: nginxinc/nginx-unprivileged:latest
     ports:
       - "8080:8080"
+    # https://yeti.tistory.com/218
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf

@@ -11,7 +11,9 @@ CHANNEL = [
 ]
 DEFAULT_CHANNEL = "yui"
 SERVICE_CHANNEL = [
-    "yui"
+    "yui",
+    # "alice",
+    # "miku"
 ]
 
 FORMAT_MP3 = "mp3"

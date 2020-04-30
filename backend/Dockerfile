@@ -48,10 +48,6 @@ ENV GOOGLE_APPLICATION_CREDENTIALS /etc/gcloud/service-account-key.json
 
 RUN mkdir -p /etc/gcloud
 
-# Uncomment when production
-#COPY . /backend/
-#RUN python3 -m pip install --no-cache-dir -r requirement.txt
-
 RUN apt-get update && apt-get install netcat-openbsd -y
 
 ENV DB_ENGINE 'django.db.backends.postgresql'
@@ -66,5 +62,9 @@ ENV REDIS_PORT 6379
 ENV REDIS_DB 0
 
 USER ${USER}
+
+# Uncomment when production
+#COPY . /backend/
+#RUN python3 -m pip install --no-cache-dir -r requirement.txt
 
 ENTRYPOINT ["./startup.sh"]

@@ -94,6 +94,7 @@ class TrackAdmin(admin.ModelAdmin):
         ('uploaded_at', DateTimeRangeFilter), ('updated_at', DateTimeRangeFilter),
     )
     ordering = ('-id',)
+    actions = ['delete_model']
 
     def user_link(self, obj):
         User = get_user_model()
@@ -112,6 +113,8 @@ class TrackAdmin(admin.ModelAdmin):
         extra_context = extra_context or {}
         extra_context['channels'] = CHANNEL
         extra_context['editable'] = True
+        extra_context['http_protocol'] = settings.HTTP_PROTOCOL
+        extra_context['domain_url'] = settings.DOMAIN_URL
         return super().changelist_view(request, extra_context=extra_context)
 
     def get_form(self, request, obj=None, **kwargs):
@@ -119,6 +122,7 @@ class TrackAdmin(admin.ModelAdmin):
             self.form = self.add_form
         else:
             self.form = self.change_form
+        self.form.user = request.user
 
         return super().get_form(request, obj, **kwargs)
 
@@ -272,37 +276,31 @@ class TrackAdmin(admin.ModelAdmin):
 
         print('========================delete_queryset========================')
 
-    # def has_add_permission(self, request):
-    #     return False
-    #
-    # def has_delete_permission(self, request, obj=None):
-    #     return True
-    #
-    # def has_change_permission(self, request, obj=None):
-    #     return False
-    #
-    # def has_view_permission(self, request, obj=None):
-    #     return True
-    #
-    # def has_module_permission(self, request):
-    #     return True
+    def delete_model(self, request, obj):
+        print('============================delete_model============================')
+        print(obj)
+
+        """
+        you can do anything here BEFORE deleting the object
+        """
+
+        try:
+            delete_track(obj)
+        except ValidationError as e:
+            self.message_user(request, e.detail, level=ERROR)
+        else:
+            self.message_user(request, "Success")
+
+        """
+        you can do anything here AFTER deleting the object
+        """
+
+        print('============================delete_model============================')
 
 
 class TrackInline(admin.StackedInline):
     model = Track
     can_delete = False
-
-    # def has_delete_permission(self, request, obj=None):
-    #     return False
-    #
-    # def has_change_permission(self, request, obj=None):
-    #     return False
-    #
-    # def has_view_permission(self, request, obj=None):
-    #     return True
-    #
-    # def has_module_permission(self, request):
-    #     return True
 
 
 @admin.register(PlayHistory)
@@ -324,18 +322,3 @@ class PlayHistoryAdmin(admin.ModelAdmin):
         link = '<a href="%s">%s</a>' % (url, obj.track.id)
         return mark_safe(link)
     track_link.short_description = 'Track'
-
-    # def has_add_permission(self, request):
-    #     return False
-    #
-    # def has_delete_permission(self, request, obj=None):
-    #     return False
-    #
-    # def has_change_permission(self, request, obj=None):
-    #     return False
-    #
-    # def has_view_permission(self, request, obj=None):
-    #     return True
-    #
-    # def has_module_permission(self, request):
-    #     return True

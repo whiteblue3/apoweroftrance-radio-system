@@ -144,10 +144,10 @@ class UploadAPI(CreateAPIView):
         openapi.Parameter(
             name="channel",
             in_=openapi.IN_FORM,
-            type=openapi.TYPE_STRING,
+            type=openapi.TYPE_ARRAY,
             required=True,
             description="Service Channel",
-            enum=SERVICE_CHANNEL
+            items=openapi.Items(type=openapi.TYPE_STRING, enum=SERVICE_CHANNEL)
         ),
     ]
 
@@ -200,14 +200,17 @@ class UploadAPI(CreateAPIView):
         except MultiValueDictKeyError:
             raise ValidationError(_("'channel' is required"))
 
-        if channel not in SERVICE_CHANNEL:
-            raise ValidationError(_("Invalid service channel"))
+        channel = channel.replace('"', '').split(',')
+
+        for service_channel in channel:
+            if service_channel not in SERVICE_CHANNEL:
+                raise ValidationError(_("Invalid service channel"))
 
         duration = None
         filepath = None
         for f in request.FILES.getlist('audio'):
             try:
-                storage_driver = 'gcs'
+                storage_driver = settings.STORAGE_DRIVER
                 valid_mimetype = None
                 if audio_format == FORMAT_MP3:
                     valid_mimetype = [
@@ -244,7 +247,7 @@ class UploadAPI(CreateAPIView):
                     "description": description,
                     "duration": str(timedelta(seconds=float(duration))),
                     "play_count": 0,
-                    "channel": [channel],
+                    "channel": channel,
                     "uploaded_at": now(),
                     "last_played_at": None
                 }
