@@ -16,6 +16,7 @@ It contains
 And it's designed for run as a standalone mode.
 
 # TODO
+- [ ] Split Account and re-design to MSA
 - [ ] Streaming with YouTube
 - [ ] Auto Beat Matching
 - [ ] Layer with Ment while playing (Voice Composition)
