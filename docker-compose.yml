@@ -30,7 +30,7 @@ services:
       - -c
       - |
         python3 -m pip install -r requirement.txt
-        while ! nc 10.0.0.5 8090; do
+        while ! nc 10.0.0.6 8090; do
           >&2 echo "Wait backend service - sleeping"
           sleep 1
         done
@@ -73,6 +73,56 @@ services:
     links:
       - radio
 
+#  account:
+#    container_name: account
+#    restart: always
+##    image: gcr.io/apoweroftrance/radio:latest
+#    build: account
+#    environment:
+#      STAGE: dev
+#      SECRET_KEY: 67DnqAXVVmYt84uhax1rE0M5zFpcvQAB0nqz5WWSoLtmSjBD0j
+#      AES_KEY: BYOUwqYyMgWfEIjSHhmVHBoJgobVUJbR
+#      AES_SECRET: I6V8HN5DMUPM4AES
+#      EMAIL_HOST_USER: apoweroftrance@gmail.com
+#      EMAIL_HOST_PASSWORD: "\"!Triace07\""
+#      DB_NAME: user
+#      DB_HOST: 10.0.0.8
+#      DB_USERNAME: whiteblue3
+#      DB_PASSWORD: ?!Triace07
+#      DB_PORT: 5432
+#      NGINX: 10.0.0.4:8080
+#      REDIS_URL: 10.0.0.7
+#      REDIS_PORT: 6379
+#      REDIS_DB: 0
+#    depends_on:
+#      - redis
+#      - db
+#    links:
+#      - redis
+#      - db
+#    command:
+#      - /bin/bash
+#      - -c
+#      - |
+#        python3 -m pip install -r requirement.txt
+#        python3 manage.py collectstatic --noinput -i yes
+#        python3 manage.py makemigrations
+#        python3 manage.py migrate
+#        while ! nc 10.0.0.8 5432; do
+#          >&2 echo "Wait database service - sleeping"
+#          sleep 1
+#        done
+#        uwsgi --show-config
+#    ports:
+#      - "8090:8090"
+#    networks:
+#      apoweroftrance:
+#        ipv4_address: 10.0.0.6
+#    volumes:
+#      - radio_data:/backend
+#      - ./apoweroftrance-525255671db2.json:/etc/gcloud/service-account-key.json
+
+
   radio:
     container_name: radio
     restart: always
@@ -85,13 +135,18 @@ services:
       AES_SECRET: I6V8HN5DMUPM4AES
       EMAIL_HOST_USER: apoweroftrance@gmail.com
       EMAIL_HOST_PASSWORD: "\"!Triace07\""
+      DB_USER_NAME: user
+      DB_USER_HOST: 10.0.0.8
+      DB_USER_USERNAME: whiteblue3
+      DB_USER_PASSWORD: ?!Triace07
+      DB_USER_PORT: 5432
       DB_NAME: radio
-      DB_HOST: 10.0.0.7
+      DB_HOST: 10.0.0.8
       DB_USERNAME: whiteblue3
       DB_PASSWORD: ?!Triace07
       DB_PORT: 5432
       NGINX: 10.0.0.4:8080
-      REDIS_URL: 10.0.0.6
+      REDIS_URL: 10.0.0.7
       REDIS_PORT: 6379
       REDIS_DB: 0
     depends_on:
@@ -106,11 +161,11 @@ services:
       - |
         python3 -m pip install -r requirement.txt
         python3 manage.py collectstatic --noinput -i yes
-        python3 manage.py migrate --noinput
         python3 manage.py makemigrations accounts
         python3 manage.py makemigrations radio
+        python3 manage.py migrate accounts --database=user
         python3 manage.py migrate
-        while ! nc 10.0.0.7 5432; do
+        while ! nc 10.0.0.8 5432; do
           >&2 echo "Wait database service - sleeping"
           sleep 1
         done
@@ -119,7 +174,7 @@ services:
       - "8090:8090"
     networks:
       apoweroftrance:
-        ipv4_address: 10.0.0.5
+        ipv4_address: 10.0.0.6
     volumes:
       - radio_data:/backend
       - ./apoweroftrance-525255671db2.json:/etc/gcloud/service-account-key.json
@@ -139,7 +194,7 @@ services:
       - "6379:6379"
     networks:
       apoweroftrance:
-        ipv4_address: 10.0.0.6
+        ipv4_address: 10.0.0.7
 
   db:
     container_name: db
@@ -147,7 +202,7 @@ services:
     environment:
       POSTGRES_USER: whiteblue3
       POSTGRES_PASSWORD: ?!Triace07
-      POSTGRES_DB: radio
+      $POSTGRES_MULTIPLE_DB: radio,user
       PGDATA: /var/postgres_data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
@@ -158,8 +213,9 @@ services:
       - "5432:5432"
     networks:
       apoweroftrance:
-        ipv4_address: 10.0.0.7
+        ipv4_address: 10.0.0.8
     volumes:
+      - ./initialize_postgresql_multiple_databases.sh:/docker-entrypoint-initdb.d/initialize_postgresql_multiple_databases.sh
       - pgdata:/var/postgres_data
 
 

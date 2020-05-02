@@ -1,7 +1,9 @@
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django_utils import multi_db_ralation
 
 
 CHANNEL = [
@@ -29,9 +31,14 @@ SUPPORT_FORMAT = [
 ]
 
 
+class ModelQuerySet(multi_db_ralation.ExternalDbQuerySetMixin, models.QuerySet):
+    pass
+
+
 class Track(models.Model):
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=False, blank=False, editable=False
+        get_user_model(), on_delete=models.CASCADE, null=False, blank=False, editable=False,
+        db_constraint=False, swappable=False
     )
 
     location = models.CharField(null=False, blank=False, max_length=254)
@@ -55,7 +62,11 @@ class Track(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     last_played_at = models.DateTimeField(null=True, blank=True, editable=False)
 
+    objects = models.Manager.from_queryset(queryset_class=ModelQuerySet)()
+
     class Meta:
+        app_label = 'radio'
+        external_db_fields = ['user']
         verbose_name = 'Music'
         verbose_name_plural = 'Music'
 
@@ -69,14 +80,19 @@ class Like(models.Model):
     )
 
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=False, blank=False, editable=False
+        get_user_model(), on_delete=models.CASCADE, null=False, blank=False, editable=False,
+        db_constraint=False, swappable=False
     )
 
     like = models.BooleanField(default=None, null=True, blank=True)
 
     updated_at = models.DateTimeField(auto_now_add=True, editable=False)
 
+    objects = models.Manager.from_queryset(queryset_class=ModelQuerySet)()
+
     class Meta:
+        app_label = 'radio'
+        external_db_fields = ['user']
         verbose_name = 'Like'
         verbose_name_plural = 'Like'
 
@@ -96,5 +112,6 @@ class PlayHistory(models.Model):
     played_at = models.DateTimeField(null=False, blank=False, editable=False)
 
     class Meta:
+        app_label = 'radio'
         verbose_name = 'Play History'
         verbose_name_plural = 'Play History'

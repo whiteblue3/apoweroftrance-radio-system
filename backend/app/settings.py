@@ -105,7 +105,19 @@ DATABASES = {
         'HOST': os.environ.get('DB_HOST'),
         'PORT': os.environ.get('DB_PORT')
     },
+    'user': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_USER_NAME'),
+        'USER': os.environ.get('DB_USER_USERNAME'),
+        'PASSWORD': os.environ.get('DB_USER_PASSWORD'),
+        'HOST': os.environ.get('DB_USER_HOST'),
+        'PORT': os.environ.get('DB_USER_PORT')
+    },
 }
+
+DATABASE_ROUTERS = [
+    'app.routers.DefaultRouter',
+]
 
 # https://jupiny.com/2018/02/27/caching-using-redis-on-django/
 CACHES = {

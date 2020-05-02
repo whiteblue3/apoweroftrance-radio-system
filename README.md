@@ -22,6 +22,12 @@ And it's designed for run as a standalone mode.
 
 # TODO
 - [ ] Split Account and re-design to MSA
+    - [x] DB Routing via Multi Database setup
+    - [ ] DJango app (not main 'app') make sure pip installable
+    - [ ] Remove radio.accounts_ tables when MSA successful
+- [ ] Search Music and User Nickname
+- [ ] Deploy to Kubernetes
+- [ ] Support AWS S3
 - [ ] Streaming with YouTube
 - [ ] Auto Beat Matching
 - [ ] Layer with Ment while playing (Voice Composition)
@@ -62,11 +68,17 @@ You must define these variables because secret information.
     ENV EMAIL_HOST_USER = ''
     ENV EMAIL_HOST_PASSWORD = ''
     
-    ENV DB_NAME 'postgres'
+    ENV DB_NAME 'radio'
     ENV DB_HOST '127.0.0.1'
     ENV DB_USERNAME 'postgres'
     ENV DB_PASSWORD ''
     ENV DB_PORT 5432
+    
+    ENV DB_ACCOUNT_NAME 'user'
+    ENV DB_ACCOUNT_HOST '127.0.0.1'
+    ENV DB_ACCOUNT_USERNAME 'postgres'
+    ENV DB_ACCOUNT_PASSWORD ''
+    ENV DB_ACCOUNT_PORT 5432
     
     ENV REDIS_URL "127.0.0.1"
     ENV REDIS_PORT 6379
