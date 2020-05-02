@@ -25,3 +25,49 @@ And it's designed for run as a standalone mode.
 - [ ] Streaming with YouTube
 - [ ] Auto Beat Matching
 - [ ] Layer with Ment while playing (Voice Composition)
+
+# Backend Environment Variable
+See backend/Dockerfile.
+
+These variables is basic setup
+
+    ENV NGINX=127.0.0.1:80
+    ENV GOOGLE_APPLICATION_CREDENTIALS /etc/gcloud/service-account-key.json
+    ENV DJANGO_SETTINGS_MODULE=app.settings
+    
+These variables works with uwsgi
+
+    ENV UWSGI_WSGI_FILE=/backend/app/wsgi.py
+    ENV UWSGI_SOCKET=0.0.0.0:8090 
+    ENV UWSGI_CHMOD_SOCKET=644
+    ENV UWSGI_LAZY_APPS=1 
+    ENV UWSGI_WSGI_ENV_BEHAVIOR=holy 
+    ENV UWSGI_POST_BUFFERING=1
+    ENV UWSGI_MASTER=1 
+    ENV UWSGI_HTTP_AUTO_CHUNKED=1 
+    ENV UWSGI_HTTP_KEEPALIVE=1 
+    ENV UWSGI_PROCESS=4
+    ENV UWSGI_STATIC_MAP="/static/=/backend/.static/" 
+    ENV UWSGI_STATIC_EXPIRES_URI="/static/.*\.[a-f0-9]{12,}\.(css|js|png|jpg|jpeg|gif|ico|woff|ttf|otf|svg|scss|map|txt) 315360000"
+    
+This variable define like 'dev', 'stage', 'production'
+
+    ENV STAGE 'dev'
+
+You must define these variables because secret information.
+
+    ENV SECRET_KEY = ''
+    ENV AES_KEY = ''
+    ENV AES_SECRET = ''
+    ENV EMAIL_HOST_USER = ''
+    ENV EMAIL_HOST_PASSWORD = ''
+    
+    ENV DB_NAME 'postgres'
+    ENV DB_HOST '127.0.0.1'
+    ENV DB_USERNAME 'postgres'
+    ENV DB_PASSWORD ''
+    ENV DB_PORT 5432
+    
+    ENV REDIS_URL "127.0.0.1"
+    ENV REDIS_PORT 6379
+    ENV REDIS_DB 0

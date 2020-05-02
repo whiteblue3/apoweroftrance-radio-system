@@ -62,6 +62,13 @@ ENV GOOGLE_APPLICATION_CREDENTIALS /etc/gcloud/service-account-key.json
 
 RUN mkdir -p /etc/gcloud
 
+ENV STAGE 'dev'
+ENV SECRET_KEY = ''
+ENV AES_KEY = ''
+ENV AES_SECRET = ''
+ENV EMAIL_HOST_USER = ''
+ENV EMAIL_HOST_PASSWORD = ''
+
 ENV DB_NAME 'postgres'
 ENV DB_HOST '127.0.0.1'
 ENV DB_USERNAME 'postgres'

@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+# from google.oauth2 import service_account
 import logging.config
 from django.utils.log import DEFAULT_LOGGING
 
@@ -22,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '@++f3cl$2c)f1m4_&0j$hjcnassuw7pd93oo5my)4w_fe41$c1'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -159,6 +160,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
+# Local storage
 STATIC_URL = '/static/'
 STATIC_DIR = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [
@@ -166,6 +168,12 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, '.static')
 
+# # Uncomment using cloud storage
+# STATIC_DIR = os.path.join(BASE_DIR, 'static')
+# STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+
+# https://blog.jun2.org/development/2019/07/23/django-security-options.html
 
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # SECURE_SSL_REDIRECT = True
@@ -178,7 +186,6 @@ SECURE_HSTS_PRELOAD = True
 SECURE_HSTS_SECONDS = 63072000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 X_FRAME_OPTIONS = 'SAMEORIGIN'
-SESSION_COOKIE_SAMESITE = 'Strict'
 
 
 # Disable Django's logging setup
@@ -321,6 +328,13 @@ GCP_USE_SERVICE_ACCOUNT_JSON = True
 
 STORAGE_DOMAIN = "https://storage.cloud.google.com/apoweroftrance-media"
 
+# GS_CREDENTIALS = service_account.Credentials.from_service_account_file(GCP_SERVICE_ACCOUNT_JSON)
+# DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+# STATICFILES_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+# GS_BUCKET_NAME = "apoweroftrance-static"
+#
+# STATIC_URL = "https://storage.cloud.google.com/apoweroftrance-static/"
+
 
 #####################
 # File Upload Setup #
@@ -337,8 +351,8 @@ STORAGE_DRIVER = "gcs"
 # AES Setup #
 #############
 
-AES_KEY = "BYOUwqYyMgWfEIjSHhmVHBoJgobVUJbR"
-AES_SECRET = "I6V8HN5DMUPM4AES"
+AES_KEY = os.environ.get('AES_KEY')
+AES_SECRET = os.environ.get('AES_SECRET')
 
 
 ###############
@@ -348,8 +362,8 @@ AES_SECRET = "I6V8HN5DMUPM4AES"
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = "apoweroftrance@gmail.com"
-EMAIL_HOST_PASSWORD = "\"!Triace07\""
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 SERVER_EMAIL = EMAIL_HOST_USER

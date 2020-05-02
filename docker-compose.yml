@@ -79,6 +79,12 @@ services:
     image: gcr.io/apoweroftrance/radio:latest
 #    build: backend
     environment:
+      STAGE: dev
+      SECRET_KEY: ucKAsoQml9WVaHaLu00zDqno7LpgV6QPU3zv8FiryvKkkk90HB
+      AES_KEY: BYOUwqYyMgWfEIjSHhmVHBoJgobVUJbR
+      AES_SECRET: I6V8HN5DMUPM4AES
+      EMAIL_HOST_USER: apoweroftrance@gmail.com
+      EMAIL_HOST_PASSWORD: "\"!Triace07\""
       DB_NAME: radio
       DB_HOST: 10.0.0.7
       DB_USERNAME: whiteblue3
