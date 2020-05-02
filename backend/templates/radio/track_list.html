@@ -21,10 +21,10 @@
   <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 
   <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
-  <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.24/themes/smoothness/jquery-ui.css" />
+  <link rel="stylesheet" type="text/css" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.24/themes/smoothness/jquery-ui.css" />
   <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.24/jquery-ui.min.js"></script>
 
-  <style>
+  <style type="text/css">
     .music-row{ cursor: pointer; height: 30px; }
     .sortable { list-style-type: none; margin: 0; padding: 0; width: 60%; }
     .sortable li { margin: 0 3px 3px 3px; padding: 0.4em; padding-left: 1.5em; font-size: 1.4em; height: 18px; }
@@ -43,20 +43,27 @@
 
     function updateData(channel) {
       $.getJSON(protocol + '://' + domain + '/v1/radio/playqueue/nowplaying/' + channel, function(data) {
-        nowplaying = data.payload;
-
-        var dv = document.getElementById('nowplaying_' + channel);
-        dv.innerHTML = '<li class="ui-state-default">' + nowplaying["artist"] + ' - ' + nowplaying["title"] + '</li>';
+        if(data.length == 0 || !data.payload) {
+          nowplaying = null;
+          var dv = document.getElementById('nowplaying_' + channel);
+          dv.innerHTML = '';
+        } else {
+          nowplaying = data.payload;
+          var dv = document.getElementById('nowplaying_' + channel);
+          dv.innerHTML = '<li class="ui-state-default">' + nowplaying["artist"] + ' - ' + nowplaying["title"] + '</li>';
+        }
       });
 
       $.getJSON(protocol + '://' + domain + '/v1/radio/playqueue?channel=' + channel + '&page=0&limit=30', function(data) {
         playlist = new Array();
         playlist_data[channel] = new Array();
 
-        $.each(data.payload, function(i,item) {
-          playlist_data[channel].push(item);
-          playlist.push( item["artist"] + ' - ' + item["title"] );
-        });
+        if(data.payload != null) {
+          $.each(data.payload, function(i,item) {
+            playlist_data[channel].push(item);
+            playlist.push( item["artist"] + ' - ' + item["title"] );
+          });
+        }
 
         update_playlist('playlist_' + channel, playlist, channel);
       });

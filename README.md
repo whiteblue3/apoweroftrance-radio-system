@@ -5,6 +5,11 @@ This project is published as opensource and use GPLv3 license.
 # Server Spec
 - Platform: Docker or Kubernetes
 - Database: PostgreSQL 11 over
+- Python: 3.6
+- Storage: Google Cloud Storage
+- Nginx: latest
+- Icecast: 2.4.4
+- WSGI: uWSGI 2.0.18
 
 # musicdaemon
 Real broadcast daemon to stream icecast2.

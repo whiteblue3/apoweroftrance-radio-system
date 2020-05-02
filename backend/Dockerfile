@@ -1,23 +1,37 @@
-FROM python:3.6-slim
-
-ENV PYTHONUNBUFFERED 0
+FROM python:3.6-slim AS build
+MAINTAINER @whiteblue3 https://github.com/whiteblue3
 
 RUN mkdir /backend
 WORKDIR /backend
 
-RUN apt-get update && apt-get -y install --no-install-recommends build-essential vim gnupg curl \
-    && rm -rf /var/lib/apt/lists/*
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Install gcloud.
-RUN apt-get install --no-install-recommends -y apt-transport-https ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-RUN curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-RUN apt-get update
-RUN apt-get install --no-install-recommends -y google-cloud-sdk \
-    && rm -rf /var/lib/apt/lists/*
+COPY ./django_utils-0.0.1.tar.gz /backend/django_utils-0.0.1.tar.gz
+COPY ./accounts-0.0.1.tar.gz /backend/accounts-0.0.1.tar.gz
+COPY ./requirement.txt /backend/requirement.txt
 
-RUN rm -f /var/cache/apt/archives/*.rpm /var/cache/apt/*.bin /var/lib/apt/lists/*.*;
+RUN apt-get update && apt-get -y install --no-install-recommends build-essential \
+    && python3 -m pip install --upgrade pip setuptools wheel \
+    && python3 -m pip install --no-cache-dir uwsgi==2.0.18 \
+    && python3 -m pip install --no-cache-dir -r requirement.txt \
+    && apt-get remove --purge -y build-essential \
+    && apt-get -y autoremove \
+    && apt-get -y clean \
+    && rm -f /var/cache/apt/archives/*.rpm /var/cache/apt/*.bin /var/lib/apt/lists/*.*;
+
+
+FROM python:3.6-slim AS deploy
+MAINTAINER @whiteblue3 https://github.com/whiteblue3
+
+COPY --from=build /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+ENV PYTHONUNBUFFERED 0
+ENV TZ=Asia/Seoul
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN apt-get update && apt-get -y install --no-install-recommends vim netcat-openbsd
 
 ENV NGINX=127.0.0.1:80
 
@@ -36,21 +50,18 @@ EXPOSE 8090
 ENV USER=ubuntu
 RUN useradd -rm -d /home/${USER} -s /bin/bash --no-log-init ${USER}
 
+RUN chown -R ${USER}:${USER} /opt/venv
+
+WORKDIR /backend
 RUN chown -R ${USER}:${USER} /backend
 
 COPY ./startup.sh /backend/startup.sh
 RUN chmod a+x /backend/startup.sh
 
-RUN python3 -m pip install --upgrade pip \
-    && python3 -m pip install uwsgi==2.0.18
-
 ENV GOOGLE_APPLICATION_CREDENTIALS /etc/gcloud/service-account-key.json
 
 RUN mkdir -p /etc/gcloud
 
-RUN apt-get update && apt-get install netcat-openbsd -y
-
-ENV DB_ENGINE 'django.db.backends.postgresql'
 ENV DB_NAME 'postgres'
 ENV DB_HOST '127.0.0.1'
 ENV DB_USERNAME 'postgres'
@@ -63,8 +74,16 @@ ENV REDIS_DB 0
 
 USER ${USER}
 
-# Uncomment when production
+
+#FROM deploy AS production
+#MAINTAINER @whiteblue3 https://github.com/whiteblue3
+#
 #COPY . /backend/
-#RUN python3 -m pip install --no-cache-dir -r requirement.txt
+#RUN python3 manage.py collectstatic --noinput -i yes \
+#    && python3 manage.py migrate --noinput \
+#    && python3 manage.py makemigrations accounts \
+#    && python3 manage.py makemigrations radio \
+#    && python3 manage.py migrate
+
 
 ENTRYPOINT ["./startup.sh"]

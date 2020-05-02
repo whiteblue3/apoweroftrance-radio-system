@@ -97,7 +97,7 @@ WSGI_APPLICATION = 'app.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': os.environ.get('DB_ENGINE'),
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('DB_NAME'),
         'USER': os.environ.get('DB_USERNAME'),
         'PASSWORD': os.environ.get('DB_PASSWORD'),
@@ -316,6 +316,8 @@ SWAGGER_SETTINGS = {
 
 GCP_PROJECT_ID = "apoweroftrance"
 GCP_STORAGE_BUCKET_NAME = "apoweroftrance-media"
+GCP_SERVICE_ACCOUNT_JSON = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+GCP_USE_SERVICE_ACCOUNT_JSON = True
 
 STORAGE_DOMAIN = "https://storage.cloud.google.com/apoweroftrance-media"
 
