@@ -21,10 +21,10 @@ It contains
 And it's designed for run as a standalone mode.
 
 # TODO
-- [ ] Split Account and re-design to MSA
+- [x] Split Account and re-design to MSA
     - [x] DB Routing via Multi Database setup
-    - [ ] DJango app (not main 'app') make sure pip installable
-    - [ ] Remove radio.accounts_ tables when MSA successful
+    - [x] DJango app (not main 'app') make sure pip installable
+    - [x] Refactor package dependencies structure accounts, utils
 - [ ] Search Music and User Nickname
 - [ ] Deploy to Kubernetes
 - [ ] Support AWS S3
@@ -32,7 +32,7 @@ And it's designed for run as a standalone mode.
 - [ ] Auto Beat Matching
 - [ ] Layer with Ment while playing (Voice Composition)
 
-# Backend Environment Variable
+# Radio Backend Environment Variable
 See backend/Dockerfile.
 
 These variables is basic setup
@@ -62,23 +62,32 @@ This variable define like 'dev', 'stage', 'production'
 
 You must define these variables because secret information.
 
+- apoweroftrance-account only
+
+
     ENV SECRET_KEY = ''
     ENV AES_KEY = ''
     ENV AES_SECRET = ''
     ENV EMAIL_HOST_USER = ''
     ENV EMAIL_HOST_PASSWORD = ''
     
+- apoweroftrance-radio only
+
+
     ENV DB_NAME 'radio'
     ENV DB_HOST '127.0.0.1'
     ENV DB_USERNAME 'postgres'
     ENV DB_PASSWORD ''
     ENV DB_PORT 5432
     
-    ENV DB_ACCOUNT_NAME 'user'
-    ENV DB_ACCOUNT_HOST '127.0.0.1'
-    ENV DB_ACCOUNT_USERNAME 'postgres'
-    ENV DB_ACCOUNT_PASSWORD ''
-    ENV DB_ACCOUNT_PORT 5432
+- apoweroftrance django common
+
+
+    ENV DB_USER_NAME 'user'
+    ENV DB_USERT_HOST '127.0.0.1'
+    ENV DB_USER_USERNAME 'postgres'
+    ENV DB_USER_PASSWORD ''
+    ENV DB_USER_PORT 5432
     
     ENV REDIS_URL "127.0.0.1"
     ENV REDIS_PORT 6379

@@ -1,8 +1,8 @@
 [submodule "musicdaemon"]
 	path = musicdaemon
 	url = https://github.com/whiteblue3/apoweroftrance-musicdaemon.git
-[submodule "django-accounts"]
-	path = django-accounts
+[submodule "accounts"]
+	path = accounts
 	url = https://github.com/whiteblue3/apoweroftrance-account.git
 [submodule "django-utils"]
 	path = django-utils
