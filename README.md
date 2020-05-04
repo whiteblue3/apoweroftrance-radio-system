@@ -11,6 +11,8 @@ This project is published as opensource and use GPLv3 license.
 - Icecast: 2.4.4
 - WSGI: uWSGI 2.0.18
 
+for design as microservices, all microservice use same database
+
 # musicdaemon
 Real broadcast daemon to stream icecast2.
 It contains
@@ -21,11 +23,8 @@ It contains
 And it's designed for run as a standalone mode.
 
 # TODO
-- [x] Split Account and re-design to MSA
-    - [x] DB Routing via Multi Database setup
-    - [x] DJango app (not main 'app') make sure pip installable
-    - [x] Refactor package dependencies structure accounts, utils
-- [ ] Search Music and User Nickname
+- [x] Search Music and User Nickname
+- [ ] Access Logging with DJango Login
 - [ ] Deploy to Kubernetes
 - [ ] Support AWS S3
 - [ ] Streaming with YouTube
@@ -62,33 +61,19 @@ This variable define like 'dev', 'stage', 'production'
 
 You must define these variables because secret information.
 
-- apoweroftrance-account only
-
-
     ENV SECRET_KEY = ''
     ENV AES_KEY = ''
     ENV AES_SECRET = ''
     ENV EMAIL_HOST_USER = ''
     ENV EMAIL_HOST_PASSWORD = ''
     
-- apoweroftrance-radio only
-
-
     ENV DB_NAME 'radio'
     ENV DB_HOST '127.0.0.1'
     ENV DB_USERNAME 'postgres'
     ENV DB_PASSWORD ''
     ENV DB_PORT 5432
     
-- apoweroftrance django common
-
-
-    ENV DB_USER_NAME 'user'
-    ENV DB_USERT_HOST '127.0.0.1'
-    ENV DB_USER_USERNAME 'postgres'
-    ENV DB_USER_PASSWORD ''
-    ENV DB_USER_PORT 5432
-    
     ENV REDIS_URL "127.0.0.1"
     ENV REDIS_PORT 6379
     ENV REDIS_DB 0
+

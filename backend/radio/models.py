@@ -37,8 +37,7 @@ class ModelQuerySet(multi_db_ralation.ExternalDbQuerySetMixin, models.QuerySet):
 
 class Track(models.Model):
     user = models.ForeignKey(
-        get_user_model(), on_delete=models.CASCADE, null=False, blank=False, editable=False,
-        db_constraint=False, swappable=False
+        get_user_model(), on_delete=models.CASCADE, null=False, blank=False, editable=False
     )
 
     location = models.CharField(null=False, blank=False, max_length=254)
@@ -80,8 +79,7 @@ class Like(models.Model):
     )
 
     user = models.ForeignKey(
-        get_user_model(), on_delete=models.CASCADE, null=False, blank=False, editable=False,
-        db_constraint=False, swappable=False
+        get_user_model(), on_delete=models.CASCADE, null=False, blank=False, editable=False
     )
 
     like = models.BooleanField(default=None, null=True, blank=True)

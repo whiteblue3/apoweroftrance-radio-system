@@ -28,6 +28,7 @@ admin.site.index_title = "Radio Admin"
 
 
 schema_url_patterns = [
+    path('v1/user/', include('accounts.urls', namespace='user')),
     path('v1/radio/', include('radio.urls', namespace='radio')),
 ]
 

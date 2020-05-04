@@ -136,3 +136,6 @@ dmypy.json
 
 /apoweroftrance-525255671db2.json
 /django-accounts/.static/
+/backend/radio/migrations/
+/radio/radio/migrations/
+/radio/accounts/migrations/

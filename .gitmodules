@@ -4,6 +4,3 @@
 [submodule "django-utils"]
 	path = django-utils
 	url = https://github.com/whiteblue3/apoweroftrance-django-utils.git
-[submodule "accounts"]
-	path = accounts
-	url = https://github.com/whiteblue3/apoweroftrance-account.git

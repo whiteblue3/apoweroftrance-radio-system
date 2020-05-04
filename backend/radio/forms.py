@@ -1,7 +1,6 @@
 from datetime import timedelta
 from django import forms
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.translation import ugettext_lazy as _
 from rest_framework.exceptions import ValidationError
@@ -55,6 +54,7 @@ class UploadTrackForm(UpdateTrackForm):
 
     class Meta:
         model = Track
+        exclude = ['user']
         fields = ['audio', 'format', 'artist', 'title', 'description', 'channel']
 
     def save(self, commit=True):
@@ -107,22 +107,17 @@ class UploadTrackForm(UpdateTrackForm):
             audio = MP4(f)
             duration = audio.info.length
 
-        User = get_user_model()
-        user = User.objects.get(id=self.user.id)
-
-        self.instance = Track(
-            user=user,
-            location=filepath,
-            format=audio_format,
-            is_service=True,
-            artist=artist,
-            title=title,
-            description=description,
-            duration=str(timedelta(seconds=float(duration))),
-            play_count=0,
-            channel=channel,
-            uploaded_at=now(),
-            last_played_at=None
-        )
+        self.instance.user = self.user
+        self.instance.location = filepath
+        self.instance.format = audio_format
+        self.instance.is_service = True
+        self.instance.artist = artist
+        self.instance.title = title
+        self.instance.description = description
+        self.instance.duration = str(timedelta(seconds=float(duration)))
+        self.instance.play_count = 0
+        self.instance.channel = channel
+        self.instance.uploaded_at = now()
+        self.instance.last_played_at = None
 
         return super().save(commit=commit)

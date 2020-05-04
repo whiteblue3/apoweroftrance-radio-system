@@ -64,8 +64,8 @@ class TrackListAPI(RetrieveAPIView):
     serializer_class = Serializer
 
     @swagger_auto_schema(
-        operation_summary="Music List",
-        operation_description="Public API",
+        operation_summary="Search Music List",
+        operation_description="Public API. Search music. if keyword is black or null, search entire music list",
         manual_parameters=manual_parameters,
         responses={'200': TrackSerializer})
     @transaction.atomic

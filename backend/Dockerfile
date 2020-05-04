@@ -8,7 +8,6 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 COPY ./django_utils-0.0.1.tar.gz /backend/django_utils-0.0.1.tar.gz
-COPY ./accounts-0.0.1.tar.gz /backend/accounts-0.0.1.tar.gz
 COPY ./requirement.txt /backend/requirement.txt
 
 RUN apt-get update && apt-get -y install --no-install-recommends build-essential \
@@ -63,14 +62,13 @@ ENV GOOGLE_APPLICATION_CREDENTIALS /etc/gcloud/service-account-key.json
 RUN mkdir -p /etc/gcloud
 
 ENV STAGE 'dev'
+ENV SECRET_KEY = ''
+ENV AES_KEY = ''
+ENV AES_SECRET = ''
+ENV EMAIL_HOST_USER = ''
+ENV EMAIL_HOST_PASSWORD = ''
 
-ENV DB_USER_NAME 'user'
-ENV DB_USER_HOST '127.0.0.1'
-ENV DB_USER_USERNAME 'postgres'
-ENV DB_USER_PASSWORD ''
-ENV DB_USER_PORT 5432
-
-ENV DB_NAME 'radio'
+ENV DB_NAME 'apoweroftrance'
 ENV DB_HOST '127.0.0.1'
 ENV DB_USERNAME 'postgres'
 ENV DB_PASSWORD ''

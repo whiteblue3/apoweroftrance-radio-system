@@ -19,18 +19,6 @@ from .util import get_redis_data, set_redis_data, delete_track, get_random_track
 from django_utils import api
 
 
-class UserFilter(InputFilter):
-    parameter_name = 'user__email'
-    title = _('User')
-
-    def queryset(self, request, queryset):
-        if self.value() is not None:
-            email = self.value()
-            return queryset.filter(
-                Q(user__email__icontains=email)
-            )
-
-
 class ChannelFilter(admin.SimpleListFilter):
     template = 'admin/dropdown_filter.html'
 
@@ -86,10 +74,10 @@ class TrackAdmin(admin.ModelAdmin):
         'uploaded_at', 'updated_at', 'last_played_at',
     )
     search_fields = (
-        'title', 'artist',
+        'title', 'artist', 'user__email'
     )
     list_filter = (
-        UserFilter, ChannelFilter, ('play_count', RangeNumericFilter),
+        ChannelFilter, ('play_count', RangeNumericFilter),
         PlayedFilter, ('last_played_at', DateTimeRangeFilter),
         ('uploaded_at', DateTimeRangeFilter), ('updated_at', DateTimeRangeFilter),
     )
@@ -322,3 +310,12 @@ class PlayHistoryAdmin(admin.ModelAdmin):
         link = '<a href="%s">%s</a>' % (url, obj.track.id)
         return mark_safe(link)
     track_link.short_description = 'Track'
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
