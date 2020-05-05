@@ -137,3 +137,5 @@ dmypy.json
 /radio/radio/migrations/
 /account/.static/
 /account/accounts/migrations/
+/radio_secret.json
+/account_secret.json

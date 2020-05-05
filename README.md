@@ -24,7 +24,7 @@ And it's designed for run as a standalone mode.
 
 # TODO
 - [x] Search Music and User Nickname
-- [ ] Access Logging with DJango Login
+- [x] Access Logging with DJango Login
 - [ ] Deploy to Kubernetes
 - [ ] Support AWS S3
 - [ ] Streaming with YouTube
@@ -32,7 +32,7 @@ And it's designed for run as a standalone mode.
 - [ ] Layer with Ment while playing (Voice Composition)
 
 # Radio Backend Environment Variable
-See backend/Dockerfile.
+See backend/Dockerfile or account/Dockerfile.
 
 These variables is basic setup
 
@@ -55,20 +55,11 @@ These variables works with uwsgi
     ENV UWSGI_STATIC_MAP="/static/=/backend/.static/" 
     ENV UWSGI_STATIC_EXPIRES_URI="/static/.*\.[a-f0-9]{12,}\.(css|js|png|jpg|jpeg|gif|ico|woff|ttf|otf|svg|scss|map|txt) 315360000"
     
-This variable define like 'dev', 'stage', 'production'
-
-    ENV STAGE 'dev'
-
 You must define these variables because secret information.
 
-    ENV SECRET_KEY = ''
-    ENV JWT_SECRET_KEY = ''
-    ENV AES_KEY = ''
-    ENV AES_SECRET = ''
-    ENV EMAIL_HOST_USER = ''
-    ENV EMAIL_HOST_PASSWORD = ''
-    
-    ENV DB_NAME 'radio'
+    ENV ENABLE_SWAGGER 1
+
+    ENV DB_NAME 'apoweroftrance'
     ENV DB_HOST '127.0.0.1'
     ENV DB_USERNAME 'postgres'
     ENV DB_PASSWORD ''
@@ -77,4 +68,23 @@ You must define these variables because secret information.
     ENV REDIS_URL "127.0.0.1"
     ENV REDIS_PORT 6379
     ENV REDIS_DB 0
-
+    
+    ###########################
+    # service depends control #
+    
+    # if 1, wait to start the depends service is up
+    ENV WAIT_SERVICE 0
+    ENV WAIT_URL "127.0.0.1"
+    ENV WAIT_PORT 5432
+    
+    ###################
+    # startup control #
+    
+    # pip install when start (dev usally)
+    ENV INSTALL 0
+    
+    # pip makemigrations and migrate (dev usally)
+    ENV MIGRATE 0
+    
+    # automatic start django
+    ENV AUTOSTART 1

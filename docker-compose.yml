@@ -18,23 +18,29 @@ services:
   musicdeamon:
     container_name: musicdaemon
     restart: always
-    image: gcr.io/apoweroftrance/musicdaemon:latest
+#    image: gcr.io/apoweroftrance/musicdaemon:latest
+    image: gcr.io/apoweroftrance/musicdaemon:production-latest
 #    build: musicdaemon
     environment:
       FUSE: gcs
       BUCKET: apoweroftrance-media
       MOUNT_POINT: /srv/media
+      WAIT_SERVICE: 1
+      WAIT_URL: 10.0.0.7
+      WAIT_PORT: 8090
+      INSTALL: 0
+      AUTOSTART: 1
     # https://stackoverflow.com/questions/33887194/how-to-set-multiple-commands-in-one-yaml-file-with-kubernetes
-    command:
-      - /bin/bash
-      - -c
-      - |
-        python3 -m pip install -r requirement.txt
-        while ! nc 10.0.0.7 8090; do
-          >&2 echo "Wait backend service - sleeping"
-          sleep 1
-        done
-        python3 /opt/musicdaemon/main.py
+#    command:
+#      - /bin/bash
+#      - -c
+#      - |
+#        python3 -m pip install -r requirement.txt
+#        while ! nc 10.0.0.7 8090; do
+#          >&2 echo "Wait backend service - sleeping"
+#          sleep 1
+#        done
+#        python3 /opt/musicdaemon/main.py
     privileged: true
     cap_add:
       - SYS_ADMIN
@@ -46,7 +52,7 @@ services:
       apoweroftrance:
         ipv4_address: 10.0.0.3
     volumes:
-      - musicdaemon_data:/opt/musicdaemon
+#      - musicdaemon_data:/opt/musicdaemon
       - ./config.ini:/opt/musicdaemon/config.ini
       - ./apoweroftrance-525255671db2.json:/etc/gcloud/service-account-key.json
 #      - ./volumes:/srv/media:ro
@@ -120,16 +126,11 @@ services:
   radio:
     container_name: radio
     restart: always
-    image: gcr.io/apoweroftrance/radio:latest
+#    image: gcr.io/apoweroftrance/radio:latest
+    image: gcr.io/apoweroftrance/radio:production-latest
 #    build: radio
     environment:
-      STAGE: dev
-      SECRET_KEY: ucKAsoQml9WVaHaLu00zDqno7LpgV6QPU3zv8FiryvKkkk90HB
-      JWT_SECRET_KEY: qPkwEuJBQhKMjlnTQ84QqUKNpPuaLixOt4yBeAaJJFWOaFflI1
-      AES_KEY: BYOUwqYyMgWfEIjSHhmVHBoJgobVUJbR
-      AES_SECRET: I6V8HN5DMUPM4AES
-      EMAIL_HOST_USER: apoweroftrance@gmail.com
-      EMAIL_HOST_PASSWORD: "\"!Triace07\""
+      ENABLE_SWAGGER: 1
       DB_NAME: apoweroftrance
       DB_HOST: 10.0.0.4
       DB_USERNAME: whiteblue3
@@ -139,47 +140,49 @@ services:
       REDIS_URL: 10.0.0.5
       REDIS_PORT: 6379
       REDIS_DB: 0
+      WAIT_SERVICE: 1
+      WAIT_URL: 10.0.0.8
+      WAIT_PORT: 8091
+      INSTALL: 0
+      MIGRATE: 0
+      AUTOSTART: 1
     depends_on:
       - redis
       - db
     links:
       - redis
       - db
-    command:
-      - /bin/bash
-      - -c
-      - |
-        python3 -m pip install -r requirement.txt
-        python3 manage.py collectstatic --noinput -i yes
-        python3 manage.py makemigrations radio
-        python3 manage.py migrate
-        while ! nc 10.0.0.6 8081; do
-          >&2 echo "Wait account service - sleeping"
-          sleep 1
-        done
-        uwsgi --show-config
+#    command:
+#      - /bin/bash
+#      - -c
+#      - |
+#        python3 -m pip install -r requirement.txt
+#        python3 manage.py collectstatic --noinput -i yes
+#        python3 manage.py makemigrations radio
+#        python3 manage.py migrate
+#        while ! nc 10.0.0.8 8091; do
+#          >&2 echo "Wait account service - sleeping"
+#          sleep 1
+#        done
+#        uwsgi --show-config
     ports:
       - "8090:8090"
     networks:
       apoweroftrance:
         ipv4_address: 10.0.0.7
     volumes:
-      - radio_data:/backend
+#      - radio_data:/backend
+      - ./radio_secret.json:/backend/secret.json
       - ./apoweroftrance-525255671db2.json:/etc/gcloud/service-account-key.json
 
   account:
     container_name: account
     restart: always
-    image: gcr.io/apoweroftrance/account:latest
+#    image: gcr.io/apoweroftrance/account:latest
+    image: gcr.io/apoweroftrance/account:production-latest
 #    build: account
     environment:
-      STAGE: dev
-      SECRET_KEY: Fs2M97WNNwkJqLWnS0QBVztwX3vk3uFnUAuVrOKmlfZ8Yq2Rrm
-      JWT_SECRET_KEY: qPkwEuJBQhKMjlnTQ84QqUKNpPuaLixOt4yBeAaJJFWOaFflI1
-      AES_KEY: BYOUwqYyMgWfEIjSHhmVHBoJgobVUJbR
-      AES_SECRET: I6V8HN5DMUPM4AES
-      EMAIL_HOST_USER: apoweroftrance@gmail.com
-      EMAIL_HOST_PASSWORD: "\"!Triace07\""
+      ENABLE_SWAGGER: 1
       DB_NAME: apoweroftrance
       DB_HOST: 10.0.0.4
       DB_USERNAME: whiteblue3
@@ -189,32 +192,39 @@ services:
       REDIS_URL: 10.0.0.5
       REDIS_PORT: 6379
       REDIS_DB: 0
+      WAIT_SERVICE: 1
+      WAIT_URL: 10.0.0.4
+      WAIT_PORT: 5432
+      INSTALL: 0
+      MIGRATE: 0
+      AUTOSTART: 1
     depends_on:
       - redis
       - db
     links:
       - redis
       - db
-    command:
-      - /bin/bash
-      - -c
-      - |
-        python3 -m pip install -r requirement.txt
-        python3 manage.py collectstatic --noinput -i yes
-        python3 manage.py makemigrations accounts
-        python3 manage.py migrate
-        while ! nc 10.0.0.4 5432; do
-          >&2 echo "Wait database service - sleeping"
-          sleep 1
-        done
-        uwsgi --show-config
+#    command:
+#      - /bin/bash
+#      - -c
+#      - |
+#        python3 -m pip install -r requirement.txt
+#        python3 manage.py collectstatic --noinput -i yes
+#        python3 manage.py makemigrations accounts
+#        python3 manage.py migrate
+#        while ! nc 10.0.0.4 5432; do
+#          >&2 echo "Wait database service - sleeping"
+#          sleep 1
+#        done
+#        uwsgi --show-config
     ports:
       - "8091:8091"
     networks:
       apoweroftrance:
         ipv4_address: 10.0.0.8
     volumes:
-      - account_data:/backend
+#      - account_data:/backend
+      - ./account_secret.json:/backend/secret.json
       - ./apoweroftrance-525255671db2.json:/etc/gcloud/service-account-key.json
 
 volumes:
