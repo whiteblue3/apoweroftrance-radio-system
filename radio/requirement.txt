@@ -10,7 +10,8 @@ django-pgcrypto
 aiohttp
 redis
 
-django_utils-0.0.1.tar.gz
+./apoweroftrance-account-0.0.1.tar.gz
+./apoweroftrance-django-utils-0.0.1.tar.gz
 
 # RESTful API
 djangorestframework
@@ -29,5 +30,3 @@ pycrypto
 
 # Audio Tag
 mutagen
-
-fleep

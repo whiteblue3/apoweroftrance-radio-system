@@ -210,7 +210,7 @@ class User(AbstractBaseUser, PermissionsMixin, TimestampedModel):
                 datetime.utcnow().utctimetuple()
             )
 
-        token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS512')
+        token = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm='HS512')
 
         refresh_limit = timedelta(hours=36)
         refresh_limit = (refresh_limit.days * 24 * 3600 + refresh_limit.seconds)

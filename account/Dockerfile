@@ -7,7 +7,7 @@ WORKDIR /backend
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-COPY ./django_utils-0.0.1.tar.gz /backend/django_utils-0.0.1.tar.gz
+COPY ./apoweroftrance-django-utils-0.0.1.tar.gz /backend/apoweroftrance-django-utils-0.0.1.tar.gz
 COPY ./requirement.txt /backend/requirement.txt
 
 RUN apt-get update && apt-get -y install --no-install-recommends build-essential \
@@ -37,14 +37,14 @@ ENV NGINX=127.0.0.1:80
 ENV DJANGO_SETTINGS_MODULE=app.settings
 ENV UWSGI_WSGI_FILE=/backend/app/wsgi.py
 #ENV UWSGI_SOCKET=/backend/app.sock UWSGI_CHMOD_SOCKET=644
-#ENV UWSGI_HTTP=0.0.0.0:8090
-ENV UWSGI_SOCKET=0.0.0.0:8090 UWSGI_CHMOD_SOCKET=644
+#ENV UWSGI_HTTP=0.0.0.0:8091
+ENV UWSGI_SOCKET=0.0.0.0:8091 UWSGI_CHMOD_SOCKET=644
 ENV UWSGI_LAZY_APPS=1 UWSGI_WSGI_ENV_BEHAVIOR=holy UWSGI_POST_BUFFERING=1
 ENV UWSGI_MASTER=1 UWSGI_HTTP_AUTO_CHUNKED=1 UWSGI_HTTP_KEEPALIVE=1 UWSGI_PROCESS=4
 ENV UWSGI_STATIC_MAP="/static/=/backend/.static/" UWSGI_STATIC_EXPIRES_URI="/static/.*\.[a-f0-9]{12,}\.(css|js|png|jpg|jpeg|gif|ico|woff|ttf|otf|svg|scss|map|txt) 315360000"
 #ENV UWSGI_ROUTE_HOST="^(?!${NGINX}$) break:400"
 
-EXPOSE 8090
+EXPOSE 8091
 
 ENV USER=ubuntu
 RUN useradd -rm -d /home/${USER} -s /bin/bash --no-log-init ${USER}
@@ -63,6 +63,7 @@ RUN mkdir -p /etc/gcloud
 
 ENV STAGE 'dev'
 ENV SECRET_KEY = ''
+ENV JWT_SECRET_KEY = ''
 ENV AES_KEY = ''
 ENV AES_SECRET = ''
 ENV EMAIL_HOST_USER = ''

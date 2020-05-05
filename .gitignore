@@ -128,14 +128,12 @@ dmypy.json
 # Pyre type checker
 .pyre/
 /.idea/
-/backend/accounts/migrations/
-/django-accounts/accounts/migrations/
 /.static_root/
-/backend/.static/
+/radio/.static/
 /volumes/
 
 /apoweroftrance-525255671db2.json
 /django-accounts/.static/
-/backend/radio/migrations/
 /radio/radio/migrations/
-/radio/accounts/migrations/
+/account/.static/
+/account/accounts/migrations/

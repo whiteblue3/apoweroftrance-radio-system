@@ -24,17 +24,16 @@ from drf_yasg import openapi
 
 admin.site.site_header = "A Power of Trance"
 admin.site.site_title = "Welcome to A Power of Trance"
-admin.site.index_title = "Radio Admin"
+admin.site.index_title = "Account Admin"
 
 
 schema_url_patterns = [
     path('v1/user/', include('accounts.urls', namespace='user')),
-    path('v1/radio/', include('radio.urls', namespace='radio')),
 ]
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="A Power of Trance Radio API",
+        title="A Power of Trance Account API",
         default_version='v1',
         description="Usage: <br />"
                     "1. user/authenticate to signin <br />"

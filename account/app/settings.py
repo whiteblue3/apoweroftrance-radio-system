@@ -24,6 +24,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
+JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -49,7 +50,6 @@ INSTALLED_APPS = [
 
     'app',
     'accounts',
-    'radio',
 
     'rest_framework',
     'drf_yasg',
@@ -190,7 +190,7 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 
 HTTP_PROTOCOL = "http"
-DOMAIN_URL = "127.0.0.1:8080"
+DOMAIN_URL = "127.0.0.1:8081"
 
 
 # Disable Django's logging setup
@@ -346,8 +346,8 @@ STORAGE_DOMAIN = "https://storage.cloud.google.com/apoweroftrance-media"
 #####################
 
 FILE_UPLOAD_PERMISSIONS = 0o777
-FILE_UPLOAD_MAX_MEMORY_SIZE = 512000000
-DATA_UPLOAD_MAX_MEMORY_SIZE = 512000000
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10240000
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10240000
 
 STORAGE_DRIVER = "gcs"
 
@@ -474,12 +474,3 @@ NOTIFY_SECURITY_ALERT_EMAIL_HTML = "<!DOCTYPE html><html lang='kr'><body>" \
                                    "A Power of Trance에서 보낸 이메일인지 어떻게 알 수 있나요?<br />" \
                                    "본 이메일의 링크는 “https://”로 시작하고 “apoweroftrance.com”을 포함합니다.<br />" \
                                    "브라우저에 표시된 자물쇠 아이콘을 통해서도 안전한 사이트인지 확인할 수 있습니다.</body></html>"
-
-
-
-###############
-# Radio Setup #
-###############
-
-MUSICDAEMON_URL = "http://10.0.0.3:9000"
-

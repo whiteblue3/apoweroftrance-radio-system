@@ -62,6 +62,7 @@ This variable define like 'dev', 'stage', 'production'
 You must define these variables because secret information.
 
     ENV SECRET_KEY = ''
+    ENV JWT_SECRET_KEY = ''
     ENV AES_KEY = ''
     ENV AES_SECRET = ''
     ENV EMAIL_HOST_USER = ''

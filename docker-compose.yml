@@ -51,97 +51,6 @@ services:
       - ./apoweroftrance-525255671db2.json:/etc/gcloud/service-account-key.json
 #      - ./volumes:/srv/media:ro
 
-  nginx:
-    container_name: nginx
-    restart: always
-    image: nginxinc/nginx-unprivileged:latest
-#    image: gcr.io/apoweroftrance/nginx:latest
-#    build: nginx
-    ports:
-      - "8080:8080"
-    # https://yeti.tistory.com/218
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
-      - ./nginx/useragent.rules:/etc/nginx/useragent.rules
-      - ./nginx/cors:/etc/nginx/cors
-      - ./nginx/whitelist.conf:/etc/nginx/whitelist.conf
-      - ./nginx/uwsgi_params:/etc/nginx/uwsgi_params
-    networks:
-      apoweroftrance:
-        ipv4_address: 10.0.0.4
-    depends_on:
-      - radio
-    links:
-      - radio
-
-  radio:
-    container_name: radio
-    restart: always
-    image: gcr.io/apoweroftrance/radio:latest
-#    build: radio
-    environment:
-      STAGE: dev
-      SECRET_KEY: ucKAsoQml9WVaHaLu00zDqno7LpgV6QPU3zv8FiryvKkkk90HB
-      AES_KEY: BYOUwqYyMgWfEIjSHhmVHBoJgobVUJbR
-      AES_SECRET: I6V8HN5DMUPM4AES
-      EMAIL_HOST_USER: apoweroftrance@gmail.com
-      EMAIL_HOST_PASSWORD: "\"!Triace07\""
-      DB_NAME: apoweroftrance
-      DB_HOST: 10.0.0.7
-      DB_USERNAME: whiteblue3
-      DB_PASSWORD: ?!Triace07
-      DB_PORT: 5432
-      NGINX: 10.0.0.4:8080
-      REDIS_URL: 10.0.0.6
-      REDIS_PORT: 6379
-      REDIS_DB: 0
-    depends_on:
-      - redis
-      - db
-    links:
-      - redis
-      - db
-    command:
-      - /bin/bash
-      - -c
-      - |
-        python3 -m pip install -r requirement.txt
-        python3 manage.py collectstatic --noinput -i yes
-        python3 manage.py makemigrations accounts
-        python3 manage.py makemigrations radio
-        python3 manage.py migrate
-        while ! nc 10.0.0.7 5432; do
-          >&2 echo "Wait database service - sleeping"
-          sleep 1
-        done
-        uwsgi --show-config
-    ports:
-      - "8090:8090"
-    networks:
-      apoweroftrance:
-        ipv4_address: 10.0.0.5
-    volumes:
-      - radio_data:/backend
-      - ./apoweroftrance-525255671db2.json:/etc/gcloud/service-account-key.json
-
-  redis:
-    container_name: redis
-    restart: always
-    image: bitnami/redis:latest
-    environment:
-      - ALLOW_EMPTY_PASSWORD=yes
-    healthcheck:
-      test: ["CMD", "redis-cli","ping"]
-      interval: 3s
-      timeout: 1s
-      retries: 5
-    ports:
-      - "6379:6379"
-    networks:
-      apoweroftrance:
-        ipv4_address: 10.0.0.6
-
   db:
     container_name: db
     image: postgres:11.6
@@ -159,17 +68,165 @@ services:
       - "5432:5432"
     networks:
       apoweroftrance:
-        ipv4_address: 10.0.0.7
+        ipv4_address: 10.0.0.4
     volumes:
 #      - ./initialize_postgresql_multiple_databases.sh:/docker-entrypoint-initdb.d/initialize_postgresql_multiple_databases.sh
       - pgdata:/var/postgres_data
 
+  redis:
+    container_name: redis
+    restart: always
+    image: bitnami/redis:latest
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    healthcheck:
+      test: ["CMD", "redis-cli","ping"]
+      interval: 3s
+      timeout: 1s
+      retries: 5
+    ports:
+      - "6379:6379"
+    networks:
+      apoweroftrance:
+        ipv4_address: 10.0.0.5
+
+  nginx:
+    container_name: nginx
+    restart: always
+#    image: nginxinc/nginx-unprivileged:latest
+    image: gcr.io/apoweroftrance/nginx:latest
+#    build: nginx
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    # https://yeti.tistory.com/218
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/useragent.rules:/etc/nginx/useragent.rules
+      - ./nginx/cors:/etc/nginx/cors
+      - ./nginx/whitelist.conf:/etc/nginx/whitelist.conf
+      - ./nginx/uwsgi_params:/etc/nginx/uwsgi_params
+    networks:
+      apoweroftrance:
+        ipv4_address: 10.0.0.6
+    depends_on:
+      - radio
+      - account
+    links:
+      - radio
+      - account
+
+  radio:
+    container_name: radio
+    restart: always
+#    image: gcr.io/apoweroftrance/radio:latest
+    build: radio
+    environment:
+      STAGE: dev
+      SECRET_KEY: ucKAsoQml9WVaHaLu00zDqno7LpgV6QPU3zv8FiryvKkkk90HB
+      JWT_SECRET_KEY: qPkwEuJBQhKMjlnTQ84QqUKNpPuaLixOt4yBeAaJJFWOaFflI1
+      AES_KEY: BYOUwqYyMgWfEIjSHhmVHBoJgobVUJbR
+      AES_SECRET: I6V8HN5DMUPM4AES
+      EMAIL_HOST_USER: apoweroftrance@gmail.com
+      EMAIL_HOST_PASSWORD: "\"!Triace07\""
+      DB_NAME: apoweroftrance
+      DB_HOST: 10.0.0.4
+      DB_USERNAME: whiteblue3
+      DB_PASSWORD: ?!Triace07
+      DB_PORT: 5432
+      NGINX: 10.0.0.6:8080
+      REDIS_URL: 10.0.0.5
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+    depends_on:
+      - redis
+      - db
+    links:
+      - redis
+      - db
+    command:
+      - /bin/bash
+      - -c
+      - |
+        python3 -m pip install -r requirement.txt
+        python3 manage.py collectstatic --noinput -i yes
+        python3 manage.py makemigrations radio
+        python3 manage.py migrate
+        while ! nc 10.0.0.6 8081; do
+          >&2 echo "Wait account service - sleeping"
+          sleep 1
+        done
+        uwsgi --show-config
+    ports:
+      - "8090:8090"
+    networks:
+      apoweroftrance:
+        ipv4_address: 10.0.0.7
+    volumes:
+      - radio_data:/backend
+      - ./apoweroftrance-525255671db2.json:/etc/gcloud/service-account-key.json
+
+  account:
+    container_name: account
+    restart: always
+#    image: gcr.io/apoweroftrance/account:latest
+    build: account
+    environment:
+      STAGE: dev
+      SECRET_KEY: Fs2M97WNNwkJqLWnS0QBVztwX3vk3uFnUAuVrOKmlfZ8Yq2Rrm
+      JWT_SECRET_KEY: qPkwEuJBQhKMjlnTQ84QqUKNpPuaLixOt4yBeAaJJFWOaFflI1
+      AES_KEY: BYOUwqYyMgWfEIjSHhmVHBoJgobVUJbR
+      AES_SECRET: I6V8HN5DMUPM4AES
+      EMAIL_HOST_USER: apoweroftrance@gmail.com
+      EMAIL_HOST_PASSWORD: "\"!Triace07\""
+      DB_NAME: apoweroftrance
+      DB_HOST: 10.0.0.4
+      DB_USERNAME: whiteblue3
+      DB_PASSWORD: ?!Triace07
+      DB_PORT: 5432
+      NGINX: 10.0.0.6:8081
+      REDIS_URL: 10.0.0.5
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+    depends_on:
+      - redis
+      - db
+    links:
+      - redis
+      - db
+    command:
+      - /bin/bash
+      - -c
+      - |
+        python3 -m pip install -r requirement.txt
+        python3 manage.py collectstatic --noinput -i yes
+        python3 manage.py makemigrations accounts
+        python3 manage.py migrate
+        while ! nc 10.0.0.4 5432; do
+          >&2 echo "Wait database service - sleeping"
+          sleep 1
+        done
+        uwsgi --show-config
+    ports:
+      - "8091:8091"
+    networks:
+      apoweroftrance:
+        ipv4_address: 10.0.0.8
+    volumes:
+      - account_data:/backend
+      - ./apoweroftrance-525255671db2.json:/etc/gcloud/service-account-key.json
 
 volumes:
+  account_data:
+    driver_opts:
+      type: none
+      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/account #NOTE needs full path (~ doesn't work)
+      o: bind
   radio_data:
     driver_opts:
       type: none
-      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/backend #NOTE needs full path (~ doesn't work)
+      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/radio #NOTE needs full path (~ doesn't work)
       o: bind
   musicdaemon_data:
     driver_opts:
