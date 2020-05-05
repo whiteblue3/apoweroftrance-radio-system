@@ -30,7 +30,7 @@ services:
       - -c
       - |
         python3 -m pip install -r requirement.txt
-        while ! nc 10.0.0.5 8090; do
+        while ! nc 10.0.0.7 8090; do
           >&2 echo "Wait backend service - sleeping"
           sleep 1
         done
@@ -120,8 +120,8 @@ services:
   radio:
     container_name: radio
     restart: always
-#    image: gcr.io/apoweroftrance/radio:latest
-    build: radio
+    image: gcr.io/apoweroftrance/radio:latest
+#    build: radio
     environment:
       STAGE: dev
       SECRET_KEY: ucKAsoQml9WVaHaLu00zDqno7LpgV6QPU3zv8FiryvKkkk90HB
@@ -170,8 +170,8 @@ services:
   account:
     container_name: account
     restart: always
-#    image: gcr.io/apoweroftrance/account:latest
-    build: account
+    image: gcr.io/apoweroftrance/account:latest
+#    build: account
     environment:
       STAGE: dev
       SECRET_KEY: Fs2M97WNNwkJqLWnS0QBVztwX3vk3uFnUAuVrOKmlfZ8Yq2Rrm
@@ -221,17 +221,17 @@ volumes:
   account_data:
     driver_opts:
       type: none
-      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radiosystem/account #NOTE needs full path (~ doesn't work)
+      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/account #NOTE needs full path (~ doesn't work)
       o: bind
   radio_data:
     driver_opts:
       type: none
-      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radiosystem/radio #NOTE needs full path (~ doesn't work)
+      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/radio #NOTE needs full path (~ doesn't work)
       o: bind
   musicdaemon_data:
     driver_opts:
       type: none
-      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radiosystem/musicdaemon #NOTE needs full path (~ doesn't work)
+      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/musicdaemon #NOTE needs full path (~ doesn't work)
       o: bind
   pgdata:
 
