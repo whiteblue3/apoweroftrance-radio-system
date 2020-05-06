@@ -139,3 +139,4 @@ dmypy.json
 /account/accounts/migrations/
 /radio_secret.json
 /account_secret.json
+/kubernetes/
