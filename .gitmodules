@@ -1,3 +1,9 @@
+[submodule "account"]
+	path = account
+	url = https://github.com/whiteblue3/apoweroftrance-account.git
+[submodule "radio"]
+	path = radio
+	url = https://github.com/whiteblue3/apoweroftrance-radio.git
 [submodule "musicdaemon"]
 	path = musicdaemon
 	url = https://github.com/whiteblue3/apoweroftrance-musicdaemon.git
