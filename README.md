@@ -25,7 +25,7 @@ And it's designed for run as a standalone mode.
 # TODO
 - [x] Search Music and User Nickname
 - [x] Access Logging with DJango Login
-- [ ] Deploy to Kubernetes
+- [x] Deploy to Kubernetes
 - [ ] Support AWS S3
 - [ ] Streaming with YouTube
 - [ ] Auto Beat Matching

@@ -18,8 +18,8 @@ services:
   musicdeamon:
     container_name: musicdaemon
     restart: always
-#    image: gcr.io/apoweroftrance/musicdaemon:latest
-    image: gcr.io/apoweroftrance/musicdaemon:production-latest
+    image: gcr.io/apoweroftrance/musicdaemon:latest
+#    image: gcr.io/apoweroftrance/musicdaemon:production-latest
 #    build: musicdaemon
     environment:
       FUSE: gcs
@@ -31,16 +31,6 @@ services:
       INSTALL: 0
       AUTOSTART: 1
     # https://stackoverflow.com/questions/33887194/how-to-set-multiple-commands-in-one-yaml-file-with-kubernetes
-#    command:
-#      - /bin/bash
-#      - -c
-#      - |
-#        python3 -m pip install -r requirement.txt
-#        while ! nc 10.0.0.7 8090; do
-#          >&2 echo "Wait backend service - sleeping"
-#          sleep 1
-#        done
-#        python3 /opt/musicdaemon/main.py
     privileged: true
     cap_add:
       - SYS_ADMIN
@@ -52,7 +42,7 @@ services:
       apoweroftrance:
         ipv4_address: 10.0.0.3
     volumes:
-#      - musicdaemon_data:/opt/musicdaemon
+      - musicdaemon_data:/opt/musicdaemon
       - ./config.ini:/opt/musicdaemon/config.ini
       - ./apoweroftrance-525255671db2.json:/etc/gcloud/service-account-key.json
 #      - ./volumes:/srv/media:ro
@@ -126,8 +116,8 @@ services:
   radio:
     container_name: radio
     restart: always
-#    image: gcr.io/apoweroftrance/radio:latest
-    image: gcr.io/apoweroftrance/radio:production-latest
+    image: gcr.io/apoweroftrance/radio:latest
+#    image: gcr.io/apoweroftrance/radio:production-latest
 #    build: radio
     environment:
       ENABLE_SWAGGER: 1
@@ -144,7 +134,7 @@ services:
       WAIT_URL: 10.0.0.8
       WAIT_PORT: 8091
       INSTALL: 0
-      MIGRATE: 0
+      MIGRATE: 1
       AUTOSTART: 1
     depends_on:
       - redis
@@ -152,34 +142,21 @@ services:
     links:
       - redis
       - db
-#    command:
-#      - /bin/bash
-#      - -c
-#      - |
-#        python3 -m pip install -r requirement.txt
-#        python3 manage.py collectstatic --noinput -i yes
-#        python3 manage.py makemigrations radio
-#        python3 manage.py migrate
-#        while ! nc 10.0.0.8 8091; do
-#          >&2 echo "Wait account service - sleeping"
-#          sleep 1
-#        done
-#        uwsgi --show-config
     ports:
       - "8090:8090"
     networks:
       apoweroftrance:
         ipv4_address: 10.0.0.7
     volumes:
-#      - radio_data:/backend
+      - radio_data:/backend
       - ./radio_secret.json:/backend/secret.json
       - ./apoweroftrance-525255671db2.json:/etc/gcloud/service-account-key.json
 
   account:
     container_name: account
     restart: always
-#    image: gcr.io/apoweroftrance/account:latest
-    image: gcr.io/apoweroftrance/account:production-latest
+    image: gcr.io/apoweroftrance/account:latest
+#    image: gcr.io/apoweroftrance/account:production-latest
 #    build: account
     environment:
       ENABLE_SWAGGER: 1
@@ -196,7 +173,7 @@ services:
       WAIT_URL: 10.0.0.4
       WAIT_PORT: 5432
       INSTALL: 0
-      MIGRATE: 0
+      MIGRATE: 1
       AUTOSTART: 1
     depends_on:
       - redis
@@ -204,26 +181,13 @@ services:
     links:
       - redis
       - db
-#    command:
-#      - /bin/bash
-#      - -c
-#      - |
-#        python3 -m pip install -r requirement.txt
-#        python3 manage.py collectstatic --noinput -i yes
-#        python3 manage.py makemigrations accounts
-#        python3 manage.py migrate
-#        while ! nc 10.0.0.4 5432; do
-#          >&2 echo "Wait database service - sleeping"
-#          sleep 1
-#        done
-#        uwsgi --show-config
     ports:
       - "8091:8091"
     networks:
       apoweroftrance:
         ipv4_address: 10.0.0.8
     volumes:
-#      - account_data:/backend
+      - account_data:/backend
       - ./account_secret.json:/backend/secret.json
       - ./apoweroftrance-525255671db2.json:/etc/gcloud/service-account-key.json
 
@@ -231,17 +195,17 @@ volumes:
   account_data:
     driver_opts:
       type: none
-      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/account #NOTE needs full path (~ doesn't work)
+      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radiosystem/account #NOTE needs full path (~ doesn't work)
       o: bind
   radio_data:
     driver_opts:
       type: none
-      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/radio #NOTE needs full path (~ doesn't work)
+      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radiosystem/radio #NOTE needs full path (~ doesn't work)
       o: bind
   musicdaemon_data:
     driver_opts:
       type: none
-      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/musicdaemon #NOTE needs full path (~ doesn't work)
+      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radiosystem/musicdaemon #NOTE needs full path (~ doesn't work)
       o: bind
   pgdata:
 
