@@ -231,17 +231,41 @@ volumes:
   account_data:
     driver_opts:
       type: none
+<<<<<<< HEAD
       device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/account #NOTE needs full path (~ doesn't work)
+=======
+<<<<<<< HEAD
+      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio-system/account #NOTE needs full path (~ doesn't work)
+=======
+      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radiosystem/account #NOTE needs full path (~ doesn't work)
+>>>>>>> a1c5d97db327c4093c35c390ac374e4cfa2c939c
+>>>>>>> f64249d4ba2a1385a20db2f41d6d7884cc796986
       o: bind
   radio_data:
     driver_opts:
       type: none
+<<<<<<< HEAD
       device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/radio #NOTE needs full path (~ doesn't work)
+=======
+<<<<<<< HEAD
+      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio-system/radio #NOTE needs full path (~ doesn't work)
+=======
+      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radiosystem/radio #NOTE needs full path (~ doesn't work)
+>>>>>>> a1c5d97db327c4093c35c390ac374e4cfa2c939c
+>>>>>>> f64249d4ba2a1385a20db2f41d6d7884cc796986
       o: bind
   musicdaemon_data:
     driver_opts:
       type: none
+<<<<<<< HEAD
       device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/musicdaemon #NOTE needs full path (~ doesn't work)
+=======
+<<<<<<< HEAD
+      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio-system/musicdaemon #NOTE needs full path (~ doesn't work)
+=======
+      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radiosystem/musicdaemon #NOTE needs full path (~ doesn't work)
+>>>>>>> a1c5d97db327c4093c35c390ac374e4cfa2c939c
+>>>>>>> f64249d4ba2a1385a20db2f41d6d7884cc796986
       o: bind
   pgdata:
 
