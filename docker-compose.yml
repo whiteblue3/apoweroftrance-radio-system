@@ -18,7 +18,7 @@ services:
   musicdeamon:
     container_name: musicdaemon
     restart: always
-    image: gcr.io/apoweroftrance/musicdaemon:latest
+    image: gcr.io/apoweroftrance/musicdaemon:dev-pod
 #    image: gcr.io/apoweroftrance/musicdaemon:production-latest
 #    build: musicdaemon
     environment:
@@ -116,7 +116,7 @@ services:
   radio:
     container_name: radio
     restart: always
-    image: gcr.io/apoweroftrance/radio:latest
+    image: gcr.io/apoweroftrance/radio:dev-pod
 #    image: gcr.io/apoweroftrance/radio:production-latest
 #    build: radio
     environment:
@@ -155,7 +155,7 @@ services:
   account:
     container_name: account
     restart: always
-    image: gcr.io/apoweroftrance/account:latest
+    image: gcr.io/apoweroftrance/account:dev-pod
 #    image: gcr.io/apoweroftrance/account:production-latest
 #    build: account
     environment:
