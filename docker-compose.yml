@@ -121,6 +121,7 @@ services:
 #    build: radio
     environment:
       ENABLE_SWAGGER: 1
+      ENABLE_EMAIL_SEND: 1
       DB_NAME: apoweroftrance
       DB_HOST: 10.0.0.4
       DB_USERNAME: whiteblue3
@@ -160,6 +161,7 @@ services:
 #    build: account
     environment:
       ENABLE_SWAGGER: 1
+      ENABLE_EMAIL_SEND: 1
       DB_NAME: apoweroftrance
       DB_HOST: 10.0.0.4
       DB_USERNAME: whiteblue3
