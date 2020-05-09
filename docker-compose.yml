@@ -23,7 +23,7 @@ services:
 #    build: musicdaemon
     environment:
       FUSE: gcs
-      BUCKET: apoweroftrance-media
+      BUCKET: apoweroftrance-dev-media
       MOUNT_POINT: /srv/media
       WAIT_SERVICE: 1
       WAIT_URL: 10.0.0.7
