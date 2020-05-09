@@ -28,9 +28,8 @@ And it's designed for run as a standalone mode.
 - [x] Deploy to Kubernetes
 - [x] External IP Logging
 - [x] Bulk Uploader Script
-- [ ] Upload Encoder
 - [ ] Pending Delete
-- [ ] Continuous Deployment
+- [ ] Stablize Continuous Deployment
 - [ ] Simple UI
 - [ ] Support AWS S3
 - [ ] Streaming with YouTube
