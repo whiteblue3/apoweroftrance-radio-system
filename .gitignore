@@ -133,10 +133,6 @@ dmypy.json
 /volumes/
 
 /apoweroftrance-525255671db2.json
-/django-accounts/.static/
-/radio/radio/migrations/
-/account/.static/
-/account/accounts/migrations/
 /radio_secret.json
 /account_secret.json
 /kubernetes/
