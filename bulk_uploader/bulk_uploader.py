@@ -13,9 +13,6 @@ from os.path import isfile, join
 from mutagen.easyid3 import EasyID3
 
 
-# auth_server = "auth.apoweroftrance.com"
-# radio_server = "radio.apoweroftrance.com"
-
 auth_server = "127.0.0.1:8081"
 radio_server = "127.0.0.1:8080"
 
