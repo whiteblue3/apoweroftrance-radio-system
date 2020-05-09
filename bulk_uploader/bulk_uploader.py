@@ -192,6 +192,10 @@ def upload(token, directory, channel):
             artist = mp3info['artist'][0]
             title = mp3info['title'][0]
 
+            if not artist or not title:
+                print("Cannot upload because 'artist', 'title' tag is not exist")
+                continue
+
             form = MultiPartForm()
             form.add_file('audio', file, open(filepath, 'rb'), content_type)
             form.add_field('channel', channel)
