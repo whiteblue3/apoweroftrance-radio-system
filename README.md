@@ -27,7 +27,9 @@ And it's designed for run as a standalone mode.
 - [x] Access Logging with DJango Login
 - [x] Deploy to Kubernetes
 - [x] External IP Logging
-- [ ] Bulk Uploader Script
+- [x] Bulk Uploader Script
+- [ ] Upload Encoder
+- [ ] Pending Delete
 - [ ] Simple UI
 - [ ] Support AWS S3
 - [ ] Streaming with YouTube
