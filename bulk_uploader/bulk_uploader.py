@@ -200,7 +200,6 @@ def upload(token, directory, channel):
             form.add_file('audio', file, open(filepath, 'rb'), content_type)
             form.add_field('channel', channel)
             form.add_field('artist', artist)
-            form.add_field('title', title)
             form.add_field('format', 'mp3')
 
             # extract meta information from title
@@ -215,6 +214,8 @@ def upload(token, directory, channel):
                 title = re.sub(r'\[\d\d\d\s.*\]\s', '', title)
                 form.add_field('bpm', bpm)
                 form.add_field('scale', scale)
+
+            form.add_field('title', title)
 
             data = bytes(form)
             total_size = len(data)

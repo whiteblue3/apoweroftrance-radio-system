@@ -28,7 +28,7 @@ And it's designed for run as a standalone mode.
 - [x] Deploy to Kubernetes
 - [x] External IP Logging
 - [x] Bulk Uploader Script
-- [ ] Pending Delete
+- [x] Pending Delete
 - [ ] Stablize Continuous Deployment
 - [ ] Simple UI
 - [ ] Support AWS S3
