@@ -30,7 +30,6 @@ And it's designed for run as a standalone mode.
 - [x] Bulk Uploader Script
 - [x] Pending Delete
 - [x] Stablize Continuous Deployment (Health Check)
-- [ ] Stablize Continuous Deployment (Job)
 - [ ] Simple UI
 - [ ] Support AWS S3
 - [ ] Streaming with YouTube
