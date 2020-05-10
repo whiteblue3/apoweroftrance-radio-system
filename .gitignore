@@ -129,10 +129,10 @@ dmypy.json
 .pyre/
 /.idea/
 /.static_root/
-/radio/.static/
 /volumes/
 
 /apoweroftrance-525255671db2.json
 /radio_secret.json
 /account_secret.json
 /kubernetes/
+/upload_secret.json

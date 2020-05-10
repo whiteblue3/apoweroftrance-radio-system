@@ -8,13 +8,15 @@ import argparse
 import mimetypes
 import requests
 import progressbar
+import asyncio
+import aiohttp
 from os import listdir
 from os.path import isfile, join
 from mutagen.easyid3 import EasyID3
 
 
-auth_server = "127.0.0.1:8081"
-radio_server = "127.0.0.1:8080"
+auth_server = "http://127.0.0.1:8081"
+upload_server = "http://127.0.0.1:8082"
 
 
 class MultiPartForm:
@@ -92,12 +94,13 @@ class MultiPartForm:
 
 
 class UploadInChunks(object):
-    def __init__(self, filepath, chunksize=1 << 13):
+    def __init__(self, name, filepath, chunksize=1 << 13):
         self.filepath = filepath
         self.chunksize = chunksize
         self.totalsize = os.path.getsize(filepath)
         self.readsofar = 0
-        self.bar = progressbar.ProgressBar(widgets=[progressbar.Percentage(), progressbar.Bar(), ' (', progressbar.Timer(), ' / ', progressbar.ETA(), ') '], maxval=100)
+        self.name = name
+        self.bar = progressbar.ProgressBar(widgets=[name, ': ', progressbar.Percentage(), progressbar.Bar(), ' (', progressbar.Timer(), ' / ', progressbar.ETA(), ') '], maxval=100)
 
     def __iter__(self):
         with open(self.filepath, 'rb') as file:
@@ -136,7 +139,7 @@ def authenticate(email, password):
     host = auth_server
     api_request = "/v1/user/authenticate"
 
-    r = requests.post("http://%s%s" % (host, api_request), headers=header, data=data, stream=True)
+    r = requests.post("%s%s" % (host, api_request), headers=header, data=data, stream=True)
     data = r.json()
 
     if r.status_code == 200:
@@ -150,9 +153,29 @@ def remove_tmp():
     os.system('rm -rf {0}/tmp'.format(base_dir))
 
 
+async def request_upload(host, api_request, header, filename, name):
+    # print(name)
+    async with aiohttp.ClientSession() as session:
+        async with requests.post(
+                "%s%s" % (host, api_request),
+                headers=header,
+                data=UploadInChunks(name, filename, chunksize=10)
+        ) as resp:
+            response = await resp.read()
+            if response.status_code == 201:
+                print("OK")
+            elif response.status_code == 403 or response.status_code == 401:
+                print("Authentication Failed")
+                exit()
+            else:
+                print("Failed")
+
+    sys.stderr.write("\n")
+
+
 def upload(token, directory, channel):
-    host = radio_server
-    api_request = "/v1/radio/upload"
+    host = upload_server
+    api_request = "/v1/upload/upload"
 
     base_dir = os.getcwd()
     tmp_path = '{0}/tmp'.format(base_dir)
@@ -161,6 +184,8 @@ def upload(token, directory, channel):
     os.mkdir('{0}/tmp'.format(base_dir))
 
     files = [f for f in listdir(directory) if isfile(join(directory, f))]
+
+    tasks = []
 
     print('Found files below:')
     for file in files:
@@ -200,17 +225,19 @@ def upload(token, directory, channel):
             form.add_field('format', 'mp3')
 
             # extract meta information from title
-            meta = re.match(r'\[\d\d\d\s.*\]', title).group()
-            meta_split = meta.split(' ')
-            if len(meta_split) > 0:
-                bpm = meta_split[0][1:]
-                if len(meta_split) > 1:
-                    scale = meta_split[1].replace(']', '')
-                else:
-                    scale = None
-                title = re.sub(r'\[\d\d\d\s.*\]\s', '', title)
-                form.add_field('bpm', bpm)
-                form.add_field('scale', scale)
+            regex = re.match(r'\[\d\d\d\s.*\]', title)
+            if regex:
+                meta = regex.group()
+                meta_split = meta.split(' ')
+                if len(meta_split) > 0:
+                    bpm = meta_split[0][1:]
+                    if len(meta_split) > 1:
+                        scale = meta_split[1].replace(']', '')
+                    else:
+                        scale = None
+                    title = re.sub(r'\[\d\d\d\s.*\]\s', '', title)
+                    form.add_field('bpm', bpm)
+                    form.add_field('scale', scale)
 
             form.add_field('title', title)
 
@@ -228,14 +255,12 @@ def upload(token, directory, channel):
             tmp.write(data)
             tmp.close()
 
-            print("{0} - {1}:".format(artist, title))
             filename = '{0}/tmp/{1}'.format(base_dir, file)
 
             response = requests.post(
-                "http://%s%s" % (host, api_request),
+                "%s%s" % (host, api_request),
                 headers=header,
-                data=UploadInChunks(filename, chunksize=10),
-                stream=True
+                data=UploadInChunks("{0} - {1}:".format(artist, title), filename, chunksize=10)
             )
 
             if response.status_code == 201:
@@ -245,7 +270,19 @@ def upload(token, directory, channel):
                 exit()
             else:
                 print("Failed")
+
             sys.stderr.write("\n")
+
+            # tasks.append(request_upload(host, api_request, header, filename, "{0} - {1}:".format(artist, title)))
+
+    # if sys.version_info >= (3, 7):
+    #     asyncio.run(asyncio.wait(tasks))
+    # else:
+    #     # loop = asyncio.get_event_loop()
+    #     loop = asyncio.new_event_loop()
+    #     asyncio.set_event_loop(loop)
+    #     loop.run_until_complete(asyncio.wait(tasks))
+    #     loop.close()
 
     print('-------------------------------------')
     print("upload complete!!")
@@ -254,13 +291,20 @@ def upload(token, directory, channel):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="A Power of Trance Music Uploader")
-    parser.add_argument("--email", required=False, help="User Email")
-    parser.add_argument("--password", required=False, help="User Password")
-    parser.add_argument("--token", required=False, help="Auth JWT Token")
-    parser.add_argument("--directory", required=False, help="Target Directory for Upload")
-    parser.add_argument("--channel", required=False, help="Service Channel")
+    parser.add_argument("--email", required=True, help="User Email")
+    parser.add_argument("--password", required=True, help="User Password")
+    parser.add_argument("--directory", required=True, help="Target Directory for Upload")
+    parser.add_argument("--channel", required=True, help="Service Channel")
+    parser.add_argument("--authserver", required=False, help="Auth Server")
+    parser.add_argument("--uploadserver", required=False, help="Upload Server")
 
     args = parser.parse_args()
+
+    if args.authserver is not None:
+        auth_server = args.authserver
+
+    if args.uploadserver is not None:
+        upload_server = args.uploadserver
 
     sys.stderr.write("\n")
     print("####################################")
@@ -270,21 +314,16 @@ if __name__ == '__main__':
     print("####################################")
     print("version: 0.0.1")
     print("Auth Server: {}".format(auth_server))
-    print("Radio Server: {}".format(radio_server))
+    print("Upload Server: {}".format(upload_server))
     sys.stderr.write("\n")
 
-    if args.token is None:
-        if args.email is None:
-            print("user 'email' is required")
-            exit()
+    if args.email is None:
+        print("user 'email' is required")
+        exit()
 
-        if args.password is None:
-            print("user 'password' is required")
-            exit()
-    else:
-        if args.token is None:
-            print("'token' is required when 'email', 'password' is not presented")
-            exit()
+    if args.password is None:
+        print("user 'password' is required")
+        exit()
 
     if args.directory is None:
         print("target 'directory' is required")
@@ -300,18 +339,13 @@ if __name__ == '__main__':
 
     sys.stderr.write("\n")
 
-    token = None
-    if args.token is None:
-        token = authenticate(args.email, args.password)
+    token = authenticate(args.email, args.password)
 
-        if token is None:
-            print("Authentication Failed")
-            exit()
-        else:
-            print("Authentication Successful!!")
+    if token is None:
+        print("Authentication Failed")
+        exit()
     else:
-        token = args.token
-        print("Try use JWT Token")
+        print("Authentication Successful!!")
 
     sys.stderr.write("\n")
     upload(token, args.directory, args.channel)
