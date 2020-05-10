@@ -29,7 +29,8 @@ And it's designed for run as a standalone mode.
 - [x] External IP Logging
 - [x] Bulk Uploader Script
 - [x] Pending Delete
-- [ ] Stablize Continuous Deployment (Health Check / Job)
+- [x] Stablize Continuous Deployment (Health Check)
+- [ ] Stablize Continuous Deployment (Job)
 - [ ] Simple UI
 - [ ] Support AWS S3
 - [ ] Streaming with YouTube
