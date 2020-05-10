@@ -9,7 +9,6 @@ import mimetypes
 import requests
 import progressbar
 import asyncio
-import aiohttp
 from os import listdir
 from os.path import isfile, join
 from mutagen.easyid3 import EasyID3
@@ -17,6 +16,9 @@ from mutagen.easyid3 import EasyID3
 
 auth_server = "http://127.0.0.1:8081"
 upload_server = "http://127.0.0.1:8082"
+
+
+tasks = []
 
 
 class MultiPartForm:
@@ -154,21 +156,18 @@ def remove_tmp():
 
 
 async def request_upload(host, api_request, header, filename, name):
-    # print(name)
-    async with aiohttp.ClientSession() as session:
-        async with requests.post(
-                "%s%s" % (host, api_request),
-                headers=header,
-                data=UploadInChunks(name, filename, chunksize=10)
-        ) as resp:
-            response = await resp.read()
-            if response.status_code == 201:
-                print("OK")
-            elif response.status_code == 403 or response.status_code == 401:
-                print("Authentication Failed")
-                exit()
-            else:
-                print("Failed")
+    response = requests.post(
+        "%s%s" % (host, api_request),
+        headers=header,
+        data=UploadInChunks(name, filename, chunksize=10)
+    )
+    if response.status_code == 201:
+        print("OK")
+    elif response.status_code == 403 or response.status_code == 401:
+        print("Authentication Failed")
+        exit()
+    else:
+        print("Failed")
 
     sys.stderr.write("\n")
 
@@ -184,8 +183,6 @@ def upload(token, directory, channel):
     os.mkdir('{0}/tmp'.format(base_dir))
 
     files = [f for f in listdir(directory) if isfile(join(directory, f))]
-
-    tasks = []
 
     print('Found files below:')
     for file in files:
@@ -257,31 +254,13 @@ def upload(token, directory, channel):
 
             filename = '{0}/tmp/{1}'.format(base_dir, file)
 
-            if len(files) == 1:
-                response = requests.post(
-                    "%s%s" % (host, api_request),
-                    headers=header,
-                    data=UploadInChunks("{0} - {1}:".format(artist, title), filename, chunksize=10)
-                )
-
-                if response.status_code == 201:
-                    print("OK")
-                elif response.status_code == 403 or response.status_code == 401:
-                    print("Authentication Failed")
-                    exit()
-                else:
-                    print("Failed")
-
-                sys.stderr.write("\n")
-            else:
-                tasks.append(request_upload(host, api_request, header, filename, "{0} - {1}:".format(artist, title)))
+            tasks.append(request_upload(host, api_request, header, filename, "{0} - {1}".format(artist, title)))
 
     if len(tasks) > 0:
         if sys.version_info >= (3, 7):
             asyncio.run(asyncio.wait(tasks))
         else:
-            # loop = asyncio.get_event_loop()
-            loop = asyncio.new_event_loop()
+            loop = asyncio.get_event_loop()
             asyncio.set_event_loop(loop)
             loop.run_until_complete(asyncio.wait(tasks))
             loop.close()
