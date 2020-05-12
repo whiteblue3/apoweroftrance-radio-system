@@ -172,7 +172,7 @@ async def request_upload(host, api_request, header, filename, name):
     sys.stderr.write("\n")
 
 
-def upload(token, directory, channel):
+def upload(token, file, channel):
     host = upload_server
     api_request = "/v1/upload/upload"
 
@@ -182,88 +182,89 @@ def upload(token, directory, channel):
         remove_tmp()
     os.mkdir('{0}/tmp'.format(base_dir))
 
-    files = [f for f in listdir(directory) if isfile(join(directory, f))]
+    # files = [f for f in listdir(directory) if isfile(join(directory, f))]
 
-    print('Found files below:')
-    for file in files:
-        print('- {}'.format(file))
-    sys.stderr.write("\n")
-    print('-------------------------------------')
-    sys.stderr.write("\n")
-    for file in files:
-        filepath = "{0}/{1}".format(directory, file)
-        content_type, _ = mimetypes.guess_type(filepath)
+    # print('Upload File:')
+    # # for file in files:
+    # print('- {}'.format(file))
+    # sys.stderr.write("\n")
+    # print('-------------------------------------')
+    # sys.stderr.write("\n")
+    # for file in files:
+    #     filepath = "{0}/{1}".format(directory, file)
+    filepath = file
+    content_type, _ = mimetypes.guess_type(filepath)
 
-        valid_mimetype = [
-            "audio/mpeg", "audio/mp3"
-        ]
+    valid_mimetype = [
+        "audio/mpeg", "audio/mp3"
+    ]
 
-        is_valid = False
-        for mimetype in valid_mimetype:
-            if mimetype == content_type:
-                is_valid = True
+    is_valid = False
+    for mimetype in valid_mimetype:
+        if mimetype == content_type:
+            is_valid = True
 
-        if is_valid is False:
-            print("'{0}' is not support format".format(file))
-            continue
-        else:
-            mp3info = EasyID3(filepath)
-            artist = mp3info['artist'][0]
-            title = mp3info['title'][0]
+    if is_valid is False:
+        print("'{0}' is not support format".format(file))
+        return
+    else:
+        mp3info = EasyID3(filepath)
+        artist = mp3info['artist'][0]
+        title = mp3info['title'][0]
 
-            if not artist or not title:
-                print("Cannot upload because 'artist', 'title' tag is not exist")
-                continue
+        if not artist or not title:
+            print("Cannot upload because 'artist', 'title' tag is not exist")
+            return
 
-            form = MultiPartForm()
-            form.add_file('audio', file, open(filepath, 'rb'), content_type)
-            form.add_field('channel', channel)
-            form.add_field('artist', artist)
-            form.add_field('format', 'mp3')
+        form = MultiPartForm()
+        form.add_file('audio', file, open(filepath, 'rb'), content_type)
+        form.add_field('channel', channel)
+        form.add_field('artist', artist)
+        form.add_field('format', 'mp3')
 
-            # extract meta information from title
-            regex = re.match(r'\[\d\d\d\s.*\]', title)
-            if regex:
-                meta = regex.group()
-                meta_split = meta.split(' ')
-                if len(meta_split) > 0:
-                    bpm = meta_split[0][1:]
-                    if len(meta_split) > 1:
-                        scale = meta_split[1].replace(']', '')
-                    else:
-                        scale = None
-                    title = re.sub(r'\[\d\d\d\s.*\]\s', '', title)
-                    form.add_field('bpm', bpm)
-                    form.add_field('scale', scale)
+        # extract meta information from title
+        regex = re.match(r'\[\d\d\d\s.*\]', title)
+        if regex:
+            meta = regex.group()
+            meta_split = meta.split(' ')
+            if len(meta_split) > 0:
+                bpm = meta_split[0][1:]
+                if len(meta_split) > 1:
+                    scale = meta_split[1].replace(']', '')
+                else:
+                    scale = None
+                title = re.sub(r'\[\d\d\d\s.*\]\s', '', title)
+                form.add_field('bpm', bpm)
+                form.add_field('scale', scale)
 
-            form.add_field('title', title)
+        form.add_field('title', title)
 
-            data = bytes(form)
-            total_size = len(data)
+        data = bytes(form)
+        total_size = len(data)
 
-            header = {
-                "Authorization": "Bearer %s" % token,
-                "Content-Type": form.get_content_type(),
-                "Content-Length": str(total_size)
-            }
+        header = {
+            "Authorization": "Bearer %s" % token,
+            "Content-Type": form.get_content_type(),
+            "Content-Length": str(total_size)
+        }
 
-            tmp = open('{0}/tmp/{1}'.format(base_dir, file), 'wb')
-            tmp.seek(0)
-            tmp.write(data)
-            tmp.close()
+        tmp = open('{0}/tmp/{1}'.format(base_dir, file), 'wb')
+        tmp.seek(0)
+        tmp.write(data)
+        tmp.close()
 
-            filename = '{0}/tmp/{1}'.format(base_dir, file)
+        filename = '{0}/tmp/{1}'.format(base_dir, file)
 
-            tasks.append(request_upload(host, api_request, header, filename, "{0} - {1}".format(artist, title)))
+        tasks.append(request_upload(host, api_request, header, filename, "{0} - {1}".format(artist, title)))
 
-    if len(tasks) > 0:
-        if sys.version_info >= (3, 7):
-            asyncio.run(asyncio.wait(tasks))
-        else:
-            loop = asyncio.get_event_loop()
-            asyncio.set_event_loop(loop)
-            loop.run_until_complete(asyncio.wait(tasks))
-            loop.close()
+    # if len(tasks) > 0:
+    if sys.version_info >= (3, 7):
+        asyncio.run(asyncio.wait(tasks))
+    else:
+        loop = asyncio.get_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(asyncio.wait(tasks))
+        loop.close()
 
     print('-------------------------------------')
     print("upload complete!!")
@@ -274,7 +275,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="A Power of Trance Music Uploader")
     parser.add_argument("--email", required=True, help="User Email")
     parser.add_argument("--password", required=True, help="User Password")
-    parser.add_argument("--directory", required=True, help="Target Directory for Upload")
+    parser.add_argument("--file", required=True, help="Upload File")
     parser.add_argument("--channel", required=True, help="Service Channel")
     parser.add_argument("--authserver", required=False, help="Auth Server")
     parser.add_argument("--uploadserver", required=False, help="Upload Server")
@@ -287,16 +288,16 @@ if __name__ == '__main__':
     if args.uploadserver is not None:
         upload_server = args.uploadserver
 
-    sys.stderr.write("\n")
-    print("####################################")
-    print("#                                  #")
-    print("# {} #".format(parser.description))
-    print("#                                  #")
-    print("####################################")
-    print("version: 0.0.1")
-    print("Auth Server: {}".format(auth_server))
-    print("Upload Server: {}".format(upload_server))
-    sys.stderr.write("\n")
+    # sys.stderr.write("\n")
+    # print("####################################")
+    # print("#                                  #")
+    # print("# {} #".format(parser.description))
+    # print("#                                  #")
+    # print("####################################")
+    # print("version: 0.0.1")
+    # print("Auth Server: {}".format(auth_server))
+    # print("Upload Server: {}".format(upload_server))
+    # sys.stderr.write("\n")
 
     if args.email is None:
         print("user 'email' is required")
@@ -306,17 +307,17 @@ if __name__ == '__main__':
         print("user 'password' is required")
         exit()
 
-    if args.directory is None:
-        print("target 'directory' is required")
+    if args.file is None:
+        print("target 'file' is required")
         exit()
-    else:
-        print("Upload Target Directory: {}".format(args.directory))
+    # else:
+    #     print("Upload File: {}".format(args.file))
 
     if args.channel is None:
         print("service 'channel' is required")
         exit()
-    else:
-        print("Service Channel: {}".format(args.channel))
+    # else:
+    #     print("Service Channel: {}".format(args.channel))
 
     sys.stderr.write("\n")
 
@@ -325,8 +326,8 @@ if __name__ == '__main__':
     if token is None:
         print("Authentication Failed")
         exit()
-    else:
-        print("Authentication Successful!!")
+    # else:
+    #     print("Authentication Successful!!")
 
-    sys.stderr.write("\n")
-    upload(token, args.directory, args.channel)
+    # sys.stderr.write("\n")
+    upload(token, args.file, args.channel)
