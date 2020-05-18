@@ -136,3 +136,4 @@ dmypy.json
 /account_secret.json
 /kubernetes/
 /upload_secret.json
+/cms_secret.json
