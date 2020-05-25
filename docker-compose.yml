@@ -271,6 +271,27 @@ services:
       - ./cms_secret.json:/backend/secret.json
       - ./apoweroftrance-525255671db2.json:/etc/gcloud/service-account-key.json
 
+  ffmpeg:
+    container_name: ffmpeg
+    restart: always
+    image: jrottenberg/ffmpeg:latest
+    hostname: ffmpeg
+    environment:
+      ICECAST_URL: http://10.0.0.2:8000/yui
+      CHANNEL: "A Power of Trance\nCH.YUI"
+      YOUTUBE_URL: rtmp://a.rtmp.youtube.com/live2/52my-hved-tvpe-r0t3-fb6e
+    volumes:
+      - ./ffmpeg/apoweroftrance.png:/srv/apoweroftrance.png
+      - ./ffmpeg/startup.sh:/scripts/startup.sh
+      - ./ffmpeg/live-meta.sh:/scripts/live-meta.sh
+      - ./ffmpeg/Fatsans.ttf:/srv/Fatsans.ttf
+      - ./ffmpeg/NanumGothic.ttf:/srv/NanumGothic.ttf
+      - ./ffmpeg/NanumGothicBold.ttf:/srv/NanumGothicBold.ttf
+    entrypoint: /scripts/startup.sh
+    networks:
+      apoweroftrance:
+        ipv4_address: 10.0.0.11
+
 
 volumes:
   account_data:
