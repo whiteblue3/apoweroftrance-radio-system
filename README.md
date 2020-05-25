@@ -32,7 +32,7 @@ And it's designed for run as a standalone mode.
 - [x] Stablize Continuous Deployment (Health Check)
 - [ ] Simple UI
 - [ ] Support AWS S3
-- [ ] Streaming with YouTube
+- [x] Streaming with YouTube
 - [ ] Auto Beat Matching
 - [ ] Layer with Ment while playing (Voice Composition)
 
