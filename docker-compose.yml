@@ -236,8 +236,7 @@ services:
   cms:
     container_name: cms
     restart: always
-    image: gcr.io/apoweroftrance/cms:dev-pod
-#    image: gcr.io/apoweroftrance/cms:production-latest
+    image: gcr.io/apoweroftrance/cms:production-latest
 #    build: ../cms
     environment:
       DB_NAME: apoweroftrance
