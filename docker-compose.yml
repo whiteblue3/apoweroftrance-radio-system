@@ -136,7 +136,7 @@ services:
       WAIT_URL: 10.0.0.8
       WAIT_PORT: 8091
       INSTALL: 0
-      MIGRATE: 0
+      MIGRATE: 1
       AUTOSTART: 1
     depends_on:
       - redis
@@ -175,7 +175,7 @@ services:
       WAIT_URL: 10.0.0.4
       WAIT_PORT: 5432
       INSTALL: 0
-      MIGRATE: 0
+      MIGRATE: 1
       AUTOSTART: 1
     depends_on:
       - redis
@@ -215,7 +215,7 @@ services:
       WAIT_URL: 10.0.0.8
       WAIT_PORT: 8091
       INSTALL: 0
-      MIGRATE: 0
+      MIGRATE: 1
       AUTOSTART: 1
     depends_on:
       - redis
