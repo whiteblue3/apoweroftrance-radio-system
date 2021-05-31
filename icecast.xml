@@ -26,6 +26,11 @@
         <burst-size>65535</burst-size>
     </limits>
 
+    <http-headers>
+        <header name="Access-Control-Allow-Origin" value="*" />
+        <header name="X-Robots-Tag" value="index, noarchive" status="200" />
+    </http-headers>
+
     <authentication>
         <!-- Sources log in with username 'source' -->
         <source-password>hackme</source-password>
