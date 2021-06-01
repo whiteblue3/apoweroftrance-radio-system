@@ -92,3 +92,4 @@ You must define these variables because secret information.
     
     # automatic start django
     ENV AUTOSTART 1
+
