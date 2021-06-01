@@ -6,8 +6,8 @@
     <admin>icemaster@localhost</admin>
 
     <limits>
-        <clients>3000</clients>
-        <sources>3</sources>
+        <clients>4000</clients>
+        <sources>4</sources>
         <threadpool>5</threadpool>
         <queue-size>524288</queue-size>
         <client-timeout>30</client-timeout>
