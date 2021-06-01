@@ -30,7 +30,6 @@ And it's designed for run as a standalone mode.
 - [x] Bulk Uploader Script
 - [x] Pending Delete
 - [x] Stablize Continuous Deployment (Health Check)
-- [ ] Simple UI
 - [ ] Support AWS S3
 - [x] Streaming with YouTube
 - [ ] Auto Beat Matching
