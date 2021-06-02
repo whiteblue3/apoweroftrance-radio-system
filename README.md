@@ -2,6 +2,9 @@ A Power of Trance is audio broadcasting server.
 It contains musicdaemon and API server.
 This project is published as opensource and use GPLv3 license.
 
+# Deploy Issue
+If you use PyCharm and before code push, first you must select file README.md and commit, push code. This is a PyCharm bug.
+
 # Server Spec
 - Platform: Docker or Kubernetes
 - Database: PostgreSQL 11 over
