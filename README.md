@@ -34,6 +34,7 @@ And it's designed for run as a standalone mode.
 - [x] Pending Delete
 - [x] Stablize Continuous Deployment (Health Check)
 - [ ] Report spam function
+- [ ] Push notification
 - [ ] Support AWS S3
 - [x] Streaming with YouTube
 - [ ] Auto Beat Matching
