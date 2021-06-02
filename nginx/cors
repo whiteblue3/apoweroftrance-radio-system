@@ -11,7 +11,7 @@
 # Forked from this Gist: https://gist.github.com/michiel/1064640 #
 
 set $cors '';
-if ($http_origin ~ '^https?://(localhost|www\.apoweroftrance\.com|auth\.apoweroftrance\.com|radio\.apoweroftrance\.com|upload\.apoweroftrance\.com)') {
+if ($http_origin ~ '^https?://(localhost|127.0.0.1|www\.apoweroftrance\.com|auth\.apoweroftrance\.com|radio\.apoweroftrance\.com|upload\.apoweroftrance\.com)') {
         set $cors 'true';
 }
 
