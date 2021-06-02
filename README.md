@@ -35,6 +35,7 @@ And it's designed for run as a standalone mode.
 - [x] Stablize Continuous Deployment (Health Check)
 - [ ] Report spam function
 - [ ] Push notification
+- [ ] Follow user function
 - [ ] Support AWS S3
 - [x] Streaming with YouTube
 - [ ] Auto Beat Matching
