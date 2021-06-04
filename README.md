@@ -36,6 +36,7 @@ And it's designed for run as a standalone mode.
 - [ ] Report spam function
 - [ ] Push notification
 - [ ] Follow user function
+- [ ] TLS support
 - [ ] Support AWS S3
 - [x] Streaming with YouTube
 - [ ] Auto Beat Matching
