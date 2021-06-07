@@ -35,7 +35,7 @@ And it's designed for run as a standalone mode.
 - [x] Stablize Continuous Deployment (Health Check)
 - [ ] Report spam function
 - [ ] Push notification
-- [ ] Add phone number to User model for push notification
+- [x] Add phone number to User model for push notification
 - [ ] Follow user function
 - [ ] TLS support
 - [ ] Support AWS S3
