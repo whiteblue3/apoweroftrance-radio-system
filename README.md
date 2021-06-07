@@ -33,10 +33,10 @@ And it's designed for run as a standalone mode.
 - [x] Bulk Uploader Script
 - [x] Pending Delete
 - [x] Stablize Continuous Deployment (Health Check)
+- [x] Add phone number to User model for push notification
+- [ ] Follow user function 
 - [ ] Report spam function
 - [ ] Push notification
-- [x] Add phone number to User model for push notification
-- [ ] Follow user function
 - [ ] TLS support
 - [ ] Support AWS S3
 - [x] Streaming with YouTube
