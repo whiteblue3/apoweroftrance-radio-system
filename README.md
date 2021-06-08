@@ -34,7 +34,8 @@ And it's designed for run as a standalone mode.
 - [x] Pending Delete
 - [x] Stablize Continuous Deployment (Health Check)
 - [x] Add phone number to User model for push notification
-- [ ] Follow user function 
+- [x] Search User List
+- [x] Follow user function
 - [ ] Report spam function
 - [ ] Push notification
 - [ ] TLS support
