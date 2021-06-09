@@ -36,6 +36,8 @@ And it's designed for run as a standalone mode.
 - [x] Add phone number to User model for push notification
 - [x] Search User List
 - [x] Follow user function
+- [x] Add Post microservice
+- [x] Add Admin microservice
 - [ ] Report spam function
 - [ ] Push notification
 - [ ] TLS support

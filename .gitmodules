@@ -7,6 +7,12 @@
 [submodule "upload"]
 	path = upload
 	url = https://github.com/whiteblue3/apoweroftrance-upload.git
+[submodule "post"]
+	path = post
+	url = https://github.com/whiteblue3/apoweroftrance-post.git
+[submodule "admin"]
+	path = admin
+	url = https://github.com/whiteblue3/apoweroftrance-admin.git
 [submodule "musicdaemon"]
 	path = musicdaemon
 	url = https://github.com/whiteblue3/apoweroftrance-musicdaemon.git
