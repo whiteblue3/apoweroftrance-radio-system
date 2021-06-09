@@ -295,7 +295,7 @@ services:
       REDIS_PORT: 6379
       REDIS_DB: 0
       WAIT_SERVICE: 1
-      WAIT_URL: 10.0.0.8
+      WAIT_URL: 10.0.0.7
       WAIT_PORT: 8091
       INSTALL: 1
       MIGRATE: 1
@@ -335,7 +335,7 @@ services:
       REDIS_PORT: 6379
       REDIS_DB: 0
       WAIT_SERVICE: 1
-      WAIT_URL: 10.0.0.8
+      WAIT_URL: 10.0.0.11
       WAIT_PORT: 8091
       INSTALL: 1
       MIGRATE: 1
