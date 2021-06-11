@@ -25,28 +25,6 @@ It contains
 
 And it's designed for run as a standalone mode.
 
-# TODO
-- [x] Search Music and User Nickname
-- [x] Access Logging with DJango Login
-- [x] Deploy to Kubernetes
-- [x] External IP Logging
-- [x] Bulk Uploader Script
-- [x] Pending Delete
-- [x] Stablize Continuous Deployment (Health Check)
-- [x] Add phone number to User model for push notification
-- [x] Search User List
-- [x] Follow user function
-- [x] Add Post microservice
-- [x] Add Admin microservice
-- [ ] Report spam function
-- [ ] TLS support
-- [ ] Feed Stream (SNS)
-- [ ] Push notification
-- [ ] Subscription Payment
-- [x] Streaming with YouTube
-- [ ] Auto Beat Matching
-- [ ] Layer with Ment while playing (Voice Composition)
-
 # Radio Backend Environment Variable
 See backend/Dockerfile or account/Dockerfile.
 
