@@ -1,0 +1,17 @@
+django>=2.0,<3.0
+
+# RESTful API
+djangorestframework
+
+# Database
+psycopg2-binary
+
+# AES
+pycrypto
+
+# AWS S3
+django-storages
+boto3
+
+# Google Cloud Storage
+google-cloud-storage
