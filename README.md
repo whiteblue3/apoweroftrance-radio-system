@@ -16,6 +16,13 @@ If you use PyCharm and before code push, first you must select file README.md an
 
 for design as microservices, all microservice use same database
 
+# TODO: Major Support Function
+- [ ] SNS Feed Stream System
+- [ ] Push Notification
+- [ ] Subscription Billing System
+- [ ] Auto Beat Matching
+- [ ] Ment Layering while playing (Voice Composition)
+
 # musicdaemon
 Real broadcast daemon to stream icecast2.
 It contains
