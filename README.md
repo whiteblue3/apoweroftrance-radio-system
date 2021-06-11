@@ -41,7 +41,7 @@ And it's designed for run as a standalone mode.
 - [ ] Report spam function
 - [ ] Push notification
 - [ ] TLS support
-- [ ] Support AWS S3
+- [ ] Subscription Payment
 - [x] Streaming with YouTube
 - [ ] Auto Beat Matching
 - [ ] Layer with Ment while playing (Voice Composition)
