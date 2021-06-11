@@ -16,6 +16,32 @@ If you use PyCharm and before code push, first you must select file README.md an
 
 for design as microservices, all microservice use same database
 
+# Pre-Requirements for Running Server
+This system running on Google Kubernetes Engine. So, You need to acquire Google OAuth2 secret json
+- Google OAuth2 Secret Json File
+- Create file secret.json under project root and fill this fields
+
+
+    {
+      "SECRET_KEY": <DJango Secret Key>,
+      "JWT_SECRET_KEY": <JWT Secret Key>,
+      "AES_KEY": <AES 256 KEY>,
+      "AES_SECRET": <AES 256 Initial IV>,
+      "EMAIL_HOST_USER": <System Email Sender Address>,
+      "EMAIL_HOST_PASSWORD": <System Email Sender Password>,
+      "GCP_PROJECT_ID": <Google Project ID>,
+      "GCP_STORAGE_BUCKET_NAME": <Public Access Media Bucket Name of Google Storage>,
+      "GS_BUCKET_NAME": <Public Access Static File Bucket Name of Google Storage>
+    }
+
+- Prepare for account, admin, radio, upload, post. 
+- These file name defined like account_secret.json, admin_secret.json, 
+  radio_secret.json, post_secret.json, upload_secret.json.
+- You setup all field to same, because this system designed for MSA.
+- But, SECRET_KEY MUST be different for each other
+- Else other fields shared all project
+
+
 # TODO: Major Support Function
 - [x] Search Music and User
 - [x] Access Logging with DJango Login
