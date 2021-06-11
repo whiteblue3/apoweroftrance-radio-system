@@ -39,8 +39,9 @@ And it's designed for run as a standalone mode.
 - [x] Add Post microservice
 - [x] Add Admin microservice
 - [ ] Report spam function
-- [ ] Push notification
 - [ ] TLS support
+- [ ] Feed Stream (SNS)
+- [ ] Push notification
 - [ ] Subscription Payment
 - [x] Streaming with YouTube
 - [ ] Auto Beat Matching
