@@ -29,16 +29,17 @@ So, You need to acquire Google OAuth2 secret json
     // secret.json
     // You NEVER, DO NOT share these secret.json file anywhere!
     {
-      "SECRET_KEY": <DJango Secret Key>,
-      "JWT_SECRET_KEY": <JWT Secret Key>,
-      "AES_KEY": <32bit AES 256 KEY>,
-      "AES_SECRET": <16bit AES 256 Initial IV>,
-      "EMAIL_HOST_USER": <System Email Sender Address>,
-      "EMAIL_HOST_PASSWORD": <System Email Sender Password>,
-      "GCP_PROJECT_ID": <Google Project ID>,
-      "GCP_STORAGE_BUCKET_NAME": <Public Access Media Bucket Name of Google Storage>,
-      "GS_BUCKET_NAME": <Public Access Static File Bucket Name of Google Storage>
+        "SECRET_KEY": <DJango Secret Key>,
+        "JWT_SECRET_KEY": <JWT Secret Key>,
+        "AES_KEY": <32bit AES 256 KEY>,
+        "AES_SECRET": <16bit AES 256 Initial IV>,
+        "EMAIL_HOST_USER": <System Email Sender Address>,
+        "EMAIL_HOST_PASSWORD": <System Email Sender Password>,
+        "GCP_PROJECT_ID": <Google Project ID>,
+        "GCP_STORAGE_BUCKET_NAME": <Public Access Media Bucket Name of Google Storage>,
+        "GS_BUCKET_NAME": <Public Access Static File Bucket Name of Google Storage>
     }
+
 
 - Prepare this secret.json for account, admin, radio, upload, post 
 - These file name define like account_secret.json, admin_secret.json, 
