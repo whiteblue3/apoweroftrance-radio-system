@@ -1,32 +1,38 @@
 A Power of Trance is audio broadcasting server. 
 It contains musicdaemon and API server.
-This project is published as opensource and use GPLv3 license.
+This project is published as opensource and use LGPL license.
 
 # Deploy Issue
 If you use PyCharm and before code push, first you must select file README.md and commit, push code. This is a PyCharm bug.
 
 # Server Spec
-- Platform: Docker or Kubernetes
+- Platform: Docker Compose (Local Dev) or Kubernetes (Production)
 - Database: PostgreSQL 11 over
 - Python: 3.6
 - Storage: Google Cloud Storage
-- Nginx: latest
+- Nginx: latest (unprivileged version)
 - Icecast: 2.4.4
 - WSGI: uWSGI 2.0.18
 
 for design as microservices, all microservice use same database
 
 # Pre-Requirements for Running Server
-This system running on Google Kubernetes Engine. So, You need to acquire Google OAuth2 secret json
-- Google OAuth2 Secret Json File
+You NEVER, DO NOT share these files anywhere!
+
+This system running on Google Kubernetes Engine. 
+So, You need to acquire Google OAuth2 secret json
+
+- Google OAuth2 Secret Json File (You NEVER, DO NOT share this file anywhere!)
 - Create file secret.json under project root and fill this fields
 
 
+    // secret.json
+    // You NEVER, DO NOT share these secret.json file anywhere!
     {
       "SECRET_KEY": <DJango Secret Key>,
       "JWT_SECRET_KEY": <JWT Secret Key>,
-      "AES_KEY": <AES 256 KEY>,
-      "AES_SECRET": <AES 256 Initial IV>,
+      "AES_KEY": <32bit AES 256 KEY>,
+      "AES_SECRET": <16bit AES 256 Initial IV>,
       "EMAIL_HOST_USER": <System Email Sender Address>,
       "EMAIL_HOST_PASSWORD": <System Email Sender Password>,
       "GCP_PROJECT_ID": <Google Project ID>,
@@ -34,12 +40,13 @@ This system running on Google Kubernetes Engine. So, You need to acquire Google 
       "GS_BUCKET_NAME": <Public Access Static File Bucket Name of Google Storage>
     }
 
-- Prepare for account, admin, radio, upload, post. 
-- These file name defined like account_secret.json, admin_secret.json, 
+- Prepare this secret.json for account, admin, radio, upload, post 
+- These file name define like account_secret.json, admin_secret.json, 
   radio_secret.json, post_secret.json, upload_secret.json.
 - You setup all field to same, because this system designed for MSA.
 - But, SECRET_KEY MUST be different for each other
 - Else other fields shared all project
+- You NEVER, DO NOT share these secret.json file anywhere!
 
 
 # TODO: Major Support Function
