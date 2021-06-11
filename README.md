@@ -17,6 +17,15 @@ If you use PyCharm and before code push, first you must select file README.md an
 for design as microservices, all microservice use same database
 
 # TODO: Major Support Function
+- [x] Search Music and User
+- [x] Access Logging with DJango Login
+- [x] Deploy to Kubernetes
+- [x] External IP Logging
+- [x] Bulk Uploader Script
+- [x] Pending Delete
+- [x] Stablize Continuous Deployment (Health Check)
+- [x] Follow System
+- [x] Streaming with YouTube
 - [ ] SNS Feed Stream System
 - [ ] Push Notification
 - [ ] Subscription Billing System
