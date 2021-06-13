@@ -1,9 +1,6 @@
 A Power of Trance is audio broadcasting server. 
 It contains musicdaemon and API server.
 
-# Deploy Issue
-If you use PyCharm and before code push, first you must select file README.md and commit, push code. This is a PyCharm bug.
-
 # Server Spec
 - Platform: Docker Compose (Local Dev) or Kubernetes (Production)
 - Database: PostgreSQL 11 over
@@ -58,7 +55,8 @@ So, You need to acquire Google OAuth2 secret json
 - [x] Bulk Uploader Script
 - [x] Pending Delete
 - [x] Stablize Continuous Deployment (Health Check)
-- [x] Follow System
+- [x] Like Track
+- [x] Follow User
 - [x] Streaming with YouTube
 - [ ] SNS Feed Stream System
 - [ ] Push Notification
@@ -135,7 +133,7 @@ You must define these variables because secret information.
 
 
 # Donation
-We receive sponsor for server maintenance and management through PayPal, and also receive sponsor by cryptocurrencies such as Bitcoin and Ethereum.
+We receive sponsor for develop, bug fix, server maintenance and management through PayPal, and also receive sponsor by cryptocurrencies such as Bitcoin and Ethereum.
 - PayPal : preparing
 - Bitcoin : bc1q49aq0ktmaa6n0qxq4787xw3k7uwl09q2vtf0ts
 - Ethereum : 0x8b08bDa86d54F0ED51A04E60279C53F99f6ddF40
