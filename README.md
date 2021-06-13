@@ -1,12 +1,5 @@
 A Power of Trance is audio broadcasting server. 
 It contains musicdaemon and API server.
-This project is published as opensource and use LGPL license.
-
-# Donation
-A Power of Trance is an open source driven project. We receive sponsor for server maintenance and management through PayPal, and also receive sponsor by cryptocurrencies such as Bitcoin and Ethereum.
-- PayPal : preparing
-- Bitcoin : bc1q49aq0ktmaa6n0qxq4787xw3k7uwl09q2vtf0ts
-- Ethereum : 0x8b08bDa86d54F0ED51A04E60279C53F99f6ddF40
 
 # Deploy Issue
 If you use PyCharm and before code push, first you must select file README.md and commit, push code. This is a PyCharm bug.
@@ -140,3 +133,9 @@ You must define these variables because secret information.
     # automatic start django
     ENV AUTOSTART 1
 
+
+# Donation
+We receive sponsor for server maintenance and management through PayPal, and also receive sponsor by cryptocurrencies such as Bitcoin and Ethereum.
+- PayPal : preparing
+- Bitcoin : bc1q49aq0ktmaa6n0qxq4787xw3k7uwl09q2vtf0ts
+- Ethereum : 0x8b08bDa86d54F0ED51A04E60279C53F99f6ddF40
