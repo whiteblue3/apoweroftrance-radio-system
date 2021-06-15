@@ -411,16 +411,17 @@ class ReplaceAPI(CreateAPIView):
 
             if cover_art_path is not None:
                 track.cover_art = cover_art_path
-                splitted_prev_cover_art_path = prev_cover_art_path.split('/')
-                prev_cover_art_filename = splitted_prev_cover_art_path.pop()
-                prev_cover_art_filepath = "/".join(splitted_prev_cover_art_path)
-                try:
-                    if prev_cover_art_path is not None:
-                        if storage.exist_file(prev_cover_art_filepath, prev_cover_art_filename, storage_driver):
-                            storage.delete_file(prev_cover_art_filepath, prev_cover_art_filename, storage_driver)
-                except Exception as e:
-                    # 파일이 존재하지 않는 경우 이곳으로 온다
-                    pass
+                if prev_cover_art_path is not None:
+                    splitted_prev_cover_art_path = prev_cover_art_path.split('/')
+                    prev_cover_art_filename = splitted_prev_cover_art_path.pop()
+                    prev_cover_art_filepath = "/".join(splitted_prev_cover_art_path)
+                    try:
+                        if prev_cover_art_path is not None:
+                            if storage.exist_file(prev_cover_art_filepath, prev_cover_art_filename, storage_driver):
+                                storage.delete_file(prev_cover_art_filepath, prev_cover_art_filename, storage_driver)
+                    except Exception as e:
+                        # 파일이 존재하지 않는 경우 이곳으로 온다
+                        pass
 
         track.save()
 
