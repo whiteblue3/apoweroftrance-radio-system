@@ -113,12 +113,12 @@ services:
     depends_on:
       - radio
       - account
-      - post
+      - backend
       - admin
     links:
       - radio
       - account
-      - post
+      - backend
       - admin
 
   radio:
@@ -276,12 +276,12 @@ services:
       - ./cms_secret.json:/backend/secret.json
       - ./apoweroftrance-525255671db2.json:/etc/gcloud/service-account-key.json
 
-  post:
-    container_name: post
+  backend:
+    container_name: backend
     restart: always
-    image: gcr.io/apoweroftrance/post:dev-pod
-#    image: gcr.io/apoweroftrance/post:production-latest
-#    build: post
+    image: gcr.io/apoweroftrance/backend:dev-pod
+#    image: gcr.io/apoweroftrance/backend:production-latest
+#    build: backend
     environment:
       ENABLE_SWAGGER: 1
       ENABLE_EMAIL_SEND: 1
@@ -312,8 +312,8 @@ services:
       apoweroftrance:
         ipv4_address: 10.0.0.11
     volumes:
-      - post_data:/backend
-      - ./post_secret.json:/backend/secret.json
+      - backend_data:/backend
+      - ./backend_secret.json:/backend/secret.json
       - ./apoweroftrance-525255671db2.json:/etc/gcloud/service-account-key.json
 
   admin:
@@ -394,10 +394,10 @@ volumes:
       type: none
       device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radiosystem/upload #NOTE needs full path (~ doesn't work)
       o: bind
-  post_data:
+  backend_data:
     driver_opts:
       type: none
-      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radiosystem/post #NOTE needs full path (~ doesn't work)
+      device: /Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radiosystem/backend #NOTE needs full path (~ doesn't work)
       o: bind
   admin_data:
     driver_opts:

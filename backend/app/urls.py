@@ -34,7 +34,7 @@ schema_url_patterns = [
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="A Power of Trance Post API",
+        title="A Power of Trance Backend API",
         default_version='v1',
         description="Usage: <br />"
                     "1. user/authenticate to signin <br />"

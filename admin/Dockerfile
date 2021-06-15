@@ -10,7 +10,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY ./apoweroftrance-django-utils-0.0.1.tar.gz /backend/apoweroftrance-django-utils-0.0.1.tar.gz
 COPY ./apoweroftrance-account-0.0.1.tar.gz /backend/apoweroftrance-account-0.0.1.tar.gz
 COPY ./apoweroftrance-radio-0.0.1.tar.gz /backend/apoweroftrance-radio-0.0.1.tar.gz
-COPY ./apoweroftrance-post-0.0.1.tar.gz /backend/apoweroftrance-post-0.0.1.tar.gz
+COPY ./apoweroftrance-backend-0.0.1.tar.gz /backend/apoweroftrance-backend-0.0.1.tar.gz
 COPY ./requirement.txt /backend/requirement.txt
 
 RUN apt-get update && apt-get -y install --no-install-recommends build-essential \
@@ -102,7 +102,7 @@ COPY . /backend/
 RUN chown -R ${USER}:${USER} /backend
 RUN rm requirement.txt && rm Dockerfile && rm build_push_docker_image.sh && rm -rf .git && rm -rf .gitignore \
     && rm apoweroftrance-django-utils-0.0.1.tar.gz && rm apoweroftrance-account-0.0.1.tar.gz \
-    && rm apoweroftrance-radio-0.0.1.tar.gz && rm apoweroftrance-post-0.0.1.tar.gz
+    && rm apoweroftrance-radio-0.0.1.tar.gz && rm apoweroftrance-backend-0.0.1.tar.gz
 
 
 USER ${USER}

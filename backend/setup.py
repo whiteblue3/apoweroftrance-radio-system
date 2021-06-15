@@ -1,12 +1,12 @@
 import setuptools
 
 setuptools.setup(
-    name="apoweroftrance-post",
+    name="apoweroftrance-backend",
     version="0.0.1",
     author="whiteblue3",
     author_email="hd2dj07@gmail.com",
-    description="A Power of Trance Post Service",
-    long_description="A Power of Trance Post Service",
+    description="A Power of Trance Backend Service",
+    long_description="A Power of Trance Backend Service",
     long_description_content_type="text/markdown",
     url="https://github.com/whiteblue3/apoweroftrance-post",
     packages=setuptools.find_packages(exclude=(

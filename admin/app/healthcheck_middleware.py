@@ -14,7 +14,7 @@ class HealthCheckMiddleware(object):
         if request.method == "GET":
             if request.path == "/readiness":
                 return self.readiness(request)
-            elif request.path == "/healthz":
+            elif request.path == "/healthz" or request.path == "/":
                 return self.healthz(request)
         return self.get_response(request)
 
