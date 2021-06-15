@@ -221,7 +221,7 @@ services:
       WAIT_URL: 10.0.0.8
       WAIT_PORT: 8091
       INSTALL: 1
-      MIGRATE: 1
+      MIGRATE: 0
       AUTOSTART: 1
     depends_on:
       - redis
@@ -322,7 +322,7 @@ services:
       WAIT_URL: 10.0.0.11
       WAIT_PORT: 8094
       INSTALL: 1
-      MIGRATE: 1
+      MIGRATE: 0
       AUTOSTART: 1
     depends_on:
       - redis
