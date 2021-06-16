@@ -49,6 +49,7 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    path('admin/', admin.site.urls),
 ] + schema_url_patterns + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if os.environ.get('ENABLE_SWAGGER') == '1':
