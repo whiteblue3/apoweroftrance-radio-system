@@ -362,17 +362,16 @@ class UserListAPIView(RetrieveAPIView):
             sort_field = "-%s" % sort
 
         # tracks = Track.objects.filter(user__id=request.user.id)
-        query = queryset.order_by(sort_field).distinct()
-        userlist = query[(page * limit):((page * limit) + limit)]
-        list = []
+        userlist = queryset.order_by(sort_field).distinct()[(page * limit):((page * limit) + limit)]
+        search_list = []
 
         for profile in userlist:
             serializer = ProfileSerializer(profile)
-            list.append(serializer.data)
+            search_list.append(serializer.data)
 
         response = {
-            "list": list,
-            "total": query.count()
+            "list": search_list,
+            "total": queryset.count()
         }
 
         return api.response_json(response, status.HTTP_200_OK)
@@ -453,9 +452,8 @@ class FollowerListAPIView(RetrieveAPIView):
         if order == "desc":
             sort_field = "-%s" % sort
 
-        query = queryset.order_by(sort_field).distinct()
-        followers = query[(page * limit):((page * limit) + limit)]
-        list = []
+        followers = queryset.order_by(sort_field).distinct()[(page * limit):((page * limit) + limit)]
+        search_list = []
 
         for follower in followers:
             try:
@@ -463,11 +461,11 @@ class FollowerListAPIView(RetrieveAPIView):
             except Profile.DoesNotExist:
                 continue
             serializer = ProfileSerializer(profile)
-            list.append(serializer.data)
+            search_list.append(serializer.data)
 
         response = {
-            "list": list,
-            "total": query.count()
+            "list": search_list,
+            "total": queryset.count()
         }
 
         return api.response_json(response, status.HTTP_200_OK)
@@ -548,9 +546,8 @@ class FollowListAPIView(RetrieveAPIView):
         if order == "desc":
             sort_field = "-%s" % sort
 
-        query = queryset.order_by(sort_field).distinct()
-        follows = query[(page * limit):((page * limit) + limit)]
-        list = []
+        follows = queryset.order_by(sort_field).distinct()[(page * limit):((page * limit) + limit)]
+        search_list = []
 
         for follow in follows:
             try:
@@ -558,11 +555,11 @@ class FollowListAPIView(RetrieveAPIView):
             except Profile.DoesNotExist:
                 continue
             serializer = ProfileSerializer(profile)
-            list.append(serializer.data)
+            search_list.append(serializer.data)
 
         response = {
-            "list": list,
-            "total": query.count()
+            "list": search_list,
+            "total": queryset.count()
         }
 
         return api.response_json(response, status.HTTP_200_OK)

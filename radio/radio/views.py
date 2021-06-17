@@ -7,7 +7,7 @@ from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import never_cache
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import mixins, generics
 from rest_framework.exceptions import ValidationError
@@ -202,20 +202,19 @@ class TrackListAPI(RetrieveAPIView):
         if order == "desc":
             sort_field = "-%s" % sort
 
-        query = queryset.order_by(sort_field).distinct()
-        track_list = query[(page * limit):((page * limit) + limit)]
-        list = []
+        track_list = queryset.order_by(sort_field).distinct()[(page * limit):((page * limit) + limit)]
+        search_list = []
 
         for track in track_list:
             is_pending_remove = get_is_pending_remove(track.id)
             if is_pending_remove:
                 continue
             serializer = TrackSerializer(track)
-            list.append(serializer.data)
+            search_list.append(serializer.data)
 
         response = {
-            "list": list,
-            "total": query.count()
+            "list": search_list,
+            "total": queryset.count()
         }
 
         return api.response_json(response, status.HTTP_200_OK)
@@ -316,20 +315,19 @@ class MyTrackAPI(RetrieveAPIView):
             sort_field = "-%s" % sort
 
         # tracks = Track.objects.filter(user__id=request.user.id)
-        query = queryset.order_by(sort_field).distinct()
-        tracks = query[(page * limit):((page * limit) + limit)]
-        list = []
+        tracks = queryset.order_by(sort_field).distinct()[(page * limit):((page * limit) + limit)]
+        search_list = []
 
         for track in tracks:
             is_pending_remove = get_is_pending_remove(track.id)
             if is_pending_remove:
                 continue
             serializer = TrackSerializer(track)
-            list.append(serializer.data)
+            search_list.append(serializer.data)
 
         response = {
-            "list": list,
-            "total": query.count()
+            "list": search_list,
+            "total": queryset.count()
         }
 
         return api.response_json(response, status.HTTP_200_OK)
@@ -608,9 +606,8 @@ class LikeUserListAPI(RetrieveAPIView):
         if order == "desc":
             sort_field = "-%s" % sort
 
-        query = queryset.order_by(sort_field).distinct()
-        likelist = query[(page * limit):((page * limit) + limit)]
-        list = []
+        likelist = queryset.order_by(sort_field).distinct()[(page * limit):((page * limit) + limit)]
+        search_list = []
 
         for like in likelist:
             try:
@@ -618,11 +615,11 @@ class LikeUserListAPI(RetrieveAPIView):
             except Profile.DoesNotExist:
                 continue
             serializer = ProfileSerializer(profile)
-            list.append(serializer.data)
+            search_list.append(serializer.data)
 
         response = {
-            "list": list,
-            "total": query.count()
+            "list": search_list,
+            "total": queryset.count()
         }
 
         return api.response_json(response, status.HTTP_200_OK)

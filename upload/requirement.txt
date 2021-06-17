@@ -26,7 +26,8 @@ djangorestframework
 drf-yasg
 
 # Database
-psycopg2-binary
+psycopg2-binary < 2.9
+tzdata
 
 # JWT
 pyjwt

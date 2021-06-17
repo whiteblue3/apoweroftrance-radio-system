@@ -127,7 +127,6 @@ class ProfileSerializer(serializers.ModelSerializer):
             return None
         else:
             return obj.image
-            # return "%s/%s" % (settings.STORAGE_DOMAIN, obj.image)
 
     def update(self, instance, validated_data):
         for (key, value) in validated_data.items():
