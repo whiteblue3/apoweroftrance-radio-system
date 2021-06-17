@@ -207,6 +207,7 @@ class TrackAdmin(admin.ModelAdmin):
                 new_track = {
                     "id": track.id,
                     "location": "/srv/media/%s" % track.location,
+                    "cover_art": track.cover_art,
                     "artist": track.artist,
                     "title": track.title
                 }
@@ -297,6 +298,7 @@ class TrackAdmin(admin.ModelAdmin):
                     response_daemon_data.append({
                         "id": track.id,
                         "location": "/srv/media/%s" % location,
+                        "cover_art": track.cover_art,
                         "artist": artist,
                         "title": title
                     })

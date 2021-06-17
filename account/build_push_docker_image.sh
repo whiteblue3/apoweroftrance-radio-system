@@ -1,7 +1,7 @@
 #!/bin/bash
 
 APP_NAME=account
-VERSION=0.0.53
+VERSION=0.0.54
 
 docker build --no-cache=True -t ${APP_NAME}:${VERSION} .
 docker tag ${APP_NAME}:${VERSION} gcr.io/apoweroftrance/${APP_NAME}:${VERSION}

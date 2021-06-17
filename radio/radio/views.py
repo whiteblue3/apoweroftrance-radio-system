@@ -202,15 +202,21 @@ class TrackListAPI(RetrieveAPIView):
         if order == "desc":
             sort_field = "-%s" % sort
 
-        track_list = queryset.order_by(sort_field).distinct()[(page * limit):((page * limit) + limit)]
-        response = []
+        query = queryset.order_by(sort_field).distinct()
+        track_list = query[(page * limit):((page * limit) + limit)]
+        list = []
 
         for track in track_list:
             is_pending_remove = get_is_pending_remove(track.id)
             if is_pending_remove:
                 continue
             serializer = TrackSerializer(track)
-            response.append(serializer.data)
+            list.append(serializer.data)
+
+        response = {
+            "list": list,
+            "total": query.count()
+        }
 
         return api.response_json(response, status.HTTP_200_OK)
 
@@ -310,15 +316,21 @@ class MyTrackAPI(RetrieveAPIView):
             sort_field = "-%s" % sort
 
         # tracks = Track.objects.filter(user__id=request.user.id)
-        tracks = queryset.order_by(sort_field).distinct()[(page * limit):((page * limit) + limit)]
-        response = []
+        query = queryset.order_by(sort_field).distinct()
+        tracks = query[(page * limit):((page * limit) + limit)]
+        list = []
 
         for track in tracks:
             is_pending_remove = get_is_pending_remove(track.id)
             if is_pending_remove:
                 continue
             serializer = TrackSerializer(track)
-            response.append(serializer.data)
+            list.append(serializer.data)
+
+        response = {
+            "list": list,
+            "total": query.count()
+        }
 
         return api.response_json(response, status.HTTP_200_OK)
 
@@ -596,8 +608,9 @@ class LikeUserListAPI(RetrieveAPIView):
         if order == "desc":
             sort_field = "-%s" % sort
 
-        likelist = queryset.order_by(sort_field).distinct()[(page * limit):((page * limit) + limit)]
-        response = []
+        query = queryset.order_by(sort_field).distinct()
+        likelist = query[(page * limit):((page * limit) + limit)]
+        list = []
 
         for like in likelist:
             try:
@@ -605,7 +618,12 @@ class LikeUserListAPI(RetrieveAPIView):
             except Profile.DoesNotExist:
                 continue
             serializer = ProfileSerializer(profile)
-            response.append(serializer.data)
+            list.append(serializer.data)
+
+        response = {
+            "list": list,
+            "total": query.count()
+        }
 
         return api.response_json(response, status.HTTP_200_OK)
 
@@ -745,6 +763,7 @@ class NowPlayingAPI(RetrieveAPIView):
 #                 response_daemon_data.append({
 #                     "id": track.id,
 #                     "location": "/srv/media/%s" % location,
+#                     "cover_art": track.cover_art,
 #                     "artist": artist,
 #                     "title": title
 #                 })
@@ -790,6 +809,7 @@ class NowPlayingAPI(RetrieveAPIView):
 #         new_track = {
 #             "id": track.id,
 #             "location": "/srv/media/%s" % track.location,
+#             "cover_art": track.cover_art,
 #             "artist": track.artist,
 #             "title": track.title
 #         }
@@ -898,6 +918,7 @@ class CallbackOnStartupAPI(RetrieveAPIView):
                 response.append({
                     "id": int(track.id),
                     "location": "/srv/media/%s" % track.location,
+                    "cover_art": track.cover_art,
                     "artist": track.artist,
                     "title": track.title
                 })
@@ -970,6 +991,7 @@ class CallbackOnStopAPI(CreateAPIView):
             new_track = {
                 "id": int(next_track.id),
                 "location": "/srv/media/%s" % next_track.location,
+                "cover_art": next_track.cover_art,
                 "artist": next_track.artist,
                 "title": next_track.title
             }
