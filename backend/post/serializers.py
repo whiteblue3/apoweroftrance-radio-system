@@ -88,3 +88,20 @@ class CommentSerializer(serializers.ModelSerializer):
             'user', 'user_id', 'track', 'track_id', 'message',
             'created_at', 'updated_at',
         )
+
+
+class PostCommentSerializer(serializers.Serializer):
+    track_id = serializers.IntegerField(allow_null=False, required=True)
+    message = serializers.CharField(allow_null=False, allow_blank=False, max_length=1000, required=True)
+
+    class Meta:
+        model = Comment
+        fields = (
+            'track_id', 'message',
+        )
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
