@@ -110,12 +110,18 @@ class CommentListAPI(RetrieveAPIView):
             sort_field = "-%s" % sort
 
         queryset = Comment.objects.filter(Q(track_id=track_id))
-        comments = queryset.order_by(sort_field).distinct()[(page * limit):((page * limit) + limit)]
-        response = []
+        query = queryset.order_by(sort_field).distinct()
+        comments = query[(page * limit):((page * limit) + limit)]
+        list = []
 
         for comment in comments:
             serializer = CommentSerializer(comment)
-            response.append(serializer.data)
+            list.append(serializer.data)
+
+        response = {
+            "list": list,
+            "total": query.count()
+        }
 
         return api.response_json(response, status.HTTP_200_OK)
 
