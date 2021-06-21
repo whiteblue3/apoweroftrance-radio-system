@@ -4,7 +4,7 @@ from rest_framework import serializers
 from accounts.serializers import UserSerializer
 from radio.serializers import TrackSerializer
 from .models import (
-    CLAIM_CATEGORY, CLAIM_STATUS, Claim, ClaimReply, Comment
+    CLAIM_CATEGORY, CLAIM_STATUS, NOTIFICATION_CATEGORY, Claim, ClaimReply, Comment, Notification
 )
 
 
@@ -105,3 +105,25 @@ class PostCommentSerializer(serializers.Serializer):
 
     def update(self, instance, validated_data):
         pass
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+
+    category = serializers.ChoiceField(choices=NOTIFICATION_CATEGORY, allow_null=False, allow_blank=False)
+    # targets = UserSerializer(many=True)
+
+    title = serializers.CharField(allow_null=False, allow_blank=False, max_length=150)
+    message = serializers.CharField(allow_null=False, allow_blank=False, max_length=3000)
+
+    created_at = serializers.DateTimeField(read_only=True)
+    updated_at = serializers.DateTimeField(read_only=True)
+
+    class Meta:
+        model = Notification
+        fields = (
+            'id',
+            'category',
+            'title', 'message',
+            'created_at', 'updated_at',
+        )

@@ -12,7 +12,7 @@ from rangefilter.filter import DateTimeRangeFilter
 from accounts.models import User
 from radio.models import Track
 from .models import (
-    CLAIM_CATEGORY, CLAIM_STATUS, Claim, ClaimReply, Comment
+    CLAIM_CATEGORY, CLAIM_STATUS, NOTIFICATION_CATEGORY, Claim, ClaimReply, Comment, Notification, NotificationUser
 )
 
 
@@ -106,8 +106,29 @@ class TrackIDFilter(InputFilter):
             )
 
 
+class NotificationCategoryFilter(SimpleListFilter):
+    template = 'accounts/dropdown_filter.html'
+
+    parameter_name = 'category'
+    title = _('Category')
+
+    def lookups(self, request, model_admin):
+        return NOTIFICATION_CATEGORY
+
+    def queryset(self, request, queryset):
+        if self.value() is not None:
+            category = self.value()
+            return queryset.filter(
+                Q(category=category)
+            )
+
+
 class ClaimReplyInline(admin.StackedInline):
     model = ClaimReply
+
+
+class NotificationUserInline(admin.TabularInline):
+    model = NotificationUser
 
 
 @admin.register(Claim)
@@ -200,3 +221,12 @@ class CommentAdmin(admin.ModelAdmin):
         link = '<a href="%s">%s - %s</a>' % (url, obj.track.artist, obj.track.title)
         return mark_safe(link)
     track_link.short_description = 'Track'
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ('id', 'category', 'title', 'message', 'created_at',)
+    search_fields = ('title', 'message',)
+    list_filter = (NotificationCategoryFilter, ('created_at', DateTimeRangeFilter), 'targets',)
+    ordering = ('-created_at',)
+    inlines = (NotificationUserInline,)

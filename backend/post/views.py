@@ -20,8 +20,8 @@ from drf_yasg import openapi
 from django_utils import api
 from django_utils.api import method_permission_classes
 from radio.models import Track
-from .models import Comment
-from .serializers import CommentSerializer, PostCommentSerializer
+from .models import Comment, Notification, NotificationUser, NOTIFICATION_CATEGORY_LIST
+from .serializers import CommentSerializer, PostCommentSerializer, NotificationSerializer
 from .util import now
 
 
@@ -158,3 +158,119 @@ class PostCommentAPI(CreateAPIView):
         serializer.save()
 
         return api.response_json(serializer.data, status.HTTP_201_CREATED)
+
+
+class NotificationListAPI(RetrieveAPIView):
+    manual_parameters = [
+        openapi.Parameter(
+            name="category",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            required=False,
+            description="Category",
+            enum=NOTIFICATION_CATEGORY_LIST,
+            default=None
+        ),
+        openapi.Parameter(
+            name="page",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_INTEGER,
+            required=True,
+            description="Page number",
+            default=0
+        ),
+        openapi.Parameter(
+            name="limit",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_INTEGER,
+            required=True,
+            description="Limit per page",
+            default=10
+        ),
+        openapi.Parameter(
+            name="sort",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            required=True,
+            description="Sort field",
+            default="created_at"
+        ),
+        openapi.Parameter(
+            name="order",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            required=True,
+            description="Sort order",
+            default="desc"
+        ),
+    ]
+
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = NotificationSerializer
+
+    @swagger_auto_schema(
+        operation_summary="View notification list for track",
+        operation_description="Authenticate Required.",
+        manual_parameters=manual_parameters,
+        responses={'200': NotificationSerializer})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            category = request.GET["category"]
+        except MultiValueDictKeyError:
+            category = None
+
+        if category is not None:
+            if category not in NOTIFICATION_CATEGORY_LIST:
+                raise ValidationError(_("Invalid category"))
+
+        try:
+            page = int(request.GET["page"])
+        except MultiValueDictKeyError:
+            page = 0
+
+        try:
+            limit = int(request.GET["limit"])
+        except MultiValueDictKeyError:
+            limit = 100
+
+        try:
+            sort = request.GET["sort"]
+        except MultiValueDictKeyError:
+            sort = "created_at"
+
+        try:
+            order = request.GET["order"]
+        except MultiValueDictKeyError:
+            order = "desc"
+
+        sort_field = sort
+        if order == "desc":
+            sort_field = "-%s" % sort
+
+        targets = NotificationUser.objects.filter(Q(user_id=user.id))
+
+        if category is not None:
+            queryset = Notification.objects.filter(
+                Q(category=category) & (Q(targets__id__in=targets) | Q(targets__id__isnull=True))
+            )
+        else:
+            queryset = Notification.objects.filter(
+                Q(targets__id__in=targets) | Q(targets__id__isnull=True)
+            )
+        notifications = queryset.order_by(sort_field).distinct()[(page * limit):((page * limit) + limit)]
+        search_list = []
+
+        for notification in notifications:
+            serializer = NotificationSerializer(notification)
+            search_list.append(serializer.data)
+
+        response = {
+            "list": search_list,
+            "total": queryset.count()
+        }
+
+        return api.response_json(response, status.HTTP_200_OK)

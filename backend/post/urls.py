@@ -6,4 +6,5 @@ app_name = 'post'
 urlpatterns = [
     path('comment/list', views.CommentListAPI.as_view()),
     path('comment/post', views.PostCommentAPI.as_view()),
+    path('notification/list', views.NotificationListAPI.as_view()),
 ]

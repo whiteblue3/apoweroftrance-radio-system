@@ -2,6 +2,7 @@ from django.db import models
 from django_utils import multi_db_ralation
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth import get_user_model
+from django.contrib.postgres.fields import ArrayField
 
 
 CLAIM_CATEGORY = [
@@ -13,6 +14,18 @@ CLAIM_STATUS = [
     ("opened", _("Opened Issue")),
     ("accept", _("Accepted")),
     ("closed", _("Closed Issue")),
+]
+
+NOTIFICATION_CATEGORY = [
+    ("notification", _("Notification")),
+    ("claim_user", _("User Claim")),
+    ("claim_copyright", _("Copyright Claim")),
+]
+
+NOTIFICATION_CATEGORY_LIST = [
+    "notification",
+    "claim_user",
+    "claim_copyright",
 ]
 
 
@@ -115,3 +128,39 @@ class Comment(models.Model):
         external_db_fields = ['user', 'track']
         verbose_name = 'Comment'
         verbose_name_plural = 'Comment'
+
+
+class Notification(models.Model):
+    id = models.BigAutoField(primary_key=True, null=False, blank=False)
+
+    category = models.CharField(choices=NOTIFICATION_CATEGORY, null=False, blank=False, max_length=20)
+
+    targets = models.ManyToManyField(get_user_model(), blank=True, through='NotificationUser')
+
+    title = models.CharField(blank=False, null=False, max_length=150)
+    message = models.TextField(blank=False, null=False)
+
+    # A timestamp representing when this object was created.
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    # A timestamp reprensenting when this object was last updated.
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager.from_queryset(queryset_class=ModelQuerySet)()
+
+    class Meta:
+        app_label = 'post'
+        verbose_name = 'Notification'
+        verbose_name_plural = 'Notification'
+
+
+class NotificationUser(models.Model):
+    id = models.BigAutoField(primary_key=True, null=False, blank=False)
+
+    notification = models.ForeignKey(Notification, on_delete=models.CASCADE, null=True)
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, null=True)
+
+    objects = models.Manager.from_queryset(queryset_class=ModelQuerySet)()
+
+    class Meta:
+        db_table = 'post_notification_targets'
