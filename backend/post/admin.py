@@ -9,10 +9,10 @@ from django.utils.safestring import mark_safe
 from django_utils.input_filter import InputFilter
 from django.utils.translation import ugettext_lazy as _
 from rangefilter.filter import DateTimeRangeFilter
-from accounts.models import User
 from radio.models import Track
 from .models import (
-    CLAIM_CATEGORY, CLAIM_STATUS, NOTIFICATION_CATEGORY, Claim, ClaimReply, Comment, Notification, NotificationUser
+    CLAIM_CATEGORY, CLAIM_STATUS, CLAIM_STAFF_ACTION, NOTIFICATION_CATEGORY,
+    Claim, ClaimReply, Comment, DirectMessage, Notification, NotificationUser
 )
 
 
@@ -47,6 +47,23 @@ class ClaimStatusFilter(SimpleListFilter):
             status = self.value()
             return queryset.filter(
                 Q(status=status)
+            )
+
+
+class ClaimStaffActionFilter(SimpleListFilter):
+    template = 'accounts/dropdown_filter.html'
+
+    parameter_name = 'staff_action'
+    title = _('Staff Action')
+
+    def lookups(self, request, model_admin):
+        return CLAIM_STAFF_ACTION
+
+    def queryset(self, request, queryset):
+        if self.value() is not None:
+            staff_action = self.value()
+            return queryset.filter(
+                Q(staff_action=staff_action)
             )
 
 
@@ -106,6 +123,34 @@ class TrackIDFilter(InputFilter):
             )
 
 
+class SendUserIDFilter(InputFilter):
+    template = 'accounts/input_filter.html'
+
+    parameter_name = 'send_user_id'
+    title = _('Send User ID')
+
+    def queryset(self, request, queryset):
+        if self.value() is not None:
+            user_id = self.value()
+            return queryset.filter(
+                Q(send_user_id=user_id)
+            )
+
+
+class TargetUserIDFilter(InputFilter):
+    template = 'accounts/input_filter.html'
+
+    parameter_name = 'target_user_id'
+    title = _('Target User ID')
+
+    def queryset(self, request, queryset):
+        if self.value() is not None:
+            user_id = self.value()
+            return queryset.filter(
+                Q(target_user_id=user_id)
+            )
+
+
 class NotificationCategoryFilter(SimpleListFilter):
     template = 'accounts/dropdown_filter.html'
 
@@ -134,7 +179,7 @@ class NotificationUserInline(admin.TabularInline):
 @admin.register(Claim)
 class ClaimAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'category', 'status', 'issuer_link', 'accepter_link',
+        'id', 'category', 'status', 'staff_action', 'issuer_link', 'accepter_link',
         'issue', 'reason', 'track_link', 'user_link', 'created_at', 'updated_at',
     )
     search_fields = (
@@ -145,7 +190,7 @@ class ClaimAdmin(admin.ModelAdmin):
         'track__artist', 'track__title',
     )
     list_filter = (
-        ClaimCategoryFilter, ClaimStatusFilter, IssuerIDFilter, AccepterIDFilter, UserIDFilter, TrackIDFilter,
+        ClaimCategoryFilter, ClaimStatusFilter, ClaimStaffActionFilter, IssuerIDFilter, AccepterIDFilter, UserIDFilter, TrackIDFilter,
         ('created_at', DateTimeRangeFilter), ('updated_at', DateTimeRangeFilter),
     )
     ordering = ('-created_at',)
@@ -221,6 +266,38 @@ class CommentAdmin(admin.ModelAdmin):
         link = '<a href="%s">%s - %s</a>' % (url, obj.track.artist, obj.track.title)
         return mark_safe(link)
     track_link.short_description = 'Track'
+
+
+@admin.register(DirectMessage)
+class DirectMessageAdmin(admin.ModelAdmin):
+    list_display = (
+        'id', 'send_user_link', 'target_user_link', 'message', 'created_at', 'updated_at',
+    )
+    search_fields = (
+        'message',
+        'send_user__email', 'send_user__nickname', 'send_user__mobile_number', 'send_user__first_name', 'send_user__last_name',
+        'target_user__email', 'target_user__nickname', 'target_user__mobile_number', 'target_user__first_name', 'target_user__last_name',
+    )
+    list_filter = (
+        SendUserIDFilter, TargetUserIDFilter, ('created_at', DateTimeRangeFilter), ('updated_at', DateTimeRangeFilter),
+    )
+    ordering = ('-created_at',)
+
+    def send_user_link(self, obj):
+        User = get_user_model()
+        user = User.objects.get(email=obj.send_user.email)
+        url = reverse("admin:accounts_user_change", args=[user.id])
+        link = '<a href="%s">%s</a>' % (url, obj.send_user.email)
+        return mark_safe(link)
+    send_user_link.short_description = 'Send User'
+
+    def target_user_link(self, obj):
+        User = get_user_model()
+        user = User.objects.get(email=obj.target_user.email)
+        url = reverse("admin:accounts_user_change", args=[user.id])
+        link = '<a href="%s">%s</a>' % (url, obj.target_user.email)
+        return mark_safe(link)
+    target_user_link.short_description = 'Target User'
 
 
 @admin.register(Notification)
