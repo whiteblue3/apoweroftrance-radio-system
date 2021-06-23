@@ -4,7 +4,8 @@ from rest_framework import serializers
 from accounts.serializers import UserSerializer
 from radio.serializers import TrackSerializer
 from .models import (
-    CLAIM_CATEGORY, CLAIM_STATUS, NOTIFICATION_CATEGORY, Claim, ClaimReply, Comment, Notification
+    CLAIM_CATEGORY, CLAIM_STATUS, CLAIM_STAFF_ACTION, NOTIFICATION_CATEGORY,
+    Claim, ClaimReply, Comment, DirectMessage, Notification
 )
 
 
@@ -29,6 +30,7 @@ class ClaimSerializer(serializers.ModelSerializer):
     reason = serializers.CharField(allow_null=False, allow_blank=False, max_length=3000)
 
     status = serializers.ChoiceField(choices=CLAIM_STATUS, allow_null=False, allow_blank=False)
+    staff_action = serializers.ChoiceField(choices=CLAIM_STAFF_ACTION, allow_null=False, allow_blank=False)
 
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
@@ -39,7 +41,7 @@ class ClaimSerializer(serializers.ModelSerializer):
             'id',
             'issuer', 'issuer_id', 'accepter', 'accepter_id',
             'category', 'user', 'user_id', 'track', 'track_id',
-            'issue', 'reason', 'status',
+            'issue', 'reason', 'status', 'staff_action',
             'created_at', 'updated_at',
         )
 
@@ -98,6 +100,46 @@ class PostCommentSerializer(serializers.Serializer):
         model = Comment
         fields = (
             'track_id', 'message',
+        )
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
+
+
+class DirectMessageSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+
+    send_user = UserSerializer(read_only=True)
+    send_user_id = serializers.IntegerField(write_only=True, allow_null=False)
+
+    target_user = UserSerializer(read_only=True)
+    target_user_id = serializers.IntegerField(write_only=True, allow_null=False)
+
+    message = serializers.CharField(allow_null=False, allow_blank=False, max_length=1000)
+
+    created_at = serializers.DateTimeField(read_only=True)
+    updated_at = serializers.DateTimeField(read_only=True)
+
+    class Meta:
+        model = DirectMessage
+        fields = (
+            'id',
+            'send_user', 'send_user_id', 'target_user', 'target_user_id', 'message',
+            'created_at', 'updated_at',
+        )
+
+
+class PostDirectMessageSerializer(serializers.Serializer):
+    target_user_id = serializers.IntegerField(allow_null=False, required=True)
+    message = serializers.CharField(allow_null=False, allow_blank=False, max_length=1000, required=True)
+
+    class Meta:
+        model = DirectMessage
+        fields = (
+            'target_user_id', 'message',
         )
 
     def create(self, validated_data):

@@ -2,6 +2,7 @@ import json
 from django.core.cache import cache
 from django.conf import settings
 from django.http import HttpResponse
+from django.contrib.auth import get_user_model
 from django.utils.decorators import method_decorator
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -20,8 +21,14 @@ from drf_yasg import openapi
 from django_utils import api
 from django_utils.api import method_permission_classes
 from radio.models import Track
-from .models import Comment, Notification, NotificationUser, NOTIFICATION_CATEGORY_LIST
-from .serializers import CommentSerializer, PostCommentSerializer, NotificationSerializer
+from .models import (
+    Comment, DirectMessage, Notification, NotificationUser, NOTIFICATION_CATEGORY_LIST
+)
+from .serializers import (
+    CommentSerializer, PostCommentSerializer,
+    DirectMessageSerializer, PostDirectMessageSerializer,
+    NotificationSerializer
+)
 from .util import now
 
 
@@ -149,6 +156,146 @@ class PostCommentAPI(CreateAPIView):
             data={
                 "user_id": request.user.id,
                 "track_id": request.data["track_id"],
+                "message": request.data["message"],
+                "created_at": now(),
+                "updated_at": now(),
+            }
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return api.response_json(serializer.data, status.HTTP_201_CREATED)
+
+
+class DirectMessageListAPI(RetrieveAPIView):
+    manual_parameters = [
+        openapi.Parameter(
+            name="send_user_id",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_INTEGER,
+            required=False,
+            description="Send User ID",
+        ),
+        openapi.Parameter(
+            name="page",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_INTEGER,
+            required=True,
+            description="Page number",
+            default=0
+        ),
+        openapi.Parameter(
+            name="limit",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_INTEGER,
+            required=True,
+            description="Limit per page",
+            default=100
+        ),
+        openapi.Parameter(
+            name="sort",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            required=True,
+            description="Sort field",
+            default="created_at"
+        ),
+        openapi.Parameter(
+            name="order",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            required=True,
+            description="Sort order",
+            default="desc"
+        ),
+    ]
+
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = DirectMessageSerializer
+
+    @swagger_auto_schema(
+        operation_summary="View direct message list for send user",
+        operation_description="Authenticate Required.",
+        manual_parameters=manual_parameters,
+        responses={'200': DirectMessageSerializer})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            send_user_id = request.GET["send_user_id"]
+        except MultiValueDictKeyError:
+            send_user_id = None
+
+        try:
+            page = int(request.GET["page"])
+        except MultiValueDictKeyError:
+            page = 0
+
+        try:
+            limit = int(request.GET["limit"])
+        except MultiValueDictKeyError:
+            limit = 100
+
+        try:
+            sort = request.GET["sort"]
+        except MultiValueDictKeyError:
+            sort = "created_at"
+
+        try:
+            order = request.GET["order"]
+        except MultiValueDictKeyError:
+            order = "desc"
+
+        sort_field = sort
+        if order == "desc":
+            sort_field = "-%s" % sort
+
+        if send_user_id is not None:
+            queryset = DirectMessage.objects.filter(Q(target_user_id=user.id) & Q(send_user_id=send_user_id))
+        else:
+            queryset = DirectMessage.objects.filter(Q(target_user_id=user.id))
+        messages = queryset.order_by(sort_field).distinct()[(page * limit):((page * limit) + limit)]
+        search_list = []
+
+        for message in messages:
+            serializer = DirectMessageSerializer(message)
+            search_list.append(serializer.data)
+
+        response = {
+            "list": search_list,
+            "total": queryset.count()
+        }
+
+        return api.response_json(response, status.HTTP_200_OK)
+
+
+class PostDirectMessageAPI(CreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = PostDirectMessageSerializer
+
+    @swagger_auto_schema(
+        operation_summary="Post direct message to user",
+        operation_description="Authenticate Required.",
+        responses={'200': "OK"})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def post(self, request, *args, **kwargs):
+        request_data = self.serializer_class(data=request.data)
+        request_data.is_valid(raise_exception=True)
+
+        try:
+            User = get_user_model()
+            target_user = User.objects.get(id=request.data["target_user_id"])
+        except User.DoesNotExist:
+            raise ValidationError(_("User does not exist"))
+
+        serializer = DirectMessageSerializer(
+            data={
+                "send_user_id": request.user.id,
+                "target_user_id": request.data["target_user_id"],
                 "message": request.data["message"],
                 "created_at": now(),
                 "updated_at": now(),
