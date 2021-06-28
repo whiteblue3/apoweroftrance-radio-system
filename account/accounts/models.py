@@ -268,6 +268,9 @@ class Profile(TimestampedModel):
     facebook = models.URLField(blank=True, null=True, validators=[URLValidator(schemes=['http', 'https'])])
     soundcloud = models.URLField(blank=True, null=True, validators=[URLValidator(schemes=['http', 'https'])])
 
+    is_ban = models.BooleanField(default=False, null=False, blank=False)
+    ban_reason = models.TextField(null=True, blank=True)
+
     objects = models.Manager.from_queryset(queryset_class=ModelQuerySet)()
 
     class Meta:

@@ -109,6 +109,9 @@ class ProfileSerializer(serializers.ModelSerializer):
         help_text="사운드 클라우드", allow_blank=True, required=False, validators=[URLValidator(schemes=['http', 'https'])]
     )
 
+    is_ban = serializers.BooleanField(default=False, allow_null=False)
+    ban_reason = serializers.CharField(allow_null=True, allow_blank=True)
+
     created_at = serializers.DateTimeField(source='user.created_at', read_only=True)
 
     class Meta:
@@ -119,6 +122,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             'nickname', 'mobile_number', 'follow_count', 'following_count',
             'bio', 'image',
             'homepage', 'youtube', 'twitter', 'facebook', 'soundcloud',
+            'is_ban', 'ban_reason',
             'created_at',
         )
 
