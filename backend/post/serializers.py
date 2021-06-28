@@ -5,7 +5,7 @@ from accounts.serializers import UserSerializer
 from radio.serializers import TrackSerializer
 from .models import (
     CLAIM_CATEGORY, CLAIM_STATUS, CLAIM_STAFF_ACTION, NOTIFICATION_CATEGORY,
-    CLAIM_STATUS_OPENED, CLAIM_STAFF_ACTION_NOACTION,
+    CLAIM_STATUS_OPENED, CLAIM_STATUS_CLOSED, CLAIM_STAFF_ACTION_NOACTION,
     Claim, ClaimReply, Comment, DirectMessage, Notification
 )
 
@@ -62,6 +62,24 @@ class PostClaimSerializer(serializers.ModelSerializer):
             'category', 'user_id', 'track_id',
             'issue', 'reason',
         )
+
+
+class UpdateClaimStatusSerializer(serializers.Serializer):
+    claim_id = serializers.IntegerField(write_only=True, allow_null=False)
+
+    status = serializers.ChoiceField(choices=[CLAIM_STATUS_OPENED, CLAIM_STATUS_CLOSED], allow_null=False, allow_blank=False)
+
+    class Meta:
+        model = Claim
+        fields = (
+            'claim_id', 'status',
+        )
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
 
 
 class ClaimReplySerializer(serializers.ModelSerializer):

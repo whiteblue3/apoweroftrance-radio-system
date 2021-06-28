@@ -23,11 +23,13 @@ from django_utils.api import method_permission_classes
 from radio.models import Track
 from .models import (
     Claim, ClaimReply, Comment, DirectMessage, Notification, NotificationUser,
-    CLAIM_CATEGORY_SPAMUSER, CLAIM_CATEGORY_COPYRIGHT, CLAIM_STATUS_OPENED, CLAIM_STAFF_ACTION_NOACTION,
-    CLAIM_CATEGORY_LIST, CLAIM_STATUS_LIST, CLAIM_STAFF_ACTION_LIST, NOTIFICATION_CATEGORY_LIST
+    CLAIM_CATEGORY_SPAMUSER, CLAIM_CATEGORY_COPYRIGHT,
+    CLAIM_STATUS_OPENED, CLAIM_STATUS_ACCEPT, CLAIM_STATUS_CLOSED,
+    CLAIM_STAFF_ACTION_NOACTION, CLAIM_STAFF_ACTION_LIST,
+    CLAIM_CATEGORY_LIST, CLAIM_STATUS_LIST, NOTIFICATION_CATEGORY_LIST
 )
 from .serializers import (
-    ClaimSerializer, PostClaimSerializer,
+    ClaimSerializer, PostClaimSerializer, UpdateClaimStatusSerializer,
     ClaimReplySerializer, PostClaimReplySerializer,
     CommentSerializer, PostCommentSerializer,
     DirectMessageSerializer, PostDirectMessageSerializer,
@@ -136,6 +138,14 @@ class ClaimListAPI(RetrieveAPIView):
             enum=CLAIM_STAFF_ACTION_LIST,
         ),
         openapi.Parameter(
+            name="show_all",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_BOOLEAN,
+            required=False,
+            description="Show All",
+            default=False,
+        ),
+        openapi.Parameter(
             name="page",
             in_=openapi.IN_QUERY,
             type=openapi.TYPE_INTEGER,
@@ -203,6 +213,14 @@ class ClaimListAPI(RetrieveAPIView):
             staff_action = None
 
         try:
+            if request.GET["show_all"] == "true":
+                show_all = True
+            else:
+                show_all = False
+        except MultiValueDictKeyError:
+            show_all = False
+
+        try:
             page = int(request.GET["page"])
         except MultiValueDictKeyError:
             page = 0
@@ -234,7 +252,10 @@ class ClaimListAPI(RetrieveAPIView):
         filter_user_permission = Q(issuer_id=user.id)
 
         if user.is_staff is True:
-            queryset = Claim.objects.filter(filter_staff_permission | filter_user_permission)
+            if show_all is True:
+                queryset = Claim.objects.all()
+            else:
+                queryset = Claim.objects.filter(filter_staff_permission | filter_user_permission)
         else:
             queryset = Claim.objects.filter(filter_user_permission)
 
@@ -295,22 +316,93 @@ class ClaimRetrieveAPI(RetrieveAPIView):
         except Claim.DoesNotExist:
             raise ValidationError(_('Claim does not exist'))
 
-        if user.is_staff is True:
-            if claim.issuer.id == user.id:
-                pass
-            else:
-                if claim.accepter_id is None:
-                    pass
-                else:
-                    if claim.accepter.id != user.id:
-                        raise ValidationError(_('Invalid access'))
-        else:
+        if user.is_staff is False:
             if claim.issuer.id != user.id:
                 raise ValidationError(_('Invalid access'))
 
         serializer = self.serializer_class(claim)
 
         return api.response_json(serializer.data, status.HTTP_200_OK)
+
+
+class UpdateClaimStatusAPI(api.UpdatePUTAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = UpdateClaimStatusSerializer
+
+    @swagger_auto_schema(
+        operation_summary="Update claim status",
+        operation_description="Authenticate Required.",
+        responses={'202': "OK"})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def put(self, request, *args, **kwargs):
+        user = request.user
+
+        try:
+            claim_id = request.data["claim_id"]
+        except KeyError:
+            claim_id = None
+
+        try:
+            claim = Claim.objects.get(id=claim_id)
+        except Claim.DoesNotExist:
+            raise ValidationError(_("Claim does not exist"))
+
+        try:
+            claim_status = request.data["status"]
+        except MultiValueDictKeyError:
+            raise ValidationError(_("status is required"))
+
+        if claim_status not in [CLAIM_STATUS_OPENED, CLAIM_STATUS_CLOSED]:
+            raise ValidationError(_("Invalid status"))
+
+        if user.is_staff is False:
+            if claim.issuer.id != user.id:
+                raise ValidationError(_('Invalid access'))
+
+        data = {
+            "status": claim_status
+        }
+
+        serializer = ClaimSerializer(claim, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return api.response_json(serializer.data, status.HTTP_202_ACCEPTED)
+
+
+class AcceptClaimAPI(api.UpdatePUTAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = None
+
+    @swagger_auto_schema(
+        operation_summary="Accept claim",
+        operation_description="Authenticate Required.",
+        responses={'202': "OK"})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def put(self, request, claim_id, *args, **kwargs):
+        user = request.user
+
+        try:
+            claim = Claim.objects.get(id=claim_id)
+        except Claim.DoesNotExist:
+            raise ValidationError(_("Claim does not exist"))
+
+        if user.is_staff is False:
+            raise ValidationError(_('Invalid access'))
+
+        data = {
+            "accepter_id": user.id
+        }
+
+        serializer = ClaimSerializer(claim, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return api.response_json(serializer.data, status.HTTP_202_ACCEPTED)
 
 
 class ClaimReplyListAPI(RetrieveAPIView):
@@ -403,16 +495,7 @@ class ClaimReplyListAPI(RetrieveAPIView):
         except Claim.DoesNotExist:
             raise ValidationError(_('Claim does not exist'))
 
-        if user.is_staff is True:
-            if claim.issuer.id == user.id:
-                pass
-            else:
-                if claim.accepter_id is None:
-                    pass
-                else:
-                    if claim.accepter.id != user.id:
-                        raise ValidationError(_('Invalid access'))
-        else:
+        if user.is_staff is False:
             if claim.issuer.id != user.id:
                 raise ValidationError(_('Invalid access'))
 
@@ -460,16 +543,7 @@ class PostClaimReplyAPI(CreateAPIView):
         except Claim.DoesNotExist:
             raise ValidationError(_("Claim does not exist"))
 
-        if user.is_staff is True:
-            if claim.issuer.id == user.id:
-                pass
-            else:
-                if claim.accepter_id is None:
-                    pass
-                else:
-                    if claim.accepter.id != user.id:
-                        raise ValidationError(_('Invalid access'))
-        else:
+        if user.is_staff is False:
             if claim.issuer.id != user.id:
                 raise ValidationError(_('Invalid access'))
 
