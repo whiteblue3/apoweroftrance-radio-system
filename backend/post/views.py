@@ -25,11 +25,11 @@ from .models import (
     Claim, ClaimReply, Comment, DirectMessage, Notification, NotificationUser,
     CLAIM_CATEGORY_SPAMUSER, CLAIM_CATEGORY_COPYRIGHT,
     CLAIM_STATUS_OPENED, CLAIM_STATUS_ACCEPT, CLAIM_STATUS_CLOSED,
-    CLAIM_STAFF_ACTION_NOACTION, CLAIM_STAFF_ACTION_LIST,
-    CLAIM_CATEGORY_LIST, CLAIM_STATUS_LIST, NOTIFICATION_CATEGORY_LIST
+    CLAIM_STAFF_ACTION_NOACTION, CLAIM_STAFF_ACTION_APPROVED, CLAIM_STAFF_ACTION_LIST,
+    CLAIM_CATEGORY_LIST, CLAIM_STATUS_LIST, CLAIM_STAFF_ACTION, NOTIFICATION_CATEGORY_LIST
 )
 from .serializers import (
-    ClaimSerializer, PostClaimSerializer, UpdateClaimStatusSerializer,
+    ClaimSerializer, PostClaimSerializer, UpdateClaimStatusSerializer, UpdateClaimStaffActionSerializer,
     ClaimReplySerializer, PostClaimReplySerializer,
     CommentSerializer, PostCommentSerializer,
     DirectMessageSerializer, PostDirectMessageSerializer,
@@ -344,6 +344,9 @@ class UpdateClaimStatusAPI(api.UpdatePUTAPIView):
         except KeyError:
             claim_id = None
 
+        if claim_id is None:
+            raise ValidationError(_("claim_id is required"))
+
         try:
             claim = Claim.objects.get(id=claim_id)
         except Claim.DoesNotExist:
@@ -379,7 +382,7 @@ class AcceptClaimAPI(api.UpdatePUTAPIView):
 
     @swagger_auto_schema(
         operation_summary="Accept claim",
-        operation_description="Authenticate Required.",
+        operation_description="Staff Only",
         responses={'202': "OK"})
     @transaction.atomic
     @method_decorator(ensure_csrf_cookie)
@@ -396,6 +399,73 @@ class AcceptClaimAPI(api.UpdatePUTAPIView):
 
         data = {
             "accepter_id": user.id
+        }
+
+        serializer = ClaimSerializer(claim, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return api.response_json(serializer.data, status.HTTP_202_ACCEPTED)
+
+
+class UpdateClaimStaffActionAPI(api.UpdatePUTAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = UpdateClaimStaffActionSerializer
+
+    @swagger_auto_schema(
+        operation_summary="Update claim staff action",
+        operation_description="Staff Only",
+        responses={'202': "OK"})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def put(self, request, *args, **kwargs):
+        user = request.user
+
+        try:
+            claim_id = request.data["claim_id"]
+        except KeyError:
+            claim_id = None
+
+        if claim_id is None:
+            raise ValidationError(_("claim_id is required"))
+
+        try:
+            claim = Claim.objects.get(id=claim_id)
+        except Claim.DoesNotExist:
+            raise ValidationError(_("Claim does not exist"))
+
+        try:
+            staff_action = request.data["staff_action"]
+        except MultiValueDictKeyError:
+            raise ValidationError(_("staff_action is required"))
+
+        if staff_action not in CLAIM_STAFF_ACTION_LIST:
+            raise ValidationError(_("Invalid status"))
+
+        if user.is_staff is False:
+            raise ValidationError(_('Invalid access'))
+
+        if claim.staff_action != CLAIM_STAFF_ACTION_APPROVED and staff_action == CLAIM_STAFF_ACTION_APPROVED:
+            if claim.category == CLAIM_CATEGORY_SPAMUSER and claim.user_id is not None:
+                claim.user.profile.is_ban = True
+                if claim.user.profile.ban_reason is None:
+                    claim.user.profile.ban_reason = "- [SpamUser] Claim #%s issue: %s" % (claim_id, claim.issue)
+                else:
+                    claim.user.profile.ban_reason = "%s\n- [SpamUser] Claim #%s issue: %s" % (claim.user.profile.ban_reason, claim_id, claim.issue)
+                claim.user.profile.save()
+            elif claim.category == CLAIM_CATEGORY_COPYRIGHT and claim.track_id is not None:
+                claim.track.is_ban = True
+                if claim.track.ban_reason is None:
+                    claim.track.ban_reason = "- [Copyright] Claim #%s issue: %s" % (claim_id, claim.issue)
+                else:
+                    claim.track.ban_reason = "%s\n- [Copyright] Claim #%s issue: %s" % (claim.track.ban_reason, claim_id, claim.issue)
+                claim.track.save()
+            else:
+                raise ValidationError(_('Invalid action'))
+
+        data = {
+            "staff_action": staff_action
         }
 
         serializer = ClaimSerializer(claim, data=data, partial=True)

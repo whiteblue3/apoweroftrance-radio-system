@@ -82,6 +82,24 @@ class UpdateClaimStatusSerializer(serializers.Serializer):
         pass
 
 
+class UpdateClaimStaffActionSerializer(serializers.Serializer):
+    claim_id = serializers.IntegerField(write_only=True, allow_null=False)
+
+    staff_action = serializers.ChoiceField(choices=CLAIM_STAFF_ACTION, allow_null=False, allow_blank=False)
+
+    class Meta:
+        model = Claim
+        fields = (
+            'claim_id', 'staff_action',
+        )
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
+
+
 class ClaimReplySerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
 
