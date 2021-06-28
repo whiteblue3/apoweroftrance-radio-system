@@ -595,6 +595,11 @@ class PostCommentAPI(CreateAPIView):
     @transaction.atomic
     @method_decorator(ensure_csrf_cookie)
     def post(self, request, *args, **kwargs):
+        user = request.user
+
+        if user.profile.is_ban is True:
+            raise ValidationError(_("You cannot post comment because you are banned"))
+
         request_data = self.serializer_class(data=request.data)
         request_data.is_valid(raise_exception=True)
 

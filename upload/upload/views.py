@@ -186,6 +186,12 @@ class UploadAPI(CreateAPIView):
         except MultiValueDictKeyError:
             is_service = True
 
+        if user.is_uploadable is False:
+            raise ValidationError(_("You have not permission upload"))
+
+        if user.profile.is_ban is True:
+            raise ValidationError(_("You cannot upload because you are banned"))
+
         duration = None
         filepath = None
         for f in request.FILES.getlist('audio'):
