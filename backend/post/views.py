@@ -452,14 +452,14 @@ class UpdateClaimStaffActionAPI(api.UpdatePUTAPIView):
                 if claim.user.profile.ban_reason is None:
                     claim.user.profile.ban_reason = "- [SpamUser] Claim #%s issue: %s" % (claim_id, claim.issue)
                 else:
-                    claim.user.profile.ban_reason = "%s\n- [SpamUser] Claim #%s issue: %s" % (claim.user.profile.ban_reason, claim_id, claim.issue)
+                    claim.user.profile.ban_reason = "- [SpamUser] Claim #%s issue: %s\n%s" % (claim_id, claim.issue, claim.user.profile.ban_reason)
                 claim.user.profile.save()
             elif claim.category == CLAIM_CATEGORY_COPYRIGHT and claim.track_id is not None:
                 claim.track.is_ban = True
                 if claim.track.ban_reason is None:
                     claim.track.ban_reason = "- [Copyright] Claim #%s issue: %s" % (claim_id, claim.issue)
                 else:
-                    claim.track.ban_reason = "%s\n- [Copyright] Claim #%s issue: %s" % (claim.track.ban_reason, claim_id, claim.issue)
+                    claim.track.ban_reason = "- [Copyright] Claim #%s issue: %s\n%s" % (claim_id, claim.issue, claim.track.ban_reason)
                 claim.track.save()
             else:
                 raise ValidationError(_('Invalid action'))
