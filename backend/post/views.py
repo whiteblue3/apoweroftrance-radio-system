@@ -22,14 +22,465 @@ from django_utils import api
 from django_utils.api import method_permission_classes
 from radio.models import Track
 from .models import (
-    Comment, DirectMessage, Notification, NotificationUser, NOTIFICATION_CATEGORY_LIST
+    Claim, ClaimReply, Comment, DirectMessage, Notification, NotificationUser,
+    CLAIM_CATEGORY_SPAMUSER, CLAIM_CATEGORY_COPYRIGHT, CLAIM_STATUS_OPENED, CLAIM_STAFF_ACTION_NOACTION,
+    CLAIM_CATEGORY_LIST, CLAIM_STATUS_LIST, CLAIM_STAFF_ACTION_LIST, NOTIFICATION_CATEGORY_LIST
 )
 from .serializers import (
+    ClaimSerializer, PostClaimSerializer,
+    ClaimReplySerializer, PostClaimReplySerializer,
     CommentSerializer, PostCommentSerializer,
     DirectMessageSerializer, PostDirectMessageSerializer,
     NotificationSerializer
 )
 from .util import now
+
+
+class PostClaimAPI(CreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = PostClaimSerializer
+
+    @swagger_auto_schema(
+        operation_summary="Post new claim",
+        operation_description="Authenticate Required.",
+        responses={'200': "OK"})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            category = request.data["category"]
+        except MultiValueDictKeyError:
+            raise ValidationError(_("Category is required"))
+
+        if category not in CLAIM_CATEGORY_LIST:
+            raise ValidationError(_("Invalid category"))
+
+        try:
+            user_id = request.data["user_id"]
+        except KeyError:
+            user_id = None
+
+        try:
+            track_id = request.data["track_id"]
+        except KeyError:
+            track_id = None
+
+        if category == CLAIM_CATEGORY_SPAMUSER and user_id is None:
+            raise ValidationError(_("Spamuser category required user_id"))
+
+        if category == CLAIM_CATEGORY_COPYRIGHT and track_id is None:
+            raise ValidationError(_("Copyright category required track_id"))
+
+        if user_id is not None:
+            try:
+                User = get_user_model()
+                target_user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                raise ValidationError(_("User does not exist"))
+
+        if track_id is not None:
+            try:
+                track = Track.objects.get(id=track_id)
+            except Track.DoesNotExist:
+                raise ValidationError(_("Track does not exist"))
+
+        data = request.data
+        data["issuer_id"] = user.id
+        data["status"] = CLAIM_STATUS_OPENED
+        data["staff_action"] = CLAIM_STAFF_ACTION_NOACTION
+
+        serializer = ClaimSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return api.response_json(serializer.data, status.HTTP_201_CREATED)
+
+
+class ClaimListAPI(RetrieveAPIView):
+    manual_parameters = [
+        openapi.Parameter(
+            name="keyword",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            required=False,
+            description="Keyword",
+            default=None,
+        ),
+        openapi.Parameter(
+            name="category",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            required=False,
+            description="Category",
+            default=None,
+            enum=CLAIM_CATEGORY_LIST,
+        ),
+        openapi.Parameter(
+            name="status",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            required=False,
+            description="Status",
+            default=None,
+            enum=CLAIM_STATUS_LIST,
+        ),
+        openapi.Parameter(
+            name="staff_action",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            required=False,
+            description="Staff Action",
+            default=None,
+            enum=CLAIM_STAFF_ACTION_LIST,
+        ),
+        openapi.Parameter(
+            name="page",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_INTEGER,
+            required=True,
+            description="Page number",
+            default=0
+        ),
+        openapi.Parameter(
+            name="limit",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_INTEGER,
+            required=True,
+            description="Limit per page",
+            default=30
+        ),
+        openapi.Parameter(
+            name="sort",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            required=True,
+            description="Sort field",
+            default="created_at"
+        ),
+        openapi.Parameter(
+            name="order",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            required=True,
+            description="Sort order",
+            default="desc"
+        ),
+    ]
+
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = ClaimSerializer
+
+    @swagger_auto_schema(
+        operation_summary="View claim list",
+        operation_description="Authenticate Required.",
+        manual_parameters=manual_parameters,
+        responses={'200': ClaimSerializer})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            keyword = request.GET["keyword"]
+        except MultiValueDictKeyError:
+            keyword = None
+
+        try:
+            category = request.GET["category"]
+        except MultiValueDictKeyError:
+            category = None
+
+        try:
+            claim_status = request.GET["status"]
+        except MultiValueDictKeyError:
+            claim_status = None
+
+        try:
+            staff_action = request.GET["staff_action"]
+        except MultiValueDictKeyError:
+            staff_action = None
+
+        try:
+            page = int(request.GET["page"])
+        except MultiValueDictKeyError:
+            page = 0
+
+        try:
+            limit = int(request.GET["limit"])
+        except MultiValueDictKeyError:
+            limit = 30
+
+        try:
+            sort = request.GET["sort"]
+        except MultiValueDictKeyError:
+            sort = "created_at"
+
+        try:
+            order = request.GET["order"]
+        except MultiValueDictKeyError:
+            order = "desc"
+
+        sort_field = sort
+        if order == "desc":
+            sort_field = "-%s" % sort
+
+        filter_category = Q(category=category)
+        filter_status = Q(status=claim_status)
+        filter_staff_action = Q(staff_action=staff_action)
+
+        filter_staff_permission = Q(accepter_id=user.id) | Q(accepter_id__isnull=True)
+        filter_user_permission = Q(issuer_id=user.id)
+
+        if user.is_staff is True:
+            queryset = Claim.objects.filter(filter_staff_permission | filter_user_permission)
+        else:
+            queryset = Claim.objects.filter(filter_user_permission)
+
+        if category is not None:
+            queryset = queryset.filter(filter_category)
+        if claim_status is not None:
+            queryset = queryset.filter(filter_status)
+        if staff_action is not None:
+            queryset = queryset.filter(filter_staff_action)
+
+        if keyword is not None:
+            filter_claim = Q(issue__icontains=keyword) | Q(reason__icontains=keyword)
+            filter_issuer = Q(issuer__profile__nickname__icontains=keyword)
+            filter_accepter = Q(accepter__profile__nickname__icontains=keyword)
+            filter_targetuser = Q(user__profile__nickname__icontains=keyword)
+            filter_targettrack = Q(track__artist__icontains=keyword) | Q(track__title__icontains=keyword) | Q(track__user__profile__nickname__icontains=keyword)
+
+            queryset = queryset.filter(
+                filter_claim | filter_issuer | filter_accepter | filter_targetuser | filter_targettrack
+            )
+
+        claims = queryset.order_by(sort_field).distinct()[(page * limit):((page * limit) + limit)]
+        search_list = []
+
+        for claim in claims:
+            serializer = self.serializer_class(claim)
+            search_list.append(serializer.data)
+
+        response = {
+            "list": search_list,
+            "total": queryset.count()
+        }
+
+        return api.response_json(response, status.HTTP_200_OK)
+
+
+class ClaimRetrieveAPI(RetrieveAPIView):
+    schema = openapi.Schema(
+        title="Get detail of claim",
+        type=openapi.TYPE_OBJECT,
+        manual_parameters=[
+            openapi.Parameter('claim_id', openapi.IN_PATH, type=openapi.TYPE_STRING, description="Claim ID")
+        ],
+    )
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = ClaimSerializer
+
+    @swagger_auto_schema(operation_summary=schema.title,
+                         manual_parameters=schema.manual_parameters,
+                         responses={'200': ClaimSerializer})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request, claim_id, *args, **kwargs):
+        user = request.user
+        try:
+            claim = Claim.objects.get(id=claim_id)
+        except Claim.DoesNotExist:
+            raise ValidationError(_('Claim does not exist'))
+
+        if user.is_staff is True:
+            if claim.issuer.id == user.id:
+                pass
+            else:
+                if claim.accepter_id is None:
+                    pass
+                else:
+                    if claim.accepter.id != user.id:
+                        raise ValidationError(_('Invalid access'))
+        else:
+            if claim.issuer.id != user.id:
+                raise ValidationError(_('Invalid access'))
+
+        serializer = self.serializer_class(claim)
+
+        return api.response_json(serializer.data, status.HTTP_200_OK)
+
+
+class ClaimReplyListAPI(RetrieveAPIView):
+    manual_parameters = [
+        openapi.Parameter(
+            name="claim_id",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_INTEGER,
+            required=True,
+            description="Claim ID",
+        ),
+        openapi.Parameter(
+            name="page",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_INTEGER,
+            required=True,
+            description="Page number",
+            default=0
+        ),
+        openapi.Parameter(
+            name="limit",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_INTEGER,
+            required=True,
+            description="Limit per page",
+            default=100
+        ),
+        openapi.Parameter(
+            name="sort",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            required=True,
+            description="Sort field",
+            default="created_at"
+        ),
+        openapi.Parameter(
+            name="order",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            required=True,
+            description="Sort order",
+            default="asc"
+        ),
+    ]
+
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = ClaimReplySerializer
+
+    @swagger_auto_schema(
+        operation_summary="View claim reply list",
+        operation_description="Authenticate Required.",
+        manual_parameters=manual_parameters,
+        responses={'200': ClaimReplySerializer})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            claim_id = int(request.GET["claim_id"])
+        except MultiValueDictKeyError:
+            raise ValidationError(_("claim_id is required"))
+
+        try:
+            page = int(request.GET["page"])
+        except MultiValueDictKeyError:
+            page = 0
+
+        try:
+            limit = int(request.GET["limit"])
+        except MultiValueDictKeyError:
+            limit = 100
+
+        try:
+            sort = request.GET["sort"]
+        except MultiValueDictKeyError:
+            sort = "created_at"
+
+        try:
+            order = request.GET["order"]
+        except MultiValueDictKeyError:
+            order = "asc"
+
+        sort_field = sort
+        if order == "desc":
+            sort_field = "-%s" % sort
+
+        try:
+            claim = Claim.objects.get(id=claim_id)
+        except Claim.DoesNotExist:
+            raise ValidationError(_('Claim does not exist'))
+
+        if user.is_staff is True:
+            if claim.issuer.id == user.id:
+                pass
+            else:
+                if claim.accepter_id is None:
+                    pass
+                else:
+                    if claim.accepter.id != user.id:
+                        raise ValidationError(_('Invalid access'))
+        else:
+            if claim.issuer.id != user.id:
+                raise ValidationError(_('Invalid access'))
+
+        queryset = ClaimReply.objects.filter(Q(claim_id=claim_id))
+        replies = queryset.order_by(sort_field).distinct()[(page * limit):((page * limit) + limit)]
+        search_list = []
+
+        for reply in replies:
+            serializer = self.serializer_class(reply)
+            search_list.append(serializer.data)
+
+        response = {
+            "list": search_list,
+            "total": queryset.count()
+        }
+
+        return api.response_json(response, status.HTTP_200_OK)
+
+
+class PostClaimReplyAPI(CreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = PostClaimReplySerializer
+
+    @swagger_auto_schema(
+        operation_summary="Post reply to claim",
+        operation_description="Authenticate Required.",
+        responses={'200': "OK"})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            claim_id = request.data["claim_id"]
+        except MultiValueDictKeyError:
+            raise ValidationError(_("claim_id is required"))
+
+        try:
+            message = request.data["message"]
+        except MultiValueDictKeyError:
+            raise ValidationError(_("message is required"))
+
+        try:
+            claim = Claim.objects.get(id=claim_id)
+        except Claim.DoesNotExist:
+            raise ValidationError(_("Claim does not exist"))
+
+        if user.is_staff is True:
+            if claim.issuer.id == user.id:
+                pass
+            else:
+                if claim.accepter_id is None:
+                    pass
+                else:
+                    if claim.accepter.id != user.id:
+                        raise ValidationError(_('Invalid access'))
+        else:
+            if claim.issuer.id != user.id:
+                raise ValidationError(_('Invalid access'))
+
+        data = request.data
+        data["user_id"] = user.id
+
+        serializer = ClaimReplySerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return api.response_json(serializer.data, status.HTTP_201_CREATED)
 
 
 class CommentListAPI(RetrieveAPIView):
@@ -71,7 +522,7 @@ class CommentListAPI(RetrieveAPIView):
             type=openapi.TYPE_STRING,
             required=True,
             description="Sort order",
-            default="desc"
+            default="asc"
         ),
     ]
 
@@ -110,7 +561,7 @@ class CommentListAPI(RetrieveAPIView):
         try:
             order = request.GET["order"]
         except MultiValueDictKeyError:
-            order = "desc"
+            order = "asc"
 
         sort_field = sort
         if order == "desc":

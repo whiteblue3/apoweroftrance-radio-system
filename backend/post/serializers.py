@@ -5,6 +5,7 @@ from accounts.serializers import UserSerializer
 from radio.serializers import TrackSerializer
 from .models import (
     CLAIM_CATEGORY, CLAIM_STATUS, CLAIM_STAFF_ACTION, NOTIFICATION_CATEGORY,
+    CLAIM_STATUS_OPENED, CLAIM_STAFF_ACTION_NOACTION,
     Claim, ClaimReply, Comment, DirectMessage, Notification
 )
 
@@ -16,15 +17,15 @@ class ClaimSerializer(serializers.ModelSerializer):
     issuer_id = serializers.IntegerField(write_only=True, allow_null=False)
 
     accepter = UserSerializer(read_only=True)
-    accepter_id = serializers.IntegerField(write_only=True, allow_null=True)
+    accepter_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
 
     category = serializers.ChoiceField(choices=CLAIM_CATEGORY, allow_null=False, allow_blank=False)
 
     user = UserSerializer(read_only=True)
-    user_id = serializers.IntegerField(write_only=True, allow_null=True)
+    user_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
 
     track = TrackSerializer(read_only=True)
-    track_id = serializers.IntegerField(write_only=True, allow_null=True)
+    track_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
 
     issue = serializers.CharField(allow_null=False, allow_blank=False, max_length=150)
     reason = serializers.CharField(allow_null=False, allow_blank=False, max_length=3000)
@@ -43,6 +44,23 @@ class ClaimSerializer(serializers.ModelSerializer):
             'category', 'user', 'user_id', 'track', 'track_id',
             'issue', 'reason', 'status', 'staff_action',
             'created_at', 'updated_at',
+        )
+
+
+class PostClaimSerializer(serializers.ModelSerializer):
+    category = serializers.ChoiceField(choices=CLAIM_CATEGORY, required=True, allow_null=False, allow_blank=False)
+
+    user_id = serializers.IntegerField(required=False, allow_null=True)
+    track_id = serializers.IntegerField(required=False, allow_null=True)
+
+    issue = serializers.CharField(required=True, allow_null=False, allow_blank=False, max_length=150)
+    reason = serializers.CharField(required=True, allow_null=False, allow_blank=False, max_length=3000)
+
+    class Meta:
+        model = Claim
+        fields = (
+            'category', 'user_id', 'track_id',
+            'issue', 'reason',
         )
 
 
@@ -67,6 +85,24 @@ class ClaimReplySerializer(serializers.ModelSerializer):
             'claim', 'claim_id', 'user', 'user_id', 'message',
             'created_at', 'updated_at',
         )
+
+
+class PostClaimReplySerializer(serializers.ModelSerializer):
+    claim_id = serializers.IntegerField(write_only=True, allow_null=False)
+
+    message = serializers.CharField(allow_null=False, allow_blank=False, max_length=3000)
+
+    class Meta:
+        model = ClaimReply
+        fields = (
+            'claim_id', 'message',
+        )
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
 
 
 class CommentSerializer(serializers.ModelSerializer):
