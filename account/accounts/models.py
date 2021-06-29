@@ -260,7 +260,7 @@ class Profile(TimestampedModel):
 
     # In addition to the `bio` field, each user may have a profile image or
     # avatar. This field is not required and it may be blank.
-    image = models.URLField(blank=True, null=True)
+    image = models.CharField(blank=True, null=True, max_length=255)
 
     homepage = models.URLField(blank=True, null=True, validators=[URLValidator(schemes=['http', 'https'])])
     youtube = models.URLField(blank=True, null=True, validators=[URLValidator(schemes=['http', 'https'])])

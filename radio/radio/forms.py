@@ -18,7 +18,7 @@ from .util import now, get_is_pending_remove
 class UpdateTrackForm(forms.ModelForm):
     audio = forms.FileField(required=False)
     format = forms.ChoiceField(choices=FORMAT, required=True)
-    cover_art = forms.FileField(required=False)
+    img = forms.FileField(required=False)
 
     artist = forms.CharField(required=True, max_length=70)
     title = forms.CharField(required=True, max_length=200)
@@ -38,13 +38,13 @@ class UpdateTrackForm(forms.ModelForm):
 
     class Meta:
         model = Track
-        fields = ['audio', 'format', 'cover_art', 'artist', 'title', 'description', 'bpm', 'scale',
+        fields = ['audio', 'format', 'img', 'artist', 'title', 'description', 'bpm', 'scale',
                   'queue_in', 'queue_out', 'mix_in', 'mix_out', 'ment_in', 'channel', 'is_service', 'is_ban', 'ban_reason']
 
     def save(self, commit=True):
         f = self.cleaned_data['audio']
         audio_format = self.cleaned_data['format']
-        image = self.cleaned_data['cover_art']
+        img = self.cleaned_data['img']
 
         if audio_format not in SUPPORT_FORMAT:
             raise ValidationError(_("Unsupported music file format"))
@@ -149,14 +149,15 @@ class UpdateTrackForm(forms.ModelForm):
             duration = str(timedelta(seconds=float(duration)))
 
         cover_art_path = self.instance.cover_art
-        if image is not None:
+
+        if img is not None:
             try:
                 storage_driver = settings.STORAGE_DRIVER
                 valid_mimetype = [
                     "image/png"
                 ]
                 if valid_mimetype is not None:
-                    cover_art_path = storage.upload_file_direct(image, 'cover_art', storage_driver, valid_mimetype)
+                    cover_art_path = storage.upload_file_direct(img, 'cover_art', storage_driver, valid_mimetype)
                 else:
                     raise ValidationError(_("Unsupported image file format"))
             except Exception as e:
@@ -187,19 +188,19 @@ class UpdateTrackForm(forms.ModelForm):
 class UploadTrackForm(UpdateTrackForm):
     audio = forms.FileField(required=True)
     format = forms.ChoiceField(choices=FORMAT, required=True)
-    cover_art = forms.FileField(required=False)
+    img = forms.FileField(required=False)
 
     class Meta:
         model = Track
         exclude = ['user']
-        fields = ['audio', 'format', 'cover_art', 'artist', 'title', 'description', 'bpm', 'scale',
+        fields = ['audio', 'format', 'img', 'artist', 'title', 'description', 'bpm', 'scale',
                   'queue_in', 'queue_out', 'mix_in', 'mix_out', 'ment_in', 'channel', 'is_service', 'is_ban', 'ban_reason']
 
     def save(self, commit=True):
 
         f = self.cleaned_data['audio']
         audio_format = self.cleaned_data['format']
-        image = self.cleaned_data['cover_art']
+        img = self.cleaned_data['img']
 
         if audio_format not in SUPPORT_FORMAT:
             raise ValidationError(_("Unsupported music file format"))
@@ -298,14 +299,15 @@ class UploadTrackForm(UpdateTrackForm):
             duration = audio.info.length
 
         cover_art_path = None
-        if image is not None:
+
+        if img is not None:
             try:
                 storage_driver = settings.STORAGE_DRIVER
                 valid_mimetype = [
                     "image/png"
                 ]
                 if valid_mimetype is not None:
-                    cover_art_path = storage.upload_file_direct(image, 'cover_art', storage_driver, valid_mimetype)
+                    cover_art_path = storage.upload_file_direct(img, 'cover_art', storage_driver, valid_mimetype)
                 else:
                     raise ValidationError(_("Unsupported image file format"))
             except Exception as e:
