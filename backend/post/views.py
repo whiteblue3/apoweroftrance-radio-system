@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import mixins, generics
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import RetrieveAPIView, CreateAPIView
+from rest_framework.generics import RetrieveAPIView, CreateAPIView, DestroyAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.serializers import Serializer
@@ -767,6 +767,33 @@ class PostCommentAPI(CreateAPIView):
         return api.response_json(serializer.data, status.HTTP_201_CREATED)
 
 
+class DeleteCommentAPI(DestroyAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = None
+
+    @swagger_auto_schema(
+        operation_summary="Delete comment on track",
+        operation_description="Authenticate Required.",
+        responses={'200': "OK"})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def delete(self, request, comment_id, *args, **kwargs):
+        user = request.user
+
+        try:
+            comment = Comment.objects.get(id=comment_id)
+        except Comment.DoesNotExist:
+            raise ValidationError(_("Comment does not exist"))
+
+        if user.id != comment.user.id:
+            raise ValidationError(_("Invalid access"))
+
+        comment.delete()
+
+        return api.response_json("OK", status.HTTP_202_ACCEPTED)
+
+
 class DirectMessageListAPI(RetrieveAPIView):
     manual_parameters = [
         openapi.Parameter(
@@ -905,6 +932,33 @@ class PostDirectMessageAPI(CreateAPIView):
         serializer.save()
 
         return api.response_json(serializer.data, status.HTTP_201_CREATED)
+
+
+class DeleteDirectMessageAPI(DestroyAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = None
+
+    @swagger_auto_schema(
+        operation_summary="Delete direct message",
+        operation_description="Authenticate Required.",
+        responses={'200': "OK"})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def delete(self, request, message_id, *args, **kwargs):
+        user = request.user
+
+        try:
+            message = DirectMessage.objects.get(id=message_id)
+        except DirectMessage.DoesNotExist:
+            raise ValidationError(_("DirectMessage does not exist"))
+
+        if user.id != message.send_user.id:
+            raise ValidationError(_("Invalid access"))
+
+        message.delete()
+
+        return api.response_json("OK", status.HTTP_202_ACCEPTED)
 
 
 class NotificationListAPI(RetrieveAPIView):

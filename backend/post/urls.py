@@ -14,7 +14,9 @@ urlpatterns = [
     path('claim/reply/post', views.PostClaimReplyAPI.as_view()),
     path('comment/list', views.CommentListAPI.as_view()),
     path('comment/post', views.PostCommentAPI.as_view()),
+    path('comment/delete/<int:comment_id>', views.DeleteCommentAPI.as_view()),
     path('directmessage/list', views.DirectMessageListAPI.as_view()),
     path('directmessage/post', views.PostDirectMessageAPI.as_view()),
+    path('directmessage/delete/<int:message_id>', views.DeleteDirectMessageAPI.as_view()),
     path('notification/list', views.NotificationListAPI.as_view()),
 ]
