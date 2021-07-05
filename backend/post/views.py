@@ -29,7 +29,8 @@ from .models import (
     CLAIM_CATEGORY_LIST, CLAIM_STATUS_LIST, CLAIM_STAFF_ACTION, NOTIFICATION_CATEGORY_LIST
 )
 from .serializers import (
-    ClaimSerializer, PostClaimSerializer, UpdateClaimStatusSerializer, UpdateClaimStaffActionSerializer,
+    ClaimSerializer, PostClaimSerializer, UpdateClaimSerializer,
+    UpdateClaimStatusSerializer, UpdateClaimStaffActionSerializer,
     ClaimReplySerializer, PostClaimReplySerializer,
     CommentSerializer, PostCommentSerializer,
     DirectMessageSerializer, PostDirectMessageSerializer,
@@ -94,6 +95,82 @@ class PostClaimAPI(CreateAPIView):
         data["staff_action"] = CLAIM_STAFF_ACTION_NOACTION
 
         serializer = ClaimSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return api.response_json(serializer.data, status.HTTP_201_CREATED)
+
+
+class UpdateClaimAPI(api.UpdatePUTAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = UpdateClaimSerializer
+
+    @swagger_auto_schema(
+        operation_summary="Update claim",
+        operation_description="Authenticate Required.",
+        responses={'200': "OK"})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def put(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            claim_id = request.data["claim_id"]
+        except MultiValueDictKeyError:
+            raise ValidationError(_("claim_id is required"))
+
+        try:
+            category = request.data["category"]
+        except MultiValueDictKeyError:
+            raise ValidationError(_("Category is required"))
+
+        if category not in CLAIM_CATEGORY_LIST:
+            raise ValidationError(_("Invalid category"))
+
+        try:
+            user_id = request.data["user_id"]
+        except KeyError:
+            user_id = None
+
+        try:
+            track_id = request.data["track_id"]
+        except KeyError:
+            track_id = None
+
+        if category == CLAIM_CATEGORY_SPAMUSER and user_id is None:
+            raise ValidationError(_("Spamuser category required user_id"))
+
+        if category == CLAIM_CATEGORY_COPYRIGHT and track_id is None:
+            raise ValidationError(_("Copyright category required track_id"))
+
+        try:
+            claim = Claim.objects.get(id=claim_id)
+        except Claim.DoesNotExist:
+            raise ValidationError(_("Claim does not exist"))
+
+        if user_id is not None:
+            try:
+                User = get_user_model()
+                target_user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                raise ValidationError(_("User does not exist"))
+
+        if track_id is not None:
+            try:
+                track = Track.objects.get(id=track_id)
+            except Track.DoesNotExist:
+                raise ValidationError(_("Track does not exist"))
+
+        if user.is_staff is False:
+            if claim.issuer.id != user.id:
+                raise ValidationError(_('Invalid access'))
+
+        data = request.data
+        data["issuer_id"] = user.id
+        data["status"] = claim.status
+        data["staff_action"] = claim.staff_action
+
+        serializer = ClaimSerializer(claim, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 

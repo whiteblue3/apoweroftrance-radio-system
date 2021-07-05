@@ -64,6 +64,25 @@ class PostClaimSerializer(serializers.ModelSerializer):
         )
 
 
+class UpdateClaimSerializer(serializers.ModelSerializer):
+    claim_id = serializers.IntegerField(write_only=True, allow_null=False)
+
+    category = serializers.ChoiceField(choices=CLAIM_CATEGORY, required=True, allow_null=False, allow_blank=False)
+
+    user_id = serializers.IntegerField(required=False, allow_null=True)
+    track_id = serializers.IntegerField(required=False, allow_null=True)
+
+    issue = serializers.CharField(required=True, allow_null=False, allow_blank=False, max_length=150)
+    reason = serializers.CharField(required=True, allow_null=False, allow_blank=False, max_length=3000)
+
+    class Meta:
+        model = Claim
+        fields = (
+            'claim_id', 'category', 'user_id', 'track_id',
+            'issue', 'reason',
+        )
+
+
 class UpdateClaimStatusSerializer(serializers.Serializer):
     claim_id = serializers.IntegerField(write_only=True, allow_null=False)
 
