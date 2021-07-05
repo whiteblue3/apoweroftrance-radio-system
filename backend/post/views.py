@@ -166,7 +166,7 @@ class UpdateClaimAPI(api.UpdatePUTAPIView):
                 raise ValidationError(_('Invalid access'))
 
         data = request.data
-        data["issuer_id"] = user.id
+        data["issuer_id"] = claim.issuer_id
         data["status"] = claim.status
         data["staff_action"] = claim.staff_action
 
