@@ -1360,10 +1360,12 @@ class PostTrackTagAPI(CreateAPIView):
         except MultiValueDictKeyError:
             raise ValidationError(_("tag required"))
 
+        queryset = TrackTag.objects.filter(track_id=track_id)
+        for tag in queryset:
+            tag.delete()
+
         for tag in tags:
-            queryset = TrackTag.objects.filter(track_id=track_id, tag=tag)
-            if queryset.count() < 1:
-                record = TrackTag(track_id=track_id, tag=tag)
-                record.save()
+            record = TrackTag(track_id=track_id, tag=tag)
+            record.save()
 
         return api.response_json("OK", status.HTTP_201_CREATED)
