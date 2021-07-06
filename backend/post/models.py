@@ -234,3 +234,27 @@ class NotificationUser(models.Model):
 
     class Meta:
         db_table = 'post_notification_targets'
+
+
+class TrackTag(models.Model):
+    id = models.BigAutoField(primary_key=True, null=False, blank=False)
+
+    track = models.ForeignKey(
+        'radio.Track', on_delete=models.CASCADE, null=False, blank=False
+    )
+
+    tag = models.CharField(blank=False, null=False, max_length=150)
+
+    # A timestamp representing when this object was created.
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    # A timestamp reprensenting when this object was last updated.
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager.from_queryset(queryset_class=ModelQuerySet)()
+
+    class Meta:
+        app_label = 'post'
+        external_db_fields = ['track']
+        verbose_name = 'TrackTag'
+        verbose_name_plural = 'TrackTag'

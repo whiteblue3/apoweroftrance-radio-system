@@ -20,4 +20,7 @@ urlpatterns = [
     path('directmessage/post', views.PostDirectMessageAPI.as_view()),
     path('directmessage/delete/<int:message_id>', views.DeleteDirectMessageAPI.as_view()),
     path('notification/list', views.NotificationListAPI.as_view()),
+    path('notification/post', views.PostNotificationAPI.as_view()),
+    path('track/tag/list', views.TrackTagListAPI.as_view()),
+    path('track/tag/post', views.PostTrackTagAPI.as_view()),
 ]

@@ -260,3 +260,49 @@ class NotificationSerializer(serializers.ModelSerializer):
             'title', 'message',
             'created_at', 'updated_at',
         )
+
+
+class PostNotificationSerializer(serializers.Serializer):
+    category = serializers.ChoiceField(choices=NOTIFICATION_CATEGORY, allow_null=False, allow_blank=False)
+
+    targets = serializers.ListField(
+        child=serializers.IntegerField(allow_null=True),
+        allow_null=True
+    )
+
+    title = serializers.CharField(allow_null=False, allow_blank=False, max_length=150)
+    message = serializers.CharField(allow_null=False, allow_blank=False, max_length=3000)
+
+    class Meta:
+        model = Notification
+        fields = (
+            'category', 'targets',
+            'title', 'message',
+        )
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
+
+
+class PostTrackTagSerializer(serializers.Serializer):
+    track_id = serializers.IntegerField(write_only=True, required=True, allow_null=False)
+
+    tag = serializers.ListField(
+        child=serializers.CharField(allow_null=False, allow_blank=False, max_length=150),
+        allow_null=False
+    )
+
+    class Meta:
+        model = Notification
+        fields = (
+            'track_id', 'tag',
+        )
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass

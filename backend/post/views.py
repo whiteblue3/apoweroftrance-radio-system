@@ -22,11 +22,11 @@ from django_utils import api
 from django_utils.api import method_permission_classes
 from radio.models import Track
 from .models import (
-    Claim, ClaimReply, Comment, DirectMessage, Notification, NotificationUser,
+    Claim, ClaimReply, Comment, DirectMessage, Notification, NotificationUser, TrackTag,
     CLAIM_CATEGORY_SPAMUSER, CLAIM_CATEGORY_COPYRIGHT,
     CLAIM_STATUS_OPENED, CLAIM_STATUS_ACCEPT, CLAIM_STATUS_CLOSED,
     CLAIM_STAFF_ACTION_NOACTION, CLAIM_STAFF_ACTION_APPROVED, CLAIM_STAFF_ACTION_LIST,
-    NOTIFICATION_CATEGORY_CLAIMUSER, NOTIFICATION_CATEGORY_CLAIMCOPYRIGHT,
+    NOTIFICATION_CATEGORY_CLAIMUSER, NOTIFICATION_CATEGORY_CLAIMCOPYRIGHT, NOTIFICATION_CATEGORY_NOTIFICATION,
     CLAIM_CATEGORY_LIST, CLAIM_STATUS_LIST, CLAIM_STAFF_ACTION, NOTIFICATION_CATEGORY_LIST
 )
 from .serializers import (
@@ -35,7 +35,8 @@ from .serializers import (
     ClaimReplySerializer, PostClaimReplySerializer,
     CommentSerializer, PostCommentSerializer,
     DirectMessageSerializer, PostDirectMessageSerializer,
-    NotificationSerializer
+    NotificationSerializer, PostNotificationSerializer,
+    PostTrackTagSerializer,
 )
 from .util import now, send_email_claim_spamuser, send_email_claim_copyright, send_notification
 
@@ -77,10 +78,12 @@ class PostClaimAPI(CreateAPIView):
         if category == CLAIM_CATEGORY_COPYRIGHT and track_id is None:
             raise ValidationError(_("Copyright category required track_id"))
 
+        staff_user = []
         if user_id is not None:
             try:
                 User = get_user_model()
                 target_user = User.objects.get(id=user_id)
+                staff_user = User.objects.filter(is_staff=True)
             except User.DoesNotExist:
                 raise ValidationError(_("User does not exist"))
 
@@ -98,6 +101,19 @@ class PostClaimAPI(CreateAPIView):
         serializer = ClaimSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        notification_category = NOTIFICATION_CATEGORY_NOTIFICATION
+        notification_title = "New claim has opened"
+        notification_message = "Below claim has opened\n- [%s] %s\n" % (category, data["issue"])
+
+        target = []
+        if staff_user is not None:
+            for staff in staff_user:
+                target.append(staff.id)
+            try:
+                send_notification(notification_category, notification_title, notification_message, target)
+            except Exception as e:
+                raise e
 
         return api.response_json(serializer.data, status.HTTP_201_CREATED)
 
@@ -450,6 +466,20 @@ class UpdateClaimStatusAPI(api.UpdatePUTAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
+        try:
+            targets = [claim.issuer.id]
+            if claim.accepter is not None:
+                targets.append(claim.accepter.id)
+
+            send_notification(
+                NOTIFICATION_CATEGORY_NOTIFICATION,
+                "Claim Updated",
+                "Your claim #%s status is updated to %s" % (claim_id, claim_status),
+                targets
+            )
+        except Exception as e:
+            raise e
+
         return api.response_json(serializer.data, status.HTTP_202_ACCEPTED)
 
 
@@ -482,6 +512,16 @@ class AcceptClaimAPI(api.UpdatePUTAPIView):
         serializer = ClaimSerializer(claim, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        try:
+            send_notification(
+                NOTIFICATION_CATEGORY_NOTIFICATION,
+                "Claim Updated",
+                "Your claim #%s is accepted" % (claim_id),
+                [claim.issuer.id]
+            )
+        except Exception as e:
+            raise e
 
         return api.response_json(serializer.data, status.HTTP_202_ACCEPTED)
 
@@ -572,6 +612,20 @@ class UpdateClaimStaffActionAPI(api.UpdatePUTAPIView):
         serializer = ClaimSerializer(claim, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        try:
+            targets = [claim.issuer.id]
+            if claim.accepter is not None:
+                targets.append(claim.accepter.id)
+
+            send_notification(
+                NOTIFICATION_CATEGORY_NOTIFICATION,
+                "Claim result changed",
+                "Claim #%s result changed to %s" % (claim.id, staff_action),
+                targets
+            )
+        except Exception as e:
+            raise e
 
         return api.response_json(serializer.data, status.HTTP_202_ACCEPTED)
 
@@ -725,6 +779,20 @@ class PostClaimReplyAPI(CreateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
+        try:
+            targets = [claim.issuer.id]
+            if claim.accepter is not None:
+                targets.append(claim.accepter.id)
+
+            send_notification(
+                NOTIFICATION_CATEGORY_NOTIFICATION,
+                "Claim Updated",
+                "Your claim #%s has new conversation" % (claim_id),
+                targets
+            )
+        except Exception as e:
+            raise e
+
         return api.response_json(serializer.data, status.HTTP_201_CREATED)
 
 
@@ -864,6 +932,15 @@ class PostCommentAPI(CreateAPIView):
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        notification_category = NOTIFICATION_CATEGORY_NOTIFICATION
+        notification_title = "%s posted comment to your track" % user.profile.nickname
+        notification_message = "%s - %s" % (track.artist, track.title)
+
+        try:
+            send_notification(notification_category, notification_title, notification_message, [user.id])
+        except Exception as e:
+            raise e
 
         return api.response_json(serializer.data, status.HTTP_201_CREATED)
 
@@ -1176,3 +1253,117 @@ class NotificationListAPI(RetrieveAPIView):
         }
 
         return api.response_json(response, status.HTTP_200_OK)
+
+
+class PostNotificationAPI(CreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = PostNotificationSerializer
+
+    @swagger_auto_schema(
+        operation_summary="Send notification",
+        operation_description="Public API",
+        responses={'200': "OK"})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        notification_category = serializer.data["category"]
+        notification_title = serializer.data["title"]
+        notification_message = serializer.data["message"]
+
+        target_user = []
+        for user_id in serializer.data["targets"]:
+            target_user.append(user_id)
+
+        if len(target_user) < 1:
+            target_user = None
+
+        try:
+            send_notification(notification_category, notification_title, notification_message, target_user)
+        except Exception as e:
+            raise e
+
+        return api.response_json("OK", status.HTTP_201_CREATED)
+
+
+class TrackTagListAPI(RetrieveAPIView):
+    manual_parameters = [
+        openapi.Parameter(
+            name="track_id",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_INTEGER,
+            required=True,
+            description="Track ID",
+        )
+    ]
+
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = NotificationSerializer
+
+    @swagger_auto_schema(
+        operation_summary="View notification list for track",
+        operation_description="Authenticate Required.",
+        manual_parameters=manual_parameters,
+        responses={'200': NotificationSerializer})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            track_id = request.GET["track_id"]
+        except MultiValueDictKeyError:
+            track_id = None
+
+        try:
+            track = Track.objects.get(id=track_id)
+        except Track.DoesNotExist:
+            raise ValidationError(_("Music does not exist"))
+
+        tags = TrackTag.objects.filter(Q(track_id=track_id))
+        search_list = []
+
+        for tag in tags:
+            search_list.append(tag.tag)
+
+        return api.response_json(search_list, status.HTTP_200_OK)
+
+
+class PostTrackTagAPI(CreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = PostTrackTagSerializer
+
+    @swagger_auto_schema(
+        operation_summary="Post tag to track",
+        operation_description="Authenticate Required.",
+        responses={'200': "OK"})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        try:
+            track_id = data["track_id"]
+        except MultiValueDictKeyError:
+            raise ValidationError(_("track_id required"))
+
+        try:
+            track = Track.objects.get(id=track_id)
+        except Track.DoesNotExist:
+            raise ValidationError(_("Music does not exist"))
+
+        try:
+            tags = data["tag"]
+        except MultiValueDictKeyError:
+            raise ValidationError(_("tag required"))
+
+        for tag in tags:
+            queryset = TrackTag.objects.filter(track_id=track_id, tag=tag)
+            if queryset.count() < 1:
+                record = TrackTag(track_id=track_id, tag=tag)
+                record.save()
+
+        return api.response_json("OK", status.HTTP_201_CREATED)
