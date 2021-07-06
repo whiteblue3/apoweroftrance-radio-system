@@ -1300,13 +1300,13 @@ class TrackTagListAPI(RetrieveAPIView):
         )
     ]
 
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (AllowAny,)
     renderer_classes = (JSONRenderer,)
     serializer_class = NotificationSerializer
 
     @swagger_auto_schema(
-        operation_summary="View notification list for track",
-        operation_description="Authenticate Required.",
+        operation_summary="View tag list for track",
+        operation_description="Public API",
         manual_parameters=manual_parameters,
         responses={'200': NotificationSerializer})
     @transaction.atomic
