@@ -26,6 +26,7 @@ from .models import (
     CLAIM_CATEGORY_SPAMUSER, CLAIM_CATEGORY_COPYRIGHT,
     CLAIM_STATUS_OPENED, CLAIM_STATUS_ACCEPT, CLAIM_STATUS_CLOSED,
     CLAIM_STAFF_ACTION_NOACTION, CLAIM_STAFF_ACTION_APPROVED, CLAIM_STAFF_ACTION_LIST,
+    NOTIFICATION_CATEGORY_CLAIMUSER, NOTIFICATION_CATEGORY_CLAIMCOPYRIGHT,
     CLAIM_CATEGORY_LIST, CLAIM_STATUS_LIST, CLAIM_STAFF_ACTION, NOTIFICATION_CATEGORY_LIST
 )
 from .serializers import (
@@ -36,7 +37,7 @@ from .serializers import (
     DirectMessageSerializer, PostDirectMessageSerializer,
     NotificationSerializer
 )
-from .util import now
+from .util import now, send_email_claim_spamuser, send_email_claim_copyright, send_notification
 
 
 class PostClaimAPI(CreateAPIView):
@@ -531,6 +532,17 @@ class UpdateClaimStaffActionAPI(api.UpdatePUTAPIView):
                 else:
                     claim.user.profile.ban_reason = "- [SpamUser] Claim #%s issue: %s\n%s" % (claim_id, claim.issue, claim.user.profile.ban_reason)
                 claim.user.profile.save()
+
+                notification_category = NOTIFICATION_CATEGORY_CLAIMUSER
+                notification_title = "Claim Received"
+                notification_message = "You have claim for your spam. Please check your email box."
+                send_email_claim_spamuser(claim.user.email)
+
+                try:
+                    send_notification(notification_category, notification_title, notification_message, [claim.user.id])
+                except Exception as e:
+                    raise e
+
             elif claim.category == CLAIM_CATEGORY_COPYRIGHT and claim.track_id is not None:
                 claim.track.is_ban = True
                 if claim.track.ban_reason is None:
@@ -538,6 +550,18 @@ class UpdateClaimStaffActionAPI(api.UpdatePUTAPIView):
                 else:
                     claim.track.ban_reason = "- [Copyright] Claim #%s issue: %s\n%s" % (claim_id, claim.issue, claim.track.ban_reason)
                 claim.track.save()
+
+                track_title = "%s - %s" % (claim.track.artist, claim.track.title)
+                notification_category = NOTIFICATION_CATEGORY_CLAIMCOPYRIGHT
+                notification_title = "Copyright Strike"
+                notification_message = "You have copyright strike. \n- %s\nPlease check your email box." % track_title
+                send_email_claim_copyright(claim.track.user.email, claim.track)
+
+                try:
+                    send_notification(notification_category, notification_title, notification_message, [claim.track.user.id])
+                except Exception as e:
+                    raise e
+
             else:
                 raise ValidationError(_('Invalid action'))
 

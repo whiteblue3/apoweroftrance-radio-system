@@ -29,6 +29,7 @@ admin.site.index_title = "Post Admin"
 
 
 schema_url_patterns = [
+    path('v1/system/', include('system.urls', namespace='system')),
     path('v1/post/', include('post.urls', namespace='post')),
 ]
 

@@ -12,7 +12,7 @@ fi
 
 if [[ ${MIGRATE} == *"1"* ]]; then
   python3 manage.py collectstatic --noinput -i yes
-  python3 manage.py makemigrations post
+  python3 manage.py makemigrations post system
   python3 manage.py migrate
 fi
 

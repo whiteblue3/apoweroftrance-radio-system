@@ -10,7 +10,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/whiteblue3/apoweroftrance-post",
     packages=setuptools.find_packages(exclude=(
-        "app/", "post/migrations", "manage.py"
+        "app/", "post/migrations", "system/migrations", "manage.py"
     )),
     include_package_data=True,
     classifiers=[

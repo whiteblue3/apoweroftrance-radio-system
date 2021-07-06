@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'accounts',
     'radio',
     'post',
+    'system',
 
     'rest_framework',
     'drf_yasg',
@@ -398,6 +399,20 @@ AES_KEY = secret['AES_KEY']
 AES_SECRET = secret['AES_SECRET']
 
 
+###############
+# Email Setup #
+###############
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 465
+EMAIL_HOST_USER = secret['EMAIL_HOST_USER']
+EMAIL_HOST_PASSWORD = secret['EMAIL_HOST_PASSWORD']
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+SERVER_EMAIL = EMAIL_HOST_USER
+
+
 #################
 # Account Setup #
 #################
@@ -407,6 +422,7 @@ ACCOUNT_API_PATH = "/v1/user"
 WWW_LANDING_URL = "127.0.0.1:8081"
 ACCOUNT_LANDING_PATH = "/v1/user"
 from accounts.email_setup import *
+from post.email_setup import *
 
 
 ##############

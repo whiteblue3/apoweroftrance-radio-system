@@ -1,7 +1,7 @@
 #!/bin/bash
 
 APP_NAME=backend
-VERSION=0.0.12
+VERSION=0.0.13
 
 docker build -t ${APP_NAME}:${VERSION} .
 docker tag ${APP_NAME}:${VERSION} gcr.io/apoweroftrance/${APP_NAME}:${VERSION}
