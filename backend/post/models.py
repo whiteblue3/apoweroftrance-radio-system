@@ -2,6 +2,7 @@ from django.db import models
 from django_utils import multi_db_ralation
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth import get_user_model
+from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.fields import ArrayField
 
 
@@ -209,6 +210,7 @@ class Notification(models.Model):
 
     title = models.CharField(blank=False, null=False, max_length=150)
     message = models.TextField(blank=False, null=False)
+    data = JSONField(blank=True, null=True, default="")
 
     # A timestamp representing when this object was created.
     created_at = models.DateTimeField(auto_now_add=True, editable=False)

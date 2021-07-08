@@ -934,11 +934,15 @@ class PostCommentAPI(CreateAPIView):
         serializer.save()
 
         notification_category = NOTIFICATION_CATEGORY_NOTIFICATION
-        notification_title = "%s posted comment to your track" % user.profile.nickname
-        notification_message = "%s - %s" % (track.artist, track.title)
+        notification_title = '%s posted comment to "%s - %s"' % (user.profile.nickname, track.artist, track.title)
+        notification_message = '%s' % (request.data["message"])
+        notification_data = {
+            "user_id": int(request.user.id),
+            "track_id": int(request.data["track_id"])
+        }
 
         try:
-            send_notification(notification_category, notification_title, notification_message, [user.id])
+            send_notification(notification_category, notification_title, notification_message, [user.id], json.dumps(notification_data))
         except Exception as e:
             raise e
 
@@ -1273,6 +1277,7 @@ class PostNotificationAPI(CreateAPIView):
         notification_category = serializer.data["category"]
         notification_title = serializer.data["title"]
         notification_message = serializer.data["message"]
+        notification_data = serializer.data["data"]
 
         target_user = []
         for user_id in serializer.data["targets"]:
@@ -1282,7 +1287,7 @@ class PostNotificationAPI(CreateAPIView):
             target_user = None
 
         try:
-            send_notification(notification_category, notification_title, notification_message, target_user)
+            send_notification(notification_category, notification_title, notification_message, target_user, notification_data)
         except Exception as e:
             raise e
 

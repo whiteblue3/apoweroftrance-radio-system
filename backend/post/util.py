@@ -76,7 +76,7 @@ def now():
     return str(datetime.now(tz=tzlocal()).isoformat())
 
 
-def send_notification(category, title, message, target=None):
+def send_notification(category, title, message, target=None, extra=None):
     if category not in NOTIFICATION_CATEGORY_LIST:
         raise ValidationError(_("Invalid category"))
 
@@ -85,6 +85,9 @@ def send_notification(category, title, message, target=None):
         title=title,
         message=message
     )
+
+    if extra is not None:
+        record.data = extra
 
     record.save()
 

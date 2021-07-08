@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from dateutil.tz import tzlocal
 from rest_framework import serializers
@@ -8,6 +9,22 @@ from .models import (
     CLAIM_STATUS_OPENED, CLAIM_STATUS_CLOSED, CLAIM_STAFF_ACTION_NOACTION,
     Claim, ClaimReply, Comment, DirectMessage, Notification
 )
+
+
+class JSONSerializerField(serializers.Field):
+    """Serializer for JSONField -- required to make field writable"""
+
+    def to_representation(self, value):
+        json_data = {}
+        try:
+            json_data = json.loads(value)
+        except ValueError as e:
+            raise e
+        finally:
+            return json_data
+
+    def to_internal_value(self, data):
+        return json.dumps(data)
 
 
 class ClaimSerializer(serializers.ModelSerializer):
@@ -248,6 +265,7 @@ class NotificationSerializer(serializers.ModelSerializer):
 
     title = serializers.CharField(allow_null=False, allow_blank=False, max_length=150)
     message = serializers.CharField(allow_null=False, allow_blank=False, max_length=3000)
+    data = JSONSerializerField(allow_null=True)
 
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
@@ -257,7 +275,7 @@ class NotificationSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'category',
-            'title', 'message',
+            'title', 'message', 'data',
             'created_at', 'updated_at',
         )
 
@@ -272,12 +290,13 @@ class PostNotificationSerializer(serializers.Serializer):
 
     title = serializers.CharField(allow_null=False, allow_blank=False, max_length=150)
     message = serializers.CharField(allow_null=False, allow_blank=False, max_length=3000)
+    data = JSONSerializerField(allow_null=True)
 
     class Meta:
         model = Notification
         fields = (
             'category', 'targets',
-            'title', 'message',
+            'title', 'message', 'data'
         )
 
     def create(self, validated_data):
