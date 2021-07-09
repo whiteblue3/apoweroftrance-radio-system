@@ -24,6 +24,7 @@ from radio.models import (
     SUPPORT_FORMAT, FORMAT_MP3, FORMAT_M4A, SERVICE_CHANNEL, Track
 )
 from radio.serializers import TrackSerializer
+from radio.util import get_is_pending_remove, get_redis_data
 from .util import now
 
 
@@ -355,6 +356,39 @@ class ReplaceAPI(CreateAPIView):
 
         if user.id != track.user.id:
             raise ValidationError(_("Invalid access"))
+
+        if is_exist_audio is True:
+            is_pending_remove = get_is_pending_remove(track_id)
+            if is_pending_remove:
+                raise ValidationError(_("Track is already reserved pending remove"))
+
+            channel_list = track.channel
+            for channel in channel_list:
+                now_play_track_id = None
+                playlist = None
+                try:
+                    redis_data = get_redis_data(channel)
+                    now_playing = redis_data["now_playing"]
+                    playlist = redis_data["playlist"]
+                except IndexError:
+                    pass
+                else:
+                    try:
+                        if now_playing:
+                            now_play_track_id = now_playing["id"]
+                    except KeyError:
+                        pass
+
+                # Except now playing
+                if now_play_track_id is not None:
+                    if int(track_id) == int(now_play_track_id):
+                        raise ValidationError(_("You cannot replace track because the track is now playing"))
+
+                # Except last play
+                if playlist is not None:
+                    for queue_track in playlist:
+                        if int(queue_track["id"]) == int(track_id):
+                            raise ValidationError(_("You cannot replace track because the track is queued playlist"))
 
         prev_filepath = track.location
         prev_cover_art_path = track.cover_art
