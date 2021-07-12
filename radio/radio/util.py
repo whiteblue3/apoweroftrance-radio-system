@@ -17,7 +17,7 @@ redis_db = os.environ.get('REDIS_DB')
 redis_server = redis.StrictRedis(host=redis_host, port=redis_port, db=redis_db)
 
 
-NUM_SAMPLES = 21
+NUM_SAMPLES = 5
 
 
 def now():
