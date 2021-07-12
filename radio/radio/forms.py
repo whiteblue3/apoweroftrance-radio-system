@@ -3,7 +3,6 @@ from django import forms
 from django.conf import settings
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.translation import ugettext_lazy as _
-from rest_framework.exceptions import ValidationError
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
 from mutagen.easyid3 import EasyID3
@@ -12,7 +11,7 @@ from .models import (
     FORMAT, CHANNEL, SUPPORT_FORMAT, FORMAT_MP3, FORMAT_M4A,
     SERVICE_CHANNEL, Track
 )
-from .util import now, get_is_pending_remove
+from .util import now, get_is_pending_remove, get_redis_data
 
 
 class UpdateTrackForm(forms.ModelForm):
@@ -41,16 +40,65 @@ class UpdateTrackForm(forms.ModelForm):
         fields = ['audio', 'format', 'img', 'artist', 'title', 'description', 'bpm', 'scale',
                   'queue_in', 'queue_out', 'mix_in', 'mix_out', 'ment_in', 'channel', 'is_service', 'is_ban', 'ban_reason']
 
+    def clean_format(self):
+        audio_format = self.cleaned_data['format']
+        if audio_format not in SUPPORT_FORMAT:
+            raise forms.ValidationError(_("Unsupported music file format"))
+        return audio_format
+
+    def clean_channel(self):
+        channel = self.cleaned_data['channel']
+        for service_channel in channel:
+            if service_channel not in SERVICE_CHANNEL:
+                raise forms.ValidationError(_("Invalid service channel"))
+        return channel
+
+    def clean_audio(self):
+        f = self.cleaned_data['audio']
+
+        if get_is_pending_remove(self.instance.id):
+            raise forms.ValidationError(_("You cannot change information because the track reserved pending remove"))
+
+        try:
+            track = Track.objects.get(id=self.instance.id)
+        except Track.DoesNotExist:
+            raise forms.ValidationError(_("Music does not exist"))
+
+        if f is not None:
+            channel_list = track.channel
+            for service_channel in channel_list:
+                now_play_track_id = None
+                playlist = None
+                try:
+                    redis_data = get_redis_data(service_channel)
+                    now_playing = redis_data["now_playing"]
+                    playlist = redis_data["playlist"]
+                except IndexError:
+                    pass
+                else:
+                    try:
+                        if now_playing:
+                            now_play_track_id = now_playing["id"]
+                    except KeyError:
+                        pass
+
+                # Except now playing
+                if now_play_track_id is not None:
+                    if int(self.instance.id) == int(now_play_track_id):
+                        raise forms.ValidationError(_("You cannot replace track because the track is now playing"))
+
+                # Except queued
+                if playlist is not None:
+                    for queue_track in playlist:
+                        if int(queue_track["id"]) == int(self.instance.id):
+                            raise forms.ValidationError(_("You cannot replace track because the track is queued playlist"))
+
+        return f
+
     def save(self, commit=True):
         f = self.cleaned_data['audio']
         audio_format = self.cleaned_data['format']
         img = self.cleaned_data['img']
-
-        if audio_format not in SUPPORT_FORMAT:
-            raise ValidationError(_("Unsupported music file format"))
-
-        if get_is_pending_remove(self.instance.id):
-            raise ValidationError(_("You cannot change information because the track reserved pending remove"))
 
         artist = self.cleaned_data['artist']
         title = self.cleaned_data['title']
@@ -97,10 +145,6 @@ class UpdateTrackForm(forms.ModelForm):
 
         channel = self.cleaned_data['channel']
 
-        for service_channel in channel:
-            if service_channel not in SERVICE_CHANNEL:
-                raise ValidationError(_("Invalid service channel"))
-
         try:
             is_service = self.cleaned_data['is_service']
         except MultiValueDictKeyError:
@@ -134,7 +178,7 @@ class UpdateTrackForm(forms.ModelForm):
                 if valid_mimetype is not None:
                     filepath = storage.upload_file_direct(f, 'music', storage_driver, valid_mimetype)
                 else:
-                    raise ValidationError(_("Unsupported music file format"))
+                    raise forms.ValidationError(_("Unsupported music file format"))
             except Exception as e:
                 raise e
 
@@ -159,7 +203,7 @@ class UpdateTrackForm(forms.ModelForm):
                 if valid_mimetype is not None:
                     cover_art_path = storage.upload_file_direct(img, 'cover_art', storage_driver, valid_mimetype)
                 else:
-                    raise ValidationError(_("Unsupported image file format"))
+                    raise forms.ValidationError(_("Unsupported image file format"))
             except Exception as e:
                 raise e
 
@@ -196,14 +240,23 @@ class UploadTrackForm(UpdateTrackForm):
         fields = ['audio', 'format', 'img', 'artist', 'title', 'description', 'bpm', 'scale',
                   'queue_in', 'queue_out', 'mix_in', 'mix_out', 'ment_in', 'channel', 'is_service', 'is_ban', 'ban_reason']
 
-    def save(self, commit=True):
+    def clean_format(self):
+        audio_format = self.cleaned_data['format']
+        if audio_format not in SUPPORT_FORMAT:
+            raise forms.ValidationError(_("Unsupported music file format"))
+        return audio_format
 
+    def clean_channel(self):
+        channel = self.cleaned_data['channel']
+        for service_channel in channel:
+            if service_channel not in SERVICE_CHANNEL:
+                raise forms.ValidationError(_("Invalid service channel"))
+        return channel
+
+    def save(self, commit=True):
         f = self.cleaned_data['audio']
         audio_format = self.cleaned_data['format']
         img = self.cleaned_data['img']
-
-        if audio_format not in SUPPORT_FORMAT:
-            raise ValidationError(_("Unsupported music file format"))
 
         artist = self.cleaned_data['artist']
         title = self.cleaned_data['title']
@@ -250,10 +303,6 @@ class UploadTrackForm(UpdateTrackForm):
 
         channel = self.cleaned_data['channel']
 
-        for service_channel in channel:
-            if service_channel not in SERVICE_CHANNEL:
-                raise ValidationError(_("Invalid service channel"))
-
         try:
             is_service = self.cleaned_data['is_service']
         except MultiValueDictKeyError:
@@ -286,7 +335,7 @@ class UploadTrackForm(UpdateTrackForm):
             if valid_mimetype is not None:
                 filepath = storage.upload_file_direct(f, 'music', storage_driver, valid_mimetype)
             else:
-                raise ValidationError(_("Unsupported music file format"))
+                raise forms.ValidationError(_("Unsupported music file format"))
         except Exception as e:
             raise e
 
@@ -309,7 +358,7 @@ class UploadTrackForm(UpdateTrackForm):
                 if valid_mimetype is not None:
                     cover_art_path = storage.upload_file_direct(img, 'cover_art', storage_driver, valid_mimetype)
                 else:
-                    raise ValidationError(_("Unsupported image file format"))
+                    raise forms.ValidationError(_("Unsupported image file format"))
             except Exception as e:
                 raise e
 

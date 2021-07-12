@@ -384,7 +384,7 @@ class ReplaceAPI(CreateAPIView):
                     if int(track_id) == int(now_play_track_id):
                         raise ValidationError(_("You cannot replace track because the track is now playing"))
 
-                # Except last play
+                # Except queued
                 if playlist is not None:
                     for queue_track in playlist:
                         if int(queue_track["id"]) == int(track_id):
