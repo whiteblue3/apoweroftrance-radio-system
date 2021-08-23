@@ -8,16 +8,16 @@ from django_utils import multi_db_ralation
 
 CHANNEL = [
     ("yui", _("YUI")),
-    # ("alice", _("ALICE")),
-    # ("miku", _("MIKU")),
-    # ("lena", _("LENA")),
+    ("alice", _("ALICE")),
+    ("miku", _("MIKU")),
+    ("lena", _("LENA")),
 ]
 DEFAULT_CHANNEL = "yui"
 SERVICE_CHANNEL = [
     "yui",
-    # "alice",
-    # "miku",
-    # "lena",
+    "alice",
+    "miku",
+    "lena",
 ]
 
 FORMAT_MP3 = "mp3"
@@ -65,6 +65,7 @@ class Track(models.Model):
 
     duration = models.TimeField(null=False, blank=False)
     play_count = models.PositiveIntegerField(default=0, null=False, editable=False)
+    listen_count = models.PositiveIntegerField(default=0, null=False, editable=False)
 
     channel = ArrayField(
         models.CharField(choices=CHANNEL, default=DEFAULT_CHANNEL, null=False, blank=False, max_length=15),
@@ -135,3 +136,27 @@ class PlayHistory(models.Model):
         app_label = 'radio'
         verbose_name = 'Play History'
         verbose_name_plural = 'Play History'
+
+
+class ListenHistory(models.Model):
+    id = models.BigAutoField(primary_key=True, null=False, blank=False)
+
+    user = models.ForeignKey(
+        get_user_model(), on_delete=models.CASCADE, null=False, blank=False, editable=False
+    )
+
+    track = models.ForeignKey(
+        'radio.Track', on_delete=models.SET_NULL, null=True, editable=False
+    )
+
+    title = models.CharField(null=True, blank=True, max_length=200, editable=False)
+    artist = models.CharField(null=True, blank=True, max_length=70, editable=False)
+
+    played_at = models.DateTimeField(null=False, blank=False, editable=False)
+
+    objects = models.Manager.from_queryset(queryset_class=ModelQuerySet)()
+
+    class Meta:
+        app_label = 'radio'
+        verbose_name = 'Listen History'
+        verbose_name_plural = 'Listen History'

@@ -15,7 +15,7 @@ from admin_numeric_filter.admin import RangeNumericFilter
 from django.contrib.admin.filters import (
     SimpleListFilter, BooleanFieldListFilter
 )
-from .models import Track, PlayHistory, CHANNEL
+from .models import Track, PlayHistory, ListenHistory, CHANNEL
 from .forms import UploadTrackForm, UpdateTrackForm
 from .util import (
     get_redis_data, set_redis_data, delete_track, get_random_track,
@@ -92,7 +92,7 @@ class TrackAdmin(admin.ModelAdmin):
         'channel', 'artist', 'title',
         'bpm', 'scale',
         'duration_field',
-        'play_count',
+        'play_count', 'listen_count',
         'queue_in_playlist', 'pending_delete_cancel',
         'uploaded_at', 'updated_at', 'last_played_at',
     )
@@ -428,6 +428,41 @@ class PlayHistoryAdmin(admin.ModelAdmin):
         ChannelFilter,
     )
     ordering = ('-played_at',)
+
+    def track_link(self, obj):
+        track = Track.objects.get(id=obj.track.id)
+        url = reverse("admin:radio_track_change", args=[track.id])
+        link = '<a href="%s">%s</a>' % (url, obj.track.id)
+        return mark_safe(link)
+    track_link.short_description = 'Track'
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(ListenHistory)
+class ListenHistoryAdmin(admin.ModelAdmin):
+    list_display = (
+        'id', 'user_link', 'track_link', 'artist', 'title', 'played_at',
+    )
+    search_fields = (
+        'artist', 'title', 'user__email', 'user__username'
+    )
+    ordering = ('-played_at',)
+
+    def user_link(self, obj):
+        User = get_user_model()
+        user = User.objects.get(email=obj.user.email)
+        url = reverse("admin:accounts_user_change", args=[user.id])
+        link = '<a href="%s">%s</a>' % (url, obj.user.email)
+        return mark_safe(link)
+    user_link.short_description = 'User'
 
     def track_link(self, obj):
         track = Track.objects.get(id=obj.track.id)

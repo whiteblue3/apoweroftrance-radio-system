@@ -4,7 +4,7 @@ from rest_framework import serializers
 from accounts.serializers import UserSerializer
 from .models import (
     FORMAT, DEFAULT_FORMAT, CHANNEL, DEFAULT_CHANNEL,
-    Track, Like, PlayHistory
+    Track, Like, PlayHistory, ListenHistory,
 )
 
 
@@ -33,6 +33,7 @@ class TrackSerializer(serializers.ModelSerializer):
 
     duration = serializers.TimeField(allow_null=False)
     play_count = serializers.IntegerField(default=0, allow_null=False)
+    listen_count = serializers.IntegerField(default=0, allow_null=False)
 
     channel = serializers.ListField(
         child=serializers.ChoiceField(choices=CHANNEL, default=DEFAULT_CHANNEL, allow_null=False, allow_blank=False),
@@ -55,7 +56,7 @@ class TrackSerializer(serializers.ModelSerializer):
             'title', 'artist', 'description',
             'bpm', 'scale',
             'queue_in', 'queue_out', 'mix_in', 'mix_out', 'ment_in',
-            'duration', 'play_count', 'like_count',
+            'duration', 'play_count', 'like_count', 'listen_count',
             'channel', 'uploaded_at', 'updated_at', 'last_played_at',
             'is_ban', 'ban_reason',
         )
@@ -160,6 +161,41 @@ class PlayHistorySerializer(serializers.ModelSerializer):
         fields = (
             'id', 'track', 'track_id', 'artist', 'title', 'channel', 'played_at',
         )
+
+
+class ListenHistorySerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    user_id = serializers.IntegerField(write_only=True)
+
+    track = TrackSerializer(read_only=True)
+    track_id = serializers.IntegerField(write_only=True)
+
+    title = serializers.CharField(allow_null=True, allow_blank=True, max_length=200)
+    artist = serializers.CharField(allow_null=True, allow_blank=True, max_length=70)
+
+    played_at = serializers.DateTimeField(allow_null=False)
+
+    class Meta:
+        model = ListenHistory
+        fields = (
+            'id', 'user', 'user_id', 'track', 'track_id', 'artist', 'title', 'played_at',
+        )
+
+
+class ListenAPISerializer(serializers.Serializer):
+    track_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = ListenHistory
+        fields = (
+            'track_id',
+        )
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
 
 
 class PlayQueueSerializer(serializers.Serializer):

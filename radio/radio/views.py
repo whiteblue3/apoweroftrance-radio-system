@@ -23,11 +23,11 @@ from django_utils.api import method_permission_classes
 from accounts.models import Profile
 from accounts.serializers import ProfileSerializer
 from .models import (
-    SERVICE_CHANNEL, CHANNEL, Track, Like
+    SERVICE_CHANNEL, CHANNEL, Track, Like, ListenHistory,
 )
 from .serializers import (
     TrackSerializer, TrackAPISerializer, LikeSerializer, LikeAPISerializer,
-    PlayQueueSerializer, PlayHistorySerializer
+    PlayQueueSerializer, PlayHistorySerializer, ListenHistorySerializer, ListenAPISerializer,
 )
 from .util import (
     now, get_random_track, get_redis_data, set_redis_data, delete_track, remove_pending_track, get_is_pending_remove,
@@ -623,6 +623,141 @@ class LikeUserListAPI(RetrieveAPIView):
         }
 
         return api.response_json(response, status.HTTP_200_OK)
+
+
+class ListenHistoryAPI(RetrieveAPIView):
+    manual_parameters = [
+        openapi.Parameter(
+            name="page",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_INTEGER,
+            required=True,
+            description="Page number",
+            default=0
+        ),
+        openapi.Parameter(
+            name="limit",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_INTEGER,
+            required=True,
+            description="Limit per page",
+            default=30
+        ),
+        openapi.Parameter(
+            name="sort",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            required=True,
+            description="Sort field",
+            default="played_at"
+        ),
+        openapi.Parameter(
+            name="order",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            required=True,
+            description="Sort order",
+            default="desc"
+        ),
+    ]
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = ListenHistorySerializer
+
+    @swagger_auto_schema(
+        operation_summary="Get list of listen history",
+        operation_description="Authentication required",
+        manual_parameters=manual_parameters,
+        responses={'200': ListenHistorySerializer})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request, *args, **kwargs):
+        user = request.user
+
+        try:
+            page = int(request.GET["page"])
+        except MultiValueDictKeyError:
+            page = 0
+
+        try:
+            limit = int(request.GET["limit"])
+        except MultiValueDictKeyError:
+            limit = 30
+
+        try:
+            sort = request.GET["sort"]
+        except MultiValueDictKeyError:
+            sort = "played_at"
+
+        try:
+            order = request.GET["order"]
+        except MultiValueDictKeyError:
+            order = "desc"
+
+        queryset = ListenHistory.objects.filter(Q(user_id=user))
+
+        sort_field = sort
+        if order == "desc":
+            sort_field = "-%s" % sort
+
+        history_list = queryset.order_by(sort_field).distinct()[(page * limit):((page * limit) + limit)]
+        search_list = []
+
+        for history in history_list:
+            serializer = ListenHistorySerializer(history)
+            search_list.append(serializer.data)
+
+        response = {
+            "list": search_list,
+            "total": queryset.count()
+        }
+
+        return api.response_json(response, status.HTTP_200_OK)
+
+
+class PostListenAPI(CreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = ListenAPISerializer
+
+    @swagger_auto_schema(
+        operation_summary="Post listen of track signal",
+        operation_description="Authentication required",
+        responses={'200': ListenHistorySerializer})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def post(self, request, *args, **kwargs):
+        user = request.user
+
+        try:
+            track_id = request.data["track_id"]
+        except MultiValueDictKeyError:
+            raise ValidationError(_("track_id does not exist"))
+
+        try:
+            track = Track.objects.get(id=track_id)
+        except Track.DoesNotExist:
+            raise ValidationError(_("Music does not exist"))
+
+        is_pending_remove = get_is_pending_remove(track_id)
+        if is_pending_remove:
+            raise ValidationError(_("You cannot edit music information because the track is reserved pending remove"))
+
+        serializer = ListenHistorySerializer(data={
+            "user_id": user.id,
+            "track_id": track_id,
+            "title": track.title,
+            "artist": track.artist,
+            "played_at": now(),
+        })
+        serializer.is_valid(raise_exception=True)
+
+        track.listen_count = track.listen_count + 1
+
+        serializer.save()
+        track.save()
+
+        return api.response_json(serializer.data, status.HTTP_201_CREATED)
 
 
 class PlayQueueAPI(RetrieveAPIView):
