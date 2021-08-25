@@ -127,12 +127,14 @@ Queue format used for queue-in music or replace playlist.
     {
         "id": "0",
         "location": "/Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/volumes/demo.mp3",
+        "cover_art": "http://127.0.0.1:3000/cover_art/demo.png",
         "artist": "MOBIUS",
         "title": "Trance Template"
     }
 
 - id: track id
 - location: music file path in system
+- cover_art: cover art file url. using for frontend
 - artist: artist name
 - title: name of track
 
@@ -162,6 +164,7 @@ You can post data like this
         "data": {
             "id": "0",
             "location": "/Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/volumes/demo.mp3",
+            "cover_art": "http://127.0.0.1:3000/cover_art/demo.png",
             "artist": "MOBIUS",
             "title": "Trance Template"
         }
@@ -183,6 +186,7 @@ queue command is add music to playlist
         "data": {
             "id": "0",
             "location": "/Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/volumes/demo.mp3",
+            "cover_art": "http://127.0.0.1:3000/cover_art/demo.png",
             "artist": "MOBIUS",
             "title": "Trance Template"
         }
@@ -216,6 +220,7 @@ setlist command is replace the playlist
             {
                 "id": "0",
                 "location": "/Users/whiteblue3/Documents/dev/projects/apoweroftrance.com/source/radio/volumes/demo.mp3",
+                "cover_art": "http://127.0.0.1:3000/cover_art/demo.png",
                 "artist": "MOBIUS",
                 "title": "Trance Template"
             }
