@@ -20,7 +20,9 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django_utils import api
 from django_utils.api import method_permission_classes
+from accounts.models import Follow
 from radio.models import Track
+from radio.serializers import TrackSerializer
 from .models import (
     Claim, ClaimReply, Comment, DirectMessage, Notification, NotificationUser, TrackTag,
     CLAIM_CATEGORY_SPAMUSER, CLAIM_CATEGORY_COPYRIGHT,
@@ -1374,3 +1376,97 @@ class PostTrackTagAPI(CreateAPIView):
             record.save()
 
         return api.response_json("OK", status.HTTP_201_CREATED)
+
+
+class StreamFeedAPI(RetrieveAPIView):
+    manual_parameters = [
+        openapi.Parameter(
+            name="page",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_INTEGER,
+            required=True,
+            description="Page number",
+            default=0
+        ),
+        openapi.Parameter(
+            name="limit",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_INTEGER,
+            required=True,
+            description="Limit per page",
+            default=100
+        ),
+        openapi.Parameter(
+            name="sort",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            required=True,
+            description="Sort field",
+            default="uploaded_at"
+        ),
+        openapi.Parameter(
+            name="order",
+            in_=openapi.IN_QUERY,
+            type=openapi.TYPE_STRING,
+            required=True,
+            description="Sort order",
+            default="desc"
+        ),
+    ]
+
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+    serializer_class = TrackSerializer
+
+    @swagger_auto_schema(
+        operation_summary="Get stream feed",
+        operation_description="Get stream feed",
+        manual_parameters=manual_parameters,
+        responses={'200': TrackSerializer})
+    @transaction.atomic
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request, *args, **kwargs):
+        user = request.user
+
+        try:
+            page = int(request.GET["page"])
+        except MultiValueDictKeyError:
+            page = 0
+
+        try:
+            limit = int(request.GET["limit"])
+        except MultiValueDictKeyError:
+            limit = 100
+
+        try:
+            sort = request.GET["sort"]
+        except MultiValueDictKeyError:
+            sort = "uploaded_at"
+
+        try:
+            order = request.GET["order"]
+        except MultiValueDictKeyError:
+            order = "desc"
+
+        sort_field = sort
+        if order == "desc":
+            sort_field = "-%s" % sort
+
+        follow_queryset = Follow.objects.filter(user_id=user.id, follow=True)
+        follow_list = [follow.follow_user_id for follow in follow_queryset]
+
+        queryset = Track.objects.filter(Q(user_id__in=follow_list) & Q(is_service=True) & Q(is_ban=False))
+
+        tracks = queryset.order_by(sort_field).distinct()[(page * limit):((page * limit) + limit)]
+        search_list = []
+
+        for track in tracks:
+            serializer = TrackSerializer(track)
+            search_list.append(serializer.data)
+
+        response = {
+            "list": search_list,
+            "total": queryset.count()
+        }
+
+        return api.response_json(response, status.HTTP_200_OK)

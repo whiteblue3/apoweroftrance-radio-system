@@ -23,4 +23,5 @@ urlpatterns = [
     path('notification/post', views.PostNotificationAPI.as_view()),
     path('track/tag/list', views.TrackTagListAPI.as_view()),
     path('track/tag/post', views.PostTrackTagAPI.as_view()),
+    path('stream/feed', views.StreamFeedAPI.as_view()),
 ]
