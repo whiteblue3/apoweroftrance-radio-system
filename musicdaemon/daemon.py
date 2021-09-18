@@ -371,6 +371,8 @@ class MusicDaemon:
             self.logger.log('on_startup', data)
             if not self.redis_server:
                 self.process_setlist(data)
+        except json.decoder.JSONDecodeError as e:
+            self.logger.log('on_startup_error', str(e).encode('utf-8'))
         except Exception as e:
             self.logger.log('on_startup_error', str(e).encode('utf-8'))
 
@@ -379,6 +381,8 @@ class MusicDaemon:
         try:
             data = json.loads(resp)
             self.logger.log('on_play', data)
+        except json.decoder.JSONDecodeError as e:
+            self.logger.log('on_play_error', str(e).encode('utf-8'))
         except Exception as e:
             self.logger.log('on_play_error', str(e).encode('utf-8'))
 
@@ -389,6 +393,8 @@ class MusicDaemon:
             self.logger.log('on_stop', data)
             if not self.redis_server:
                 self.process_queue(data)
+        except json.decoder.JSONDecodeError as e:
+            self.logger.log('on_stop_error', str(e).encode('utf-8'))
         except Exception as e:
             self.logger.log('on_stop_error', str(e).encode('utf-8'))
 
@@ -403,11 +409,13 @@ class MusicDaemon:
                     request_url = url
                 async with session.get(request_url, headers=headers) as resp:
                     response = await resp.read()
-                    callback(response.decode('utf-8'))
+                    if response is not None:
+                        callback(response.decode('utf-8'))
             elif method == "POST":
                 async with session.post(url, data=data, headers=headers) as resp:
                     response = await resp.read()
-                    callback(response.decode('utf-8'))
+                    if response is not None:
+                        callback(response.decode('utf-8'))
 
     def process_queue(self, data):
         is_no_error = self.validate_queue(data)
