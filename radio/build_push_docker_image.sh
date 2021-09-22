@@ -1,7 +1,7 @@
 #!/bin/bash
 
 APP_NAME=radio
-VERSION=0.0.81
+VERSION=0.0.82
 
 docker build -t ${APP_NAME}:${VERSION} .
 docker tag ${APP_NAME}:${VERSION} gcr.io/apoweroftrance/${APP_NAME}:${VERSION}

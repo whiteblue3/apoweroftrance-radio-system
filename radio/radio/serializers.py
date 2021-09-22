@@ -170,6 +170,9 @@ class ListenHistorySerializer(serializers.ModelSerializer):
     track = TrackSerializer(read_only=True)
     track_id = serializers.IntegerField(write_only=True)
 
+    provider = UserSerializer(read_only=True)
+    provider_id = serializers.IntegerField(write_only=True)
+
     title = serializers.CharField(allow_null=True, allow_blank=True, max_length=200)
     artist = serializers.CharField(allow_null=True, allow_blank=True, max_length=70)
 
@@ -178,7 +181,7 @@ class ListenHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ListenHistory
         fields = (
-            'id', 'user', 'user_id', 'track', 'track_id', 'artist', 'title', 'played_at',
+            'id', 'user', 'user_id', 'track', 'track_id', 'provider', 'provider_id', 'artist', 'title', 'played_at',
         )
 
 

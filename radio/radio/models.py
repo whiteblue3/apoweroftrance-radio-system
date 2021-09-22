@@ -142,11 +142,15 @@ class ListenHistory(models.Model):
     id = models.BigAutoField(primary_key=True, null=False, blank=False)
 
     user = models.ForeignKey(
-        get_user_model(), on_delete=models.CASCADE, null=False, blank=False, editable=False
+        get_user_model(), related_name='ListenHistory.user+', on_delete=models.CASCADE, null=False, blank=False, editable=False
     )
 
     track = models.ForeignKey(
         'radio.Track', on_delete=models.SET_NULL, null=True, editable=False
+    )
+
+    provider = models.ForeignKey(
+        get_user_model(), related_name='ListenHistory.provider+', on_delete=models.CASCADE, default=None
     )
 
     title = models.CharField(null=True, blank=True, max_length=200, editable=False)
@@ -160,3 +164,4 @@ class ListenHistory(models.Model):
         app_label = 'radio'
         verbose_name = 'Listen History'
         verbose_name_plural = 'Listen History'
+

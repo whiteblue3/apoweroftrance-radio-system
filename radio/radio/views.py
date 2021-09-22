@@ -746,6 +746,7 @@ class PostListenAPI(CreateAPIView):
         serializer = ListenHistorySerializer(data={
             "user_id": user.id,
             "track_id": track_id,
+            "provider_id": track.user.id,
             "title": track.title,
             "artist": track.artist,
             "played_at": now(),
