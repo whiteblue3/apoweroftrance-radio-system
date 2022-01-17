@@ -64,6 +64,7 @@ ENV GOOGLE_APPLICATION_CREDENTIALS /etc/gcloud/service-account-key.json
 RUN mkdir -p /etc/gcloud
 
 ENV ENABLE_SWAGGER 1
+ENV ENABLE_ADMIN 1
 
 ENV DB_NAME 'apoweroftrance'
 ENV DB_HOST '127.0.0.1'
