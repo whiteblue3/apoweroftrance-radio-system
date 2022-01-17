@@ -19,6 +19,6 @@ drawtext=textfile=/tmp/title:reload=1:fontfile=/srv/NanumGothicBold.ttf:fontcolo
 drawtext=textfile=/tmp/artist:reload=1:fontfile=/srv/NanumGothicBold.ttf:fontcolor=White@1.0:fontsize=24:shadowcolor=black:shadowx=2:shadowy=2:x=30:y=1080-50-36-24-4
 [out]" \
 -map [out] -map 1:a -pix_fmt yuv420p -c:a copy -r:a 44100 \
--f flv ${YOUTUBE_URL}
+-f flv ${STREAM_URL}
 
 exec "$@"
