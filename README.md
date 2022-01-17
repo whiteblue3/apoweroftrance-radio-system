@@ -1,6 +1,8 @@
 A Power of Trance is audio broadcasting server. 
 It contains musicdaemon and API server.
 
+You can listen testbed broadcasting here -> https://listen.apoweroftrance.com/yui
+
 # Server Spec
 - Platform: Docker Compose (Local Dev) or Kubernetes (Production)
 - Database: PostgreSQL 11 over
